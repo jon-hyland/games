@@ -1,4 +1,5 @@
-﻿using Bricker.Networking;
+﻿using Bricker.Error;
+using Bricker.Networking;
 using Common.Json;
 using SkiaSharp;
 using System;

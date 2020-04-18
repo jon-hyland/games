@@ -1,4 +1,5 @@
 ﻿using Bricker.Configuration;
+using Bricker.Error;
 using Common.Threading;
 using System;
 using System.Net;
@@ -69,8 +70,9 @@ namespace Bricker.Networking
                 byte[] bytes = p.ToBytes();
                 _client.Send(bytes, bytes.Length, _endPoint);
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorHandler.LogError(ex);
             }
         }
 

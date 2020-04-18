@@ -1,13 +1,10 @@
-﻿using Bricker.Error;
+﻿using Common.Error;
 using Common.Threading;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Bricker.Networking
+namespace Common.Networking.Tcp
 {
     /// <summary>
     /// Basic TCP client
@@ -15,6 +12,7 @@ namespace Bricker.Networking
     public class TcpClient
     {
         //private
+        private IErrorHandler _errorHandler = null;
         private readonly string _ipAddress = "";
         private readonly int _port = 0;
         private readonly int _header = 0;
@@ -39,8 +37,9 @@ namespace Bricker.Networking
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public TcpClient(string ipAddress, int port, int header, int timeoutMs)
+        public TcpClient(string ipAddress, int port, int header, int timeoutMs, IErrorHandler errorHandler = null)
         {
+            _errorHandler = errorHandler;
             _ipAddress = ipAddress;
             _port = port;
             _header = header;
@@ -90,7 +89,7 @@ namespace Bricker.Networking
             }
             catch (Exception ex)
             {
-                ErrorHandler.LogError(ex);
+                _errorHandler?.LogError(ex);
             }
         }
 

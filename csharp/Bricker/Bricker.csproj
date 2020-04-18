@@ -118,7 +118,6 @@
     <Compile Include="Networking\NetworkDiscovery.cs" />
     <Compile Include="Networking\Packet.cs" />
     <Compile Include="Networking\RemoteInstance.cs" />
-    <Compile Include="Networking\TcpClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

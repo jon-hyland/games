@@ -1,4 +1,5 @@
 ﻿using Bricker.Configuration;
+using Bricker.Error;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -110,8 +111,9 @@ namespace Bricker.Networking
                 string text = String.Join(Environment.NewLine, instances.Select(i => $"{i.IP}|{i.Initials}|{i.LastDiscovery}"));
                 File.WriteAllText(Config.RemoteInstanceFile, text);
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorHandler.LogError(ex);
             }
         }
 
@@ -144,10 +146,11 @@ namespace Bricker.Networking
 
                 return instances;
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<RemoteInstance>();
+                ErrorHandler.LogError(ex);
             }
+            return new List<RemoteInstance>();
         }        
 
     }

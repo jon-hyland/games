@@ -1,4 +1,5 @@
 ﻿using Bricker.Configuration;
+using Bricker.Error;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,8 +67,9 @@ namespace Bricker.Networking
                 byte[] bytes = _server.EndReceive(result, ref ep);
                 Task.Run(() => ProcessPacket(bytes));
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorHandler.LogError(ex);
             }
             finally
             {
@@ -91,8 +93,9 @@ namespace Bricker.Networking
                     NetworkDiscovery.AddOrUpdateRemoteInstance(p.SourceIP, p.Initials);                    
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorHandler.LogError(ex);
             }
         }
     

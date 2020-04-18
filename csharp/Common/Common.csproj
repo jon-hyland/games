@@ -44,9 +44,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Error\IErrorHandler.cs" />
     <Compile Include="Extensions\IListExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Json\JsonSerialization.cs" />
+    <Compile Include="Networking\Tcp\TcpClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Threading\SimpleTimer.cs" />
     <Compile Include="Utilities\CpsCalculator.cs" />

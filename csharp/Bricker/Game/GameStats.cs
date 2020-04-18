@@ -1,4 +1,5 @@
 ﻿using Bricker.Configuration;
+using Bricker.Error;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -108,8 +109,9 @@ namespace Bricker.Game
                 string text = String.Join(Environment.NewLine, _highScores.Select(s => $"{s.Initials}\t{s.Score}"));
                 File.WriteAllText(Config.HighScoreFile, text);
             }
-            catch
+            catch (Exception ex)
             {
+                ErrorHandler.LogError(ex);
             }
         }
 
@@ -135,19 +137,21 @@ namespace Bricker.Game
                         int score = Int32.Parse(split[1]);
                         scores.Add(new HighScore(initials, score));
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        ErrorHandler.LogError(ex);
                     }
                 }
                 return scores.OrderByDescending(s => s.Score).Take(10).ToList();
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<HighScore>();
+                ErrorHandler.LogError(ex);
             }
+            return new List<HighScore>();
         }
 
-        
+
 
     }
 
