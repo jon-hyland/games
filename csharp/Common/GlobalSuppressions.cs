@@ -6,3 +6,6 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "<Pending>", Scope = "member", Target = "~F:Common.Utilities.CpsCalculator._timer")]
+[assembly: SuppressMessage("Style", "IDE0071:Simplify interpolation", Justification = "<Pending>")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
+[assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "<Pending>", Scope = "member", Target = "~F:Common.Networking.Tcp.SimpleTcpClient._timer")]

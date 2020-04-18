@@ -2,7 +2,7 @@
 
 namespace Common.Extensions
 {
-    public static class IListExtensions
+    public static class IListExtension
     {
         public static T RemoveAndGet<T>(this IList<T> list, int index)
         {
