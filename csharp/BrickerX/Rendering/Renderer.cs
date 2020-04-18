@@ -2,7 +2,7 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Networking;
-using Common.Utilities;
+using Bricker.Utilities;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using System;
@@ -432,8 +432,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawMenu(Surface frame)
         {
-            MenuProperties menuProps = _menuProps;
-            if (menuProps == null)
+            if (_menuProps == null)
                 return;
 
             double betweenSpacing = 22;
@@ -441,17 +440,17 @@ namespace Bricker.Rendering
             double width = 400;
             double height = (itemHeight * 4) + (betweenSpacing * 5) + 4;
 
-            SKColor resumeColor = menuProps.InGame ? Colors.BrightWhite : Colors.Gray;
+            SKColor resumeColor = _menuProps.InGame ? Colors.BrightWhite : Colors.Gray;
             SKColor newColor = Colors.BrightWhite;
             SKColor twoPlayerColor = Colors.BrightWhite;
             SKColor quitColor = Colors.BrightWhite;
-            if (menuProps.Selection == MenuSelection.Resume)
+            if (_menuProps.Selection == MenuSelection.Resume)
                 resumeColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.New)
+            else if (_menuProps.Selection == MenuSelection.New)
                 newColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.TwoPlayer)
+            else if (_menuProps.Selection == MenuSelection.TwoPlayer)
                 twoPlayerColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.Quit)
+            else if (_menuProps.Selection == MenuSelection.Quit)
                 quitColor = Colors.FluorescentOrange;
 
             using (Surface surface = new Surface(width, height, Colors.Black))
@@ -479,8 +478,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawInitialsEntry(Surface frame)
         {
-            InitialsEntryProperties initialProps = _initialProps;
-            if (initialProps == null)
+            if (_initialProps == null)
                 return;
 
             double spacing = 10;
@@ -489,7 +487,7 @@ namespace Bricker.Rendering
             double charHeight = 82;
             double width = 400;
             double height = (spacing * 4) + (lineHeight * 2) + charHeight + 4;
-            string inits = initialProps.Initials.PadRight(3);
+            string inits = _initialProps.Initials.PadRight(3);
 
             using (Surface surface = new Surface(width, height, Colors.Black))
             {
@@ -502,8 +500,8 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.BrightWhite, width - 2, 0, width - 2, height - 1, 1);
                 surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
 
-                surface.DrawText_Centered(Colors.BrightWhite, initialProps.Header[0], 28, spacing + 2);
-                surface.DrawText_Centered(Colors.BrightWhite, initialProps.Header[1], 28, spacing + lineHeight + 2);
+                surface.DrawText_Centered(Colors.BrightWhite, _initialProps.Header[0], 28, spacing + 2);
+                surface.DrawText_Centered(Colors.BrightWhite, _initialProps.Header[1], 28, spacing + lineHeight + 2);
                 using (Surface initials = new Surface(charWidth * 3, charHeight))
                 {
                     using (Surface char1 = Surface.RenderText(Colors.FluorescentOrange, inits[0].ToString(), 64))
@@ -530,17 +528,16 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawMessageBox(Surface frame)
         {
-            MessageProperties messageProps = _messageProps;
-            if (messageProps == null)
+            if (_messageProps == null)
                 return;
 
-            using (Surface text = Surface.RenderText(Colors.BrightWhite, messageProps.Text, messageProps.Size))
+            using (Surface text = Surface.RenderText(Colors.BrightWhite, _messageProps.Text, _messageProps.Size))
             {
                 double spacing = 25;
                 double buttonHeight = 32;
                 double width = text.Width + 4 + (spacing * 2);
                 double height = text.Height + 4 + (spacing * 2);
-                if (messageProps.Buttons != MessageButtons.None)
+                if (_messageProps.Buttons != MessageButtons.None)
                     height += buttonHeight + (spacing * 1.5);
 
                 using (Surface surface = new Surface(width, height, Colors.Black))
@@ -555,19 +552,19 @@ namespace Bricker.Rendering
                     surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
                     surface.Blit(text, 2 + spacing, 2 + spacing);
 
-                    if (messageProps.Buttons == MessageButtons.OK)
+                    if (_messageProps.Buttons == MessageButtons.OK)
                     {
                         using (Surface buttonText = Surface.RenderText(Colors.FluorescentOrange, "ok", 24))
                         {
                             surface.Blit(buttonText, (surface.Width - buttonText.Width) / 2, 2 + spacing + text.Height + (spacing * 1.5));
                         }
                     }
-                    else if (messageProps.Buttons >= MessageButtons.CancelOK)
+                    else if (_messageProps.Buttons >= MessageButtons.CancelOK)
                     {
-                        string label1 = messageProps.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
-                        string label2 = messageProps.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
-                        SKColor color1 = messageProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
-                        SKColor color2 = messageProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
+                        string label1 = _messageProps.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
+                        string label2 = _messageProps.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
+                        SKColor color1 = _messageProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
+                        SKColor color2 = _messageProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
 
                         using (Surface buttonText1 = Surface.RenderText(color1, label1, 24))
                         {
@@ -589,8 +586,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawLobbyMenu(Surface frame)
         {
-            LobbyProperties lobbyProps = _lobbyProps;
-            if (lobbyProps == null)
+            if (_lobbyProps == null)
                 return;
 
             double width = 400;
@@ -617,14 +613,14 @@ namespace Bricker.Rendering
                     string ip = opponents[i].IP;
                     string initials = opponents[i].Initials;
                     y = 100 + (i * 32);
-                    SKColor color = lobbyProps.OpponentIndex == i ? Colors.FluorescentOrange : Colors.BrightWhite;
+                    SKColor color = _lobbyProps.OpponentIndex == i ? Colors.FluorescentOrange : Colors.BrightWhite;
                     surface.DrawText_Left(color, initials, 24, y, 25);
                     surface.DrawText_Right(color, ip, 24, y, 25);
                 }
 
                 y = 100 + (6 * 32) - 6;
-                SKColor color1 = lobbyProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
-                SKColor color2 = lobbyProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
+                SKColor color1 = _lobbyProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
+                SKColor color2 = _lobbyProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
                 surface.DrawText_Left(color1, "cancel", 24, y, 38);
                 surface.DrawText_Right(color2, "ok", 24, y, 38);
 

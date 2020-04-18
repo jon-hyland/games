@@ -1,5 +1,5 @@
 ﻿using Bricker.Configuration;
-using Common.Threading;
+using Bricker.Utilities;
 using System;
 using System.Net;
 using System.Net.Sockets;
