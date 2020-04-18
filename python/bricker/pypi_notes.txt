@@ -1,0 +1,18 @@
+=====================
+ Create PyPi Package
+=====================
+python setup.py sdist bdist_wheel
+
+
+=====================
+ Upload to Test PyPi
+=====================
+python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+[username: __token__]
+[password: [paste_token]]
+
+========================
+ Install from Test PyPi
+========================
+pip install -i https://test.pypi.org/simple/ Bricker
+ 
