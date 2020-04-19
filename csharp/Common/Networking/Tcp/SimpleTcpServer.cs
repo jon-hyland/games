@@ -1,28 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Common.Error;
+using Common.Logging;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
 namespace Common.Networking.Tcp
 {
-    public class SimpleTcpServer
+    public class SimpleTcpServer : IDisposable
     {
-        private TcpListener _listener;
-        private HashSet<string> _allowedClientIPs = new HashSet<string>();
+        //private
+        private readonly IErrorHandler _errorHandler = null;
+        private readonly ILogger _logger = null;
+        private readonly TcpListener _listener;
         private Thread _listenThread = null;
+        private readonly int _packetID = 0;
+        private readonly int _timeoutMs = 1000;
+        private SimpleTcpClient _lastConnectedClient = null;
+        private bool _isListening => _listener?.Server?.Connected ?? false;
 
-        public event Action<TcpClient> ClientConnected;
+        //events
+        public event Action<SimpleTcpClient> ClientConnected;
 
-        public SimpleTcpServer(string localIPAddress, int localPort, IEnumerable<string> allowedClientIPs = null)
+        /// <summary>
+        /// Class constructor.
+        /// </summary>
+        public SimpleTcpServer(string localIPAddress, int localPort, int packetID, int timeoutMs, IErrorHandler errorHandler = null, ILogger logger = null)
         {
+            _errorHandler = errorHandler;
+            _logger = logger;
             _listener = new TcpListener(IPAddress.Parse(localIPAddress), localPort);
-            
-            foreach (string ip in allowedClientIPs)
-                if (!_allowedClientIPs.Contains(ip))
-                    _allowedClientIPs.Add(ip);
+            _packetID = packetID;
+            _timeoutMs = timeoutMs;
         }
 
+        /// <summary>
+        /// Disposes of resources.
+        /// </summary>
+        public void Dispose()
+        {
+            _listenThread?.Abort();
+            _listener.Stop();
+        }
+
+        /// <summary>
+        /// Starts the server.
+        /// </summary>
         public void Start()
         {
             _listener.Start();
@@ -33,18 +56,46 @@ namespace Common.Networking.Tcp
             _listenThread.Start();
         }
 
+        /// <summary>
+        /// Listens for new TCP client connections.
+        /// </summary>
         private void ListenThread()
         {
             while (true)
             {
-                TcpClient client = _listener.AcceptTcpClient();
-                string clientIP = (client.Client.RemoteEndPoint as IPEndPoint).ToString();
-                if ((_allowedClientIPs.Count > 0) && (!_allowedClientIPs.Contains(clientIP)))
+                try
                 {
-                    client.Close();
-                    return;
+                    TcpClient tcpClient = _listener.AcceptTcpClient();
+                    SimpleTcpClient client = new SimpleTcpClient(tcpClient, _packetID, _timeoutMs, _errorHandler, _logger);
+                    _lastConnectedClient = client;
+                    ClientConnected?.Invoke(client);
                 }
-                ClientConnected?.Invoke(client);
+                catch (Exception ex)
+                {
+                    _errorHandler?.LogError(ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Waits for next connected client, or null if timeout reached.
+        /// </summary>
+        public SimpleTcpClient WaitForClient(int? timeoutMs = null)
+        {
+            DateTime start = DateTime.Now;
+            while (true)
+            {
+                SimpleTcpClient client = _lastConnectedClient;
+                if (client != null)
+                {
+                    _lastConnectedClient = null;
+                    return client;
+                }
+                if ((timeoutMs != null) && ((DateTime.Now - start).TotalMilliseconds > timeoutMs))
+                    return null;
+                if (!_isListening)
+                    return null;
+                Thread.Sleep(2);
             }
         }
 

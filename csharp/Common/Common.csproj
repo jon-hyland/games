@@ -47,11 +47,11 @@
     <Compile Include="Error\IErrorHandler.cs" />
     <Compile Include="Extensions\IListExtension.cs" />
     <Compile Include="Extensions\SocketExtension.cs" />
+    <Compile Include="Extensions\TcpClientExtension.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Json\JsonSerialization.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogLevel.cs" />
-    <Compile Include="Networking\Tcp\ReceiveState.cs" />
     <Compile Include="Networking\Tcp\SimpleTcpClient.cs" />
     <Compile Include="Networking\Tcp\SimpleTcpServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

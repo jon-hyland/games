@@ -23,17 +23,17 @@ namespace Common.Networking.Tcp
         //private
         private readonly IErrorHandler _errorHandler = null;
         private readonly ILogger _logger = null;
-        private bool _serverSide = false;
-        private readonly IPAddress _serverIPAddress = null;
-        private readonly int _serverPort = 0;
-        private readonly IPAddress _clientIPAddress = null;
+        private readonly bool _serverSide = false;
+        private readonly IPAddress _remoteIPAddress = null;
+        private readonly int _remotePort = 0;
         private readonly int _packetID = 0;
         private readonly int _timeoutMs = 1000;
         private readonly List<byte> _incomingBuffer = new List<byte>();
         private readonly Queue<byte[]> _incomingApplicationPackets = new Queue<byte[]>();
         private readonly object _socketLock = new object();
-        private Socket _socket = null;
-        private bool _isConnected => _socket?.Connected ?? false;
+        private readonly TcpClient _client = null;
+        private NetworkStream _networkStream = null;
+        private bool _isConnected => _client?.Connected ?? false;
         private long _socketErrors = 0;
         private readonly SimpleTimer _healthTimer = null;
         private DateTime _lastPacketReceived_Time = DateTime.MaxValue;
@@ -59,9 +59,14 @@ namespace Common.Networking.Tcp
             _errorHandler = errorHandler;
             _logger = logger;
             _serverSide = false;
-            _serverIPAddress = IPAddress.Parse(serverIPAddress);
-            _serverPort = serverPort;
-            _clientIPAddress = null;
+            _remoteIPAddress = IPAddress.Parse(serverIPAddress);
+            _remotePort = serverPort;
+            _client = new TcpClient
+            {
+                SendTimeout = timeoutMs,
+                ReceiveTimeout = timeoutMs
+            };
+            _networkStream = null;
             _packetID = packetID;
             _timeoutMs = timeoutMs;
             _healthTimer = new SimpleTimer(HealthTimer_Callback, 100);
@@ -75,14 +80,15 @@ namespace Common.Networking.Tcp
         /// <summary>
         /// Class constructor (server side).
         /// </summary>
-        public SimpleTcpClient(string clientIPAddress, int packetID, int timeoutMs, IErrorHandler errorHandler = null, ILogger logger = null)
+        public SimpleTcpClient(TcpClient client, int packetID, int timeoutMs, IErrorHandler errorHandler = null, ILogger logger = null)
         {
             _errorHandler = errorHandler;
             _logger = logger;
             _serverSide = true;
-            _serverIPAddress = null;
-            _serverPort = 0;
-            _clientIPAddress = IPAddress.Parse(clientIPAddress);
+            _remoteIPAddress = (_client.Client.RemoteEndPoint as IPEndPoint).Address;
+            _remotePort = (_client.Client.RemoteEndPoint as IPEndPoint).Port;
+            _client = client;
+            _networkStream = client.GetStream();
             _packetID = packetID;
             _timeoutMs = timeoutMs;
             _healthTimer = new SimpleTimer(HealthTimer_Callback, 100);
@@ -91,6 +97,7 @@ namespace Common.Networking.Tcp
                 IsBackground = true
             };
             _sendThread.Start();
+            BeginRead();
         }
 
         /// <summary>
@@ -100,13 +107,13 @@ namespace Common.Networking.Tcp
         {
             _healthTimer?.Dispose();
             _sendThread?.Abort();
-            _socket?.Dispose();
+            _client?.Dispose();
         }
 
         #region Connect / Close
 
         /// <summary>
-        /// Connects to configured TCP endpoint.
+        /// Connects to configured server TCP endpoint.
         /// </summary>
         public void Connect()
         {
@@ -127,15 +134,11 @@ namespace Common.Networking.Tcp
 
                     try
                     {
-                        //close existing socket?
-                        if (_socket != null)
+                        //close existing connection
+                        if (_client.Connected)
                         {
-                            if (_socket.Connected)
-                            {
-                                WriteLog($"Connect [Closing existing socket]");
-                                _socket.Close();
-                            }
-                            _socket.Dispose();
+                            WriteLog($"Connect [Closing existing connection]");
+                            _client.Close();
                         }
                     }
                     catch
@@ -148,23 +151,16 @@ namespace Common.Networking.Tcp
                         _incomingBuffer.Clear();
                     }
 
-                    //create socket
-                    WriteLog($"Connect [Creating socket]");
-                    _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-                    {
-                        NoDelay = true,
-                        SendTimeout = _timeoutMs
-                    };
-
                     //open socket
-                    WriteLog($"Connect [Connecting to server endpoint [Address: {_serverIPAddress.ToString()}, Port: {_serverPort}, Timeout_Ms: {_timeoutMs}]]");
-                    _socket.Connect(_serverIPAddress, _serverPort, TimeSpan.FromMilliseconds(_timeoutMs));
+                    WriteLog($"Connect [Connecting to server endpoint [Address: {_remoteIPAddress.ToString()}, Port: {_remotePort}, Timeout_Ms: {_timeoutMs}]]");
+                    _client.Connect(_remoteIPAddress, _remotePort, TimeSpan.FromMilliseconds(_timeoutMs));
+                    _networkStream = _client.GetStream();
 
                     //reset error count
                     _socketErrors = 0;
 
                     //begin receiving next response packet
-                    BeginReceive(_socket);
+                    BeginRead();
 
                     //success
                     success = true;
@@ -197,16 +193,11 @@ namespace Common.Networking.Tcp
                     //message
                     WriteLog($"Close [Start]");
 
-                    //close socket
-                    if (_socket != null)
+                    //close existing connection
+                    if (_client.Connected)
                     {
-                        if (_socket.Connected)
-                        {
-                            WriteLog($"Connect [Closing existing socket]");
-                            _socket.Close();
-                        }
-                        _socket.Dispose();
-                        _socket = null;
+                        WriteLog($"Connect [Closing existing connection]");
+                        _client.Close();
                     }
                 }
             }
@@ -269,7 +260,7 @@ namespace Common.Networking.Tcp
 
                             if (_isConnected)
                             {
-                                _socket.Send(packetBytes);
+                                _networkStream.Write(packetBytes, 0, packetBytes.Length);
                                 WriteLog($"SendThread [Sent {packetBytes} packet bytes]");
                             }
                         }
@@ -290,7 +281,7 @@ namespace Common.Networking.Tcp
         /// <summary>
         /// Returns next received packet, or null if no more data.
         /// </summary>
-        public byte[] GetIncomingPacket()
+        public byte[] GetPacket()
         {
             lock (_incomingApplicationPackets)
             {
@@ -304,28 +295,50 @@ namespace Common.Networking.Tcp
         }
 
         /// <summary>
+        /// Waits for next received packet, or null if timeout reached.
+        /// </summary>
+        public byte[] WaitForPacket(int? timeoutMs = null)
+        {
+            DateTime start = DateTime.Now;
+            while (true)
+            {
+                lock (_incomingApplicationPackets)
+                {
+                    if (_incomingApplicationPackets.Count > 0)
+                    {
+                        byte[] payload = _incomingApplicationPackets.Dequeue();
+                        return payload;
+                    }                    
+                }
+                if ((timeoutMs != null) && ((DateTime.Now - start).TotalMilliseconds > timeoutMs))
+                    return null;
+                if (!_isConnected)
+                    return null;
+                Thread.Sleep(2);
+            }            
+        }
+
+        /// <summary>
         /// Begins waiting for first response data, async.
         /// </summary>
-        private void BeginReceive(Socket socket)
+        private void BeginRead()
         {
             try
             {
                 //state
-                ReceiveState state = new ReceiveState
+                ReadState state = new ReadState
                 {
-                    ClientSocket = socket
+                    Stream = _networkStream
                 };
 
-                //begin receive
+                //begin read
                 WriteLog($"BeginReceive [BeginReceive]");
-                socket.BeginReceive(state.Buffer, 0, ReceiveState.BUFFER_SIZE, 0, new AsyncCallback(ReceiveData), state);
+                _networkStream.BeginRead(state.Buffer, 0, ReadState.BUFFER_SIZE, new AsyncCallback(ReceiveData), state);
             }
             catch (Exception ex)
             {
                 _errorHandler?.LogError(ex);
                 _socketErrors++;
-                //if (!socket.Connected)  //needed?
-                //    Connect();
             }
         }
 
@@ -336,17 +349,14 @@ namespace Common.Networking.Tcp
         /// </summary>
         private void ReceiveData(IAsyncResult ar)
         {
-            ReceiveState state = (ReceiveState)ar.AsyncState;
-            Socket socket = state.ClientSocket;
+            ReadState state = (ReadState)ar.AsyncState;
+            NetworkStream stream = state.Stream;
 
             try
             {
-                //set flag just in case (not sure if needed)
-                socket.NoDelay = true;
-
                 //end receive
                 WriteLog($"ReceiveData [EndReceive]");
-                int bytesRead = socket.EndReceive(ar);
+                int bytesRead = stream.EndRead(ar);
 
                 try
                 {
@@ -373,11 +383,11 @@ namespace Common.Networking.Tcp
                 }
                 finally
                 {
-                    //begin receive
-                    if (socket != null)
+                    //begin read
+                    if (_networkStream != null)
                     {
-                        WriteLog($"ReceiveData [BeginReceive]");
-                        socket.BeginReceive(state.Buffer, 0, ReceiveState.BUFFER_SIZE, 0, new AsyncCallback(ReceiveData), state);
+                        WriteLog($"BeginReceive [BeginReceive]");
+                        _networkStream.BeginRead(state.Buffer, 0, ReadState.BUFFER_SIZE, new AsyncCallback(ReceiveData), state);
                     }
                 }
             }
@@ -653,6 +663,20 @@ namespace Common.Networking.Tcp
         private void WriteLog(string message)
         {
             _logger?.Write(LogLevel.Medium, "TcpClient", message);
+        }
+
+        #endregion
+
+        #region Classes
+
+        /// <summary>
+        /// State object for receiving data from remote device.
+        /// </summary>
+        private class ReadState
+        {
+            public const int BUFFER_SIZE = 8192;
+            public NetworkStream Stream = null;
+            public byte[] Buffer = new byte[BUFFER_SIZE];
         }
 
         #endregion
