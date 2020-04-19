@@ -17,7 +17,7 @@ namespace Common.Networking.Tcp
         private readonly int _packetID = 0;
         private readonly int _timeoutMs = 1000;
         private SimpleTcpClient _lastConnectedClient = null;
-        private bool _isListening => _listener?.Server?.Connected ?? false;
+        private bool _isListening = false;
 
         //events
         public event Action<SimpleTcpClient> ClientConnected;
@@ -49,6 +49,7 @@ namespace Common.Networking.Tcp
         public void Start()
         {
             _listener.Start();
+            _isListening = true;
             _listenThread = new Thread(ListenThread)
             {
                 IsBackground = true

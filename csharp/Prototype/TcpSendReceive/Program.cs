@@ -61,10 +61,14 @@ namespace TcpSendReceive
             {
                 using (SimpleTcpServer server = new SimpleTcpServer("127.0.0.1", 8686, 1234567890, 1000, _errorHandler, _logger))
                 {
+                    server.Start();
                     while (true)
                     {
                         using (SimpleTcpClient client = server.WaitForClient(60000))
                         {
+                            if (client == null)
+                                continue;                            
+
                             while (true)
                             {
                                 byte[] payload = client.WaitForPacket(60000);
