@@ -33,6 +33,7 @@ namespace TcpSendReceive
             //client mode
             if (mode == Mode.Client)
             {
+                WriteLog("Starting in Client mode");
                 const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
                 const int TEST_SIZE = 20000;
                 string[] samples = new string[TEST_SIZE];
@@ -68,8 +69,10 @@ namespace TcpSendReceive
             //server mode
             else if (mode == Mode.Server)
             {
-                using (SimpleTcpServer server = new SimpleTcpServer("127.0.0.1", 8686, 1234567890, 1000, _errorHandler, _logger))
+                WriteLog("Starting in Server mode");
+                using (SimpleTcpServer server = new SimpleTcpServer("10.0.1.2", 8686, 1234567890, 1000, _errorHandler, _logger))
                 {
+                    WriteLog("Listening to port 8686..");
                     server.Start();
                     while (true)
                     {
@@ -83,7 +86,7 @@ namespace TcpSendReceive
                                 byte[] payload = client.WaitForPacket(60000);
                                 if (payload != null)
                                 {
-                                    WriteLog($"Echoing {payload.Length} bytes to client");
+                                    WriteLog($"Echoing {payload.Length} bytes to client at {client.RemoteIPAddress}");
                                     client.SendPacket(payload);
                                 }
                             }

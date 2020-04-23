@@ -47,6 +47,8 @@ namespace Common.Networking.Tcp
         public bool IsConnected => _isConnected;
         public long SocketErrors => _socketErrors;
         public bool ServerSide => _serverSide;
+        public IPAddress RemoteIPAddress => _remoteIPAddress;
+        public int RemotePort => _remotePort;
 
         //events
         public event Action PacketReceived;
