@@ -256,9 +256,10 @@ namespace Common.Networking.Tcp
                             byte[] payloadBytes = _outgoingApplicationPackets.Dequeue();
                             byte[] packetBytes = new byte[payloadBytes.Length + 6];
                             byte[] idBytes = BitConverter.GetBytes(_packetID);
-                            Array.Copy(idBytes, 0, packetBytes, 0, 4);
                             byte[] lengthBytes = BitConverter.GetBytes((ushort)packetBytes.Length);
+                            Array.Copy(idBytes, 0, packetBytes, 0, 4);
                             Array.Copy(lengthBytes, 0, packetBytes, 4, 2);
+                            Array.Copy(payloadBytes, 0, packetBytes, 6, payloadBytes.Length);
 
                             if (_isConnected)
                             {
