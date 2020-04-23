@@ -664,7 +664,7 @@ namespace Common.Networking.Tcp
         /// </summary>
         private void WriteLog(string message)
         {
-            _logger?.Write(LogLevel.Medium, "TcpClient", message);
+            _logger?.Write(LogLevel.Low, "TcpClient", message);
         }
 
         #endregion
