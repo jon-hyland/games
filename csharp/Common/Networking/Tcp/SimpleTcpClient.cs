@@ -87,8 +87,8 @@ namespace Common.Networking.Tcp
             _errorHandler = errorHandler;
             _logger = logger;
             _serverSide = true;
-            _remoteIPAddress = (_client.Client.RemoteEndPoint as IPEndPoint).Address;
-            _remotePort = (_client.Client.RemoteEndPoint as IPEndPoint).Port;
+            _remoteIPAddress = (client.Client.RemoteEndPoint as IPEndPoint).Address;
+            _remotePort = (client.Client.RemoteEndPoint as IPEndPoint).Port;
             _client = client;
             _networkStream = client.GetStream();
             _packetID = packetID;
