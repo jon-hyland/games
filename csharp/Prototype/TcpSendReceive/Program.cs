@@ -6,6 +6,15 @@ using System.Text;
 
 namespace TcpSendReceive
 {
+    /// <summary>
+    /// Test mode, server or client.
+    /// </summary>
+    public enum Mode
+    {
+        Server,
+        Client
+    }
+    
     public class Program
     {
         //private
@@ -19,10 +28,10 @@ namespace TcpSendReceive
         public static void Main(string[] args)
         {
             //vars
-            bool clientMode = true;
+            Mode mode = Mode.Server;
 
             //client mode
-            if (clientMode)
+            if (mode == Mode.Client)
             {
                 const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
                 const int TEST_SIZE = 20000;
@@ -57,7 +66,7 @@ namespace TcpSendReceive
             }
 
             //server mode
-            else
+            else if (mode == Mode.Server)
             {
                 using (SimpleTcpServer server = new SimpleTcpServer("127.0.0.1", 8686, 1234567890, 1000, _errorHandler, _logger))
                 {
