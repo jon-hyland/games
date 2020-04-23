@@ -72,14 +72,16 @@ namespace TcpSendReceive
                 WriteLog("Starting in Server mode");
                 using (SimpleTcpServer server = new SimpleTcpServer("10.0.1.2", 8686, 1234567890, 1000, _errorHandler, _logger))
                 {
-                    WriteLog("Listening to port 8686..");
+                    WriteLog("Waiting for connection on port 8686");
                     server.Start();
                     while (true)
                     {
                         using (SimpleTcpClient client = server.WaitForClient(60000))
                         {
                             if (client == null)
-                                continue;                            
+                                continue;
+                            WriteLog($"Connected to remote client at {client.RemoteIPAddress}");
+
 
                             while (true)
                             {
