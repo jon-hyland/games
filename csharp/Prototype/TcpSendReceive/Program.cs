@@ -28,7 +28,7 @@ namespace TcpSendReceive
         public static void Main(string[] args)
         {
             //vars
-            Mode mode = Mode.Server;
+            Mode mode = Mode.Client;
 
             //client mode
             if (mode == Mode.Client)
@@ -46,12 +46,14 @@ namespace TcpSendReceive
                     samples[i] = sample.ToString();
                 }
 
-                using (SimpleTcpClient client = new SimpleTcpClient("127.0.0.1", 8686, 1234567890, 1000, _errorHandler, _logger))
+                using (SimpleTcpClient client = new SimpleTcpClient("10.0.1.2", 8686, 1234567890, 1000, _errorHandler, _logger))
                 {
                     client.Connect();
+                    WriteLog($"Connected to server at {client.RemoteIPAddress} on port {client.RemotePort}");
                     for (int i = 0; i < TEST_SIZE; i++)
                     {
                         byte[] payload1 = Encoding.UTF8.GetBytes(samples[i]);
+                        WriteLog($"Sending packet with {payload1} bytes");
                         client.SendPacket(payload1);
                         byte[] payload2 = client.WaitForPacket(60000);
                         if (payload2 == null)
@@ -61,6 +63,10 @@ namespace TcpSendReceive
                         else if (!payload2.SequenceEqual(payload1))
                         {
                             WriteLog("Payloads do not match!");
+                        }
+                        else
+                        {
+                            WriteLog("Response packet received and verified");
                         }
                     }
                 }
