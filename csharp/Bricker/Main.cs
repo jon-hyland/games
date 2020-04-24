@@ -3,6 +3,7 @@ using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering;
 using Common.Networking.Simple;
+using Common.Networking.Simple.Discovery;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,7 @@ namespace Bricker
             _communications = new GameCommunications(Config.GameTitle, 
                 Config.GameVersion, Config.LocalIP, Config.LocalPort, 
                 Config.Initials, ErrorHandler.Instance);
-            _renderer = new Renderer(window, _communications);
+            _renderer = new Renderer(window);
             _matrix = new Matrix();
             _stats = new GameStats();
             _spaces = null;
@@ -381,7 +382,7 @@ namespace Bricker
             try
             {
                 //vars
-                LobbyProperties props = new LobbyProperties(_communications);
+                LobbyProperties props = new LobbyProperties();
 
                 //push properties to renderer
                 _renderer.LobbyProps = props;
@@ -389,8 +390,9 @@ namespace Bricker
                 //event loop
                 while (true)
                 {
-                    ////update player list
-                    //IReadOnlyList<Player> instances = _communications.GetDiscoveredPlayers(top: 5);
+                    //get discovered players
+                    IReadOnlyList<Player> players = _communications.GetDiscoveredPlayers(top: 5);
+                    props.UpdatePlayers(players);
                     
                     //get next key press, or continue
                     Key key = Key.None;
@@ -434,13 +436,13 @@ namespace Bricker
                     //up
                     else if (key == Key.Up)
                     {
-                        props.DecrementOpponentIndex();
+                        props.DecrementPlayerIndex();
                     }
 
                     //down
                     else if (key == Key.Down)
                     {
-                        props.IncrementOpponentIndex();
+                        props.IncrementPlayerIndex();
                     }
                 }
             }

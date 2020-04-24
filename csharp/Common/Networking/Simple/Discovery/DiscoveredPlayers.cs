@@ -13,9 +13,6 @@ namespace Common.Networking.Simple.Discovery
         //private
         private readonly List<Player> _players = new List<Player>();
 
-        //public
-        public int Count => _players.Count;
-
         /// <summary>
         /// Returns shallow copy of discovered player list, with matching game title and version,
         /// where player IP is not local IP (this happens sometimes when UDP broadcast bounces
@@ -32,6 +29,24 @@ namespace Common.Networking.Simple.Discovery
                     .OrderByDescending(p => p.LastDiscovery)
                     .Take(top)
                     .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Returns count of discovered player list, with matching game title and version,
+        /// where player IP is not local IP (this happens sometimes when UDP broadcast bounces
+        /// back).
+        /// </summary>
+        public int GetPlayerCount(string gameTitle, Version gameVersion, IPAddress localIP, int top = 5)
+        {
+            lock (_players)
+            {
+                return _players
+                    .Where(p => p.GameTitle.Equals(gameTitle))
+                    .Where(p => p.GameVersion.Equals(gameVersion))
+                    .Where(p => !p.IP.Equals(localIP))
+                    .Take(top)
+                    .Count();
             }
         }
 

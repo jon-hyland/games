@@ -1,7 +1,6 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
-using Bricker.Networking;
 using Common.Networking.Simple;
 using Common.Networking.Simple.Discovery;
 using Common.Utilities;
@@ -22,7 +21,6 @@ namespace Bricker.Rendering
     {
         //private
         private readonly Window _window;
-        private readonly GameCommunications _communications;
         private double _frameWidth;
         private double _frameHeight;
         private double _displayScale;
@@ -51,10 +49,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Renderer(Window window, GameCommunications communications)
+        public Renderer(Window window)
         {
             _window = window;
-            _communications = communications;
             _displayScale = 1;
             _typeface = SKTypeface.FromFile(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "zorque.ttf"));
             _linePaint = new SKPaint()
@@ -613,15 +610,15 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
 
                 surface.DrawText_Centered(Colors.BrightWhite, "choose opponent", 28, 25);
-                surface.DrawText_Centered(Colors.BrightWhite, "other players must open this menu", 12, 60);
+                surface.DrawText_Centered(Colors.BrightWhite, "other player must accept your invite", 12, 60);
 
-                IReadOnlyList<Player> players = _communications.GetDiscoveredPlayers(top: 5);
+                IReadOnlyList<Player> players = lobbyProps.GetPlayers();
                 for (int i = 0; i < players.Count; i++)
                 {
                     string ip = players[i].IP.ToString();
                     string initials = players[i].Name;
                     y = 100 + (i * 32);
-                    SKColor color = lobbyProps.OpponentIndex == i ? Colors.FluorescentOrange : Colors.BrightWhite;
+                    SKColor color = lobbyProps.PlayerIndex == i ? Colors.FluorescentOrange : Colors.BrightWhite;
                     surface.DrawText_Left(color, initials, 24, y, 25);
                     surface.DrawText_Right(color, ip, 24, y, 25);
                 }
@@ -629,6 +626,8 @@ namespace Bricker.Rendering
                 y = 100 + (6 * 32) - 6;
                 SKColor color1 = lobbyProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
                 SKColor color2 = lobbyProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.BrightWhite;
+                if ((players.Count == 0) && (lobbyProps.ButtonIndex != 1))
+                    color2 = Colors.Gray;
                 surface.DrawText_Left(color1, "cancel", 24, y, 38);
                 surface.DrawText_Right(color2, "ok", 24, y, 38);
 

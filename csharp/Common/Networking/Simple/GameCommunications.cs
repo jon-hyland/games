@@ -28,7 +28,6 @@ namespace Common.Networking.Simple
         public IPAddress LocalIP => _localIP;
         public int LocalPort => _localPort;
         public string PlayerName { get => _playerName; set => _playerName = value; }
-        public int DiscoveredPlayerCount => _discoveredPlayers.Count;
 
         /// <summary>
         /// Class constructor.
@@ -91,6 +90,14 @@ namespace Common.Networking.Simple
         public IReadOnlyList<Player> GetDiscoveredPlayers(int top = 5)
         {
             return _discoveredPlayers.GetPlayers(_gameTitle, _gameVersion, _localIP, top);
+        }
+
+        /// <summary>
+        /// Returns count of discovered players, for this game version.
+        /// </summary>
+        public int GetDiscoveredPlayerCount(int top = 5)
+        {
+            return _discoveredPlayers.GetPlayerCount(_gameTitle, _gameVersion, _localIP, top);
         }
 
     }

@@ -1,6 +1,4 @@
-﻿using Bricker.Networking;
-using Common.Networking.Simple;
-using System;
+﻿using Common.Networking.Simple.Discovery;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,45 +10,75 @@ namespace Bricker.Rendering
     public class LobbyProperties
     {
         //private
-        private readonly GameCommunications _communications;
-        private int _opponentIndex = 0;
+        private readonly List<Player> _players = new List<Player>();
+        private int _playerIndex = -1;
         private int _buttonIndex = 0;
 
         //public
-        public int OpponentIndex => _opponentIndex;
+        public int PlayerIndex => _playerIndex;
         public int ButtonIndex => _buttonIndex;
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public LobbyProperties(GameCommunications communications)
+        public LobbyProperties()
         {
-            _communications = communications;
         }
 
         /// <summary>
-        /// Increments opponent index.
+        /// Updates player list.
         /// </summary>
-        public void IncrementOpponentIndex()
+        public void UpdatePlayers(IEnumerable<Player> players)
         {
             lock (this)
             {
-                _opponentIndex++;
-                if (_opponentIndex >= _communications.DiscoveredPlayerCount)
-                    _opponentIndex = 0;
+                int prevCount = _players.Count;
+                _players.Clear();
+                _players.AddRange(players);
+                if ((_players.Count > 0) && (prevCount == 0))
+                {
+                    if (_playerIndex == -1)
+                        _playerIndex = 0;
+                    if (_buttonIndex == 0)
+                        _buttonIndex = 1;
+                }
             }
         }
 
         /// <summary>
-        /// Increments opponent index.
+        /// Gets copy of player list.
         /// </summary>
-        public void DecrementOpponentIndex()
+        public IReadOnlyList<Player> GetPlayers()
         {
             lock (this)
             {
-                _opponentIndex--;
-                if (_opponentIndex < 0)
-                    _opponentIndex = _communications.DiscoveredPlayerCount - 1;
+                return _players.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Increments player index.
+        /// </summary>
+        public void IncrementPlayerIndex()
+        {
+            lock (this)
+            {
+                _playerIndex++;
+                if (_playerIndex >= _players.Count)
+                    _playerIndex = 0;
+            }
+        }
+
+        /// <summary>
+        /// Increments player index.
+        /// </summary>
+        public void DecrementPlayerIndex()
+        {
+            lock (this)
+            {
+                _playerIndex--;
+                if (_playerIndex < 0)
+                    _playerIndex = _players.Count - 1;
             }
         }
 
@@ -61,8 +89,9 @@ namespace Bricker.Rendering
         {
             lock (this)
             {
+                int maxIndex = _players.Count > 0 ? 1 : 0;
                 _buttonIndex++;
-                if (_buttonIndex > 1)
+                if (_buttonIndex > maxIndex)
                     _buttonIndex = 0;
             }
         }
@@ -74,9 +103,10 @@ namespace Bricker.Rendering
         {
             lock (this)
             {
+                int maxIndex = _players.Count > 0 ? 1 : 0;
                 _buttonIndex--;
                 if (_buttonIndex < 0)
-                    _buttonIndex = 1;
+                    _buttonIndex = maxIndex;
             }
         }
 
