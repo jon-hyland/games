@@ -17,7 +17,7 @@ namespace Bricker.Configuration
         public static Version GameVersion { get; }
         public static string DisplayVersion { get; }
         public static IPAddress LocalIP { get; }
-        public static int LocalPort { get; }
+        public static ushort LocalPort { get; }
         public static string ApplicationFolder { get; }
         public static string ConfigFile { get; }
         public static string FontFile { get; }

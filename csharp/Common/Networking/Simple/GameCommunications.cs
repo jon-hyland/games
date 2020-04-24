@@ -14,7 +14,7 @@ namespace Common.Networking.Simple
         private readonly string _gameTitle;
         private readonly Version _gameVersion;
         private readonly IPAddress _localIP;
-        private readonly int _localPort;
+        private readonly ushort _localPort;
         private string _playerName;
         private readonly DiscoveryClient _discoveryClient;
         private readonly DiscoveryServer _discoveryServer;
@@ -26,13 +26,13 @@ namespace Common.Networking.Simple
         public string GameTitle => _gameTitle;
         public Version GameVersion => _gameVersion;
         public IPAddress LocalIP => _localIP;
-        public int LocalPort => _localPort;
+        public ushort LocalPort => _localPort;
         public string PlayerName { get => _playerName; set => _playerName = value; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public GameCommunications(string gameTitle, Version gameVersion, IPAddress localIP, int localPort, string playerName, IErrorHandler errorHandler = null)
+        public GameCommunications(string gameTitle, Version gameVersion, IPAddress localIP, ushort localPort, string playerName, IErrorHandler errorHandler = null)
         {
             //vars
             _errorHandler = errorHandler;

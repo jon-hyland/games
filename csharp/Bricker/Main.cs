@@ -416,7 +416,7 @@ namespace Bricker
                     //enter
                     else if (key == Key.Enter)
                     {
-                        if ((props.PlayerIndex >= (players.Count - 1)) && (props.PlayerIndex <= (players.Count - 1)))
+                        if ((props.ButtonIndex == 1) && (props.PlayerIndex >= 0) && (props.PlayerIndex <= (players.Count - 1)))
                             return players[props.PlayerIndex];
                         return null;
                     }

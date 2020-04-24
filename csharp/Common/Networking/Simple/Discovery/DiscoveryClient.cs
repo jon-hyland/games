@@ -1,4 +1,5 @@
 ﻿using Common.Error;
+using Common.Networking.Simple.Packets;
 using Common.Threading;
 using System;
 using System.Net;
@@ -19,35 +20,35 @@ namespace Common.Networking.Simple.Discovery
         private readonly IPEndPoint _endPoint;
         private readonly string _gameTitle;
         private readonly Version _gameVersion;
-        private readonly IPAddress _playerIP;
-        private readonly int _playerPort;
+        private readonly IPAddress _localIP;
+        private readonly ushort _localPort;
         private string _playerName;
 
         //public
         public string GameTitle => _gameTitle;
         public Version GameVersion => _gameVersion;
-        public IPAddress PlayerIP => _playerIP;
-        public int PlayerPort => _playerPort;
+        public IPAddress LocalIP => _localIP;
+        public ushort LocalPort => _localPort;
         public string PlayerName { get => _playerName; set => _playerName = value; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public DiscoveryClient(string gameTitle, Version gameVersion, IPAddress playerIP, int playerPort, string playerName, IErrorHandler errorHandler = null)
+        public DiscoveryClient(string gameTitle, Version gameVersion, IPAddress localIP, ushort localPort, string playerName, IErrorHandler errorHandler = null)
         {
             _errorHandler = errorHandler;
             _gameTitle = gameTitle;
             _gameVersion = gameVersion;
-            _playerIP = playerIP;
-            _playerPort = playerPort;
+            _localIP = localIP;
+            _localPort = localPort;
             _playerName = playerName;
             
             _timer = new SimpleTimer(SendPacket, 1000, false, true, true);
-            _client = new UdpClient(new IPEndPoint(playerIP, 0))
+            _client = new UdpClient(new IPEndPoint(localIP, 0))
             {
                 EnableBroadcast = true
             };
-            _endPoint = new IPEndPoint(IPAddress.Broadcast, playerPort);
+            _endPoint = new IPEndPoint(IPAddress.Broadcast, localPort);
         }
 
         /// <summary>
@@ -82,7 +83,11 @@ namespace Common.Networking.Simple.Discovery
         {
             try
             {
-                DiscoveryPacket p = new DiscoveryPacket(_gameTitle, _gameVersion, _playerIP, _playerPort, _playerName);
+                DiscoveryPacket p = new DiscoveryPacket(
+                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP, 
+                    destinationIP: IPAddress.Broadcast, destinationPort: _localPort, 
+                    playerIP: _localIP, playerPort: _localPort, playerName: _playerName);
+
                 byte[] bytes = p.ToBytes();
                 _client.Send(bytes, bytes.Length, _endPoint);
             }

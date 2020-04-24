@@ -1,4 +1,5 @@
 ﻿using Common.Error;
+using Common.Networking.Simple.Packets;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -87,7 +88,7 @@ namespace Common.Networking.Simple.Discovery
         {
             try
             {
-                DiscoveryPacket packet = DiscoveryPacket.FromBytes(bytes);
+                DiscoveryPacket packet = (DiscoveryPacket)PacketBase.FromBytes(bytes);
                 if (packet != null)
                 {
                     Player player = Player.FromPacket(packet);
