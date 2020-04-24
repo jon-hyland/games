@@ -1,4 +1,5 @@
 ﻿using Bricker.Networking;
+using Common.Networking.Simple;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace Bricker.Rendering
     public class LobbyProperties
     {
         //private
+        private readonly GameCommunications _communications;
         private int _opponentIndex = 0;
         private int _buttonIndex = 0;
 
@@ -21,8 +23,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public LobbyProperties()
+        public LobbyProperties(GameCommunications communications)
         {
+            _communications = communications;
         }
 
         /// <summary>
@@ -33,7 +36,7 @@ namespace Bricker.Rendering
             lock (this)
             {
                 _opponentIndex++;
-                if (_opponentIndex >= NetworkDiscovery.RemoteInstanceCount)
+                if (_opponentIndex >= _communications.DiscoveredPlayerCount)
                     _opponentIndex = 0;
             }
         }
@@ -47,7 +50,7 @@ namespace Bricker.Rendering
             {
                 _opponentIndex--;
                 if (_opponentIndex < 0)
-                    _opponentIndex = NetworkDiscovery.RemoteInstanceCount - 1;
+                    _opponentIndex = _communications.DiscoveredPlayerCount - 1;
             }
         }
 

@@ -2,6 +2,8 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Networking;
+using Common.Networking.Simple;
+using Common.Networking.Simple.Discovery;
 using Common.Utilities;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -20,6 +22,7 @@ namespace Bricker.Rendering
     {
         //private
         private readonly Window _window;
+        private readonly GameCommunications _communications;
         private double _frameWidth;
         private double _frameHeight;
         private double _displayScale;
@@ -48,9 +51,10 @@ namespace Bricker.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Renderer(Window window)
+        public Renderer(Window window, GameCommunications communications)
         {
             _window = window;
+            _communications = communications;
             _displayScale = 1;
             _typeface = SKTypeface.FromFile(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "zorque.ttf"));
             _linePaint = new SKPaint()
@@ -285,7 +289,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Centered(Colors.BrightWhite, "bricker", 64, 0);
-                surface.DrawText_Centered(Colors.BrightWhite, $"v{Config.Version}  (c) 2017-2020  john hyland", 12, titleHeight + space);
+                surface.DrawText_Centered(Colors.BrightWhite, $"v{Config.GameVersion}  (c) 2017-2020  john hyland", 12, titleHeight + space);
                 frame.Blit(surface, (_sideWidth - width) / 2, 16);
             }
         }
@@ -611,11 +615,11 @@ namespace Bricker.Rendering
                 surface.DrawText_Centered(Colors.BrightWhite, "choose opponent", 28, 25);
                 surface.DrawText_Centered(Colors.BrightWhite, "other players must open this menu", 12, 60);
 
-                List<RemoteInstance> opponents = NetworkDiscovery.GetRemoteInstances();
-                for (int i = 0; i < opponents.Count; i++)
+                IReadOnlyList<Player> players = _communications.GetDiscoveredPlayers(top: 5);
+                for (int i = 0; i < players.Count; i++)
                 {
-                    string ip = opponents[i].IP;
-                    string initials = opponents[i].Initials;
+                    string ip = players[i].IP.ToString();
+                    string initials = players[i].Name;
                     y = 100 + (i * 32);
                     SKColor color = lobbyProps.OpponentIndex == i ? Colors.FluorescentOrange : Colors.BrightWhite;
                     surface.DrawText_Left(color, initials, 24, y, 25);

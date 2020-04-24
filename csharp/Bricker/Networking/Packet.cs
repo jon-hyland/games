@@ -110,7 +110,7 @@ namespace Bricker.Networking
             list.AddRange(BitConverter.GetBytes((ushort)bytes.Length));
             list.AddRange(bytes);
             bytes = new byte[10 * 20];
-            Buffer.BlockCopy(Matrix, 0, bytes, 0, 10 * 20);     
+            Buffer.BlockCopy(Matrix, 0, bytes, 0, 10 * 20);
             list.AddRange(bytes);
             list.AddRange(BitConverter.GetBytes(Level));
             list.AddRange(BitConverter.GetBytes(Lines));
@@ -169,7 +169,7 @@ namespace Bricker.Networking
                 return null;
             }
         }
-            
+
 
 
 

@@ -14,7 +14,7 @@ namespace Common.Networking.Simple.Discovery
         private readonly List<Player> _players = new List<Player>();
 
         //public
-        public int RemoteInstanceCount => _players.Count;
+        public int Count => _players.Count;
 
         /// <summary>
         /// Returns shallow copy of discovered player list, with matching game title and version,

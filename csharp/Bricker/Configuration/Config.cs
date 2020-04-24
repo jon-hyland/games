@@ -1,9 +1,9 @@
-﻿using Bricker.Error;
-using Bricker.Networking;
-using Common.Json;
+﻿using Common.Json;
+using Common.Networking;
 using SkiaSharp;
 using System;
 using System.IO;
+using System.Net;
 using System.Reflection;
 
 namespace Bricker.Configuration
@@ -13,7 +13,11 @@ namespace Bricker.Configuration
     /// </summary>
     public static class Config
     {
-        public static string Version { get; }
+        public static string GameTitle { get; }
+        public static Version GameVersion { get; }
+        public static string DisplayVersion { get; }
+        public static IPAddress LocalIP { get; }
+        public static int LocalPort { get; }
         public static string ApplicationFolder { get; }
         public static string ConfigFile { get; }
         public static string FontFile { get; }
@@ -26,11 +30,14 @@ namespace Bricker.Configuration
         public static bool Debug { get; set; }
         public static double DisplayScale { get; private set; }
         public static string Initials { get; private set; }
-        public static string LocalIP { get; }
 
         static Config()
         {
-            Version = GetVersion();
+            GameTitle = "Bricker";
+            GameVersion = GetVersion();
+            DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
+            LocalIP = NetworkDiscovery.GetLocalIP();
+            LocalPort = 8714;
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
@@ -44,14 +51,13 @@ namespace Bricker.Configuration
             HighFrameRate = data.highFrameRate == 1;
             Debug = data.debug == 1;
             DisplayScale = 1;
-            Initials = LoadInitials();
-            LocalIP = NetworkDiscovery.GetLocalIP();
+            Initials = LoadInitials();            
         }
 
-        private static string GetVersion()
+        private static Version GetVersion()
         {
-            Version v = Assembly.GetExecutingAssembly().GetName().Version;
-            return $"{v.Major}.{v.Minor}.{v.Build}";
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;            
+            return version;
         }
         
         public static void SetDisplayScale(double scale)

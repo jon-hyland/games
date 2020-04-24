@@ -57,6 +57,7 @@
     <Compile Include="Json\JsonSerialization.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogLevel.cs" />
+    <Compile Include="Networking\NetworkDiscovery.cs" />
     <Compile Include="Networking\PacketBuilder.cs" />
     <Compile Include="Networking\PacketParser.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveredPlayers.cs" />

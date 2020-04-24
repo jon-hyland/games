@@ -113,11 +113,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Networking\LobbyClient.cs" />
-    <Compile Include="Networking\LobbyServer.cs" />
-    <Compile Include="Networking\NetworkDiscovery.cs" />
     <Compile Include="Networking\Packet.cs" />
-    <Compile Include="Networking\RemoteInstance.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

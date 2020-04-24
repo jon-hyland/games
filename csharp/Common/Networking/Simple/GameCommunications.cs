@@ -28,6 +28,7 @@ namespace Common.Networking.Simple
         public IPAddress LocalIP => _localIP;
         public int LocalPort => _localPort;
         public string PlayerName { get => _playerName; set => _playerName = value; }
+        public int DiscoveredPlayerCount => _discoveredPlayers.Count;
 
         /// <summary>
         /// Class constructor.

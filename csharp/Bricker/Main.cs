@@ -1,7 +1,9 @@
 ﻿using Bricker.Configuration;
+using Bricker.Error;
 using Bricker.Game;
-using Bricker.Networking;
 using Bricker.Rendering;
+using Common.Networking.Simple;
+using Common.Networking.Simple.Discovery;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,7 @@ namespace Bricker
         private readonly Dispatcher _dispatcher;
         private readonly Queue<Key> _keyQueue;
         private Thread _programLoop;
+        private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
         private GameStats _stats;
@@ -36,7 +39,10 @@ namespace Bricker
             //vars
             _dispatcher = window.Dispatcher;
             _keyQueue = new Queue<Key>();
-            _renderer = new Renderer(window);
+            _communications = new GameCommunications(Config.GameTitle, 
+                Config.GameVersion, Config.LocalIP, Config.LocalPort, 
+                Config.Initials, ErrorHandler.Instance);
+            _renderer = new Renderer(window, _communications);
             _matrix = new Matrix();
             _stats = new GameStats();
             _spaces = null;
@@ -76,6 +82,9 @@ namespace Bricker
             _renderer.DrawFrame(e, _matrix, _stats, _spaces);
         }
 
+        /// <summary>
+        /// Starts the program loop thread, called on window load.
+        /// </summary>
         public void StartProgramLoop()
         {
             _programLoop = new Thread(ProgramLoop)
@@ -92,6 +101,9 @@ namespace Bricker
         {
             //vars
             bool inGame = false;
+
+            //start game communications
+            _communications.Start();
 
             //program loop
             while (true)
@@ -363,30 +375,19 @@ namespace Bricker
         /// </summary>
         private Opponent TwoPlayerLobbyLoop()
         {
-            LobbyClient client = null;
-            LobbyServer server = null;
-            
             try
             {
                 //vars
-                LobbyProperties props = new LobbyProperties();
-                client = new LobbyClient();
-                server = new LobbyServer();
+                LobbyProperties props = new LobbyProperties(_communications);
 
                 //push properties to renderer
                 _renderer.LobbyProps = props;
 
-                //start discovery client
-                client.Start();
-
-                //start discovery server
-                server.Start();
-
                 //event loop
                 while (true)
                 {
-                    //update opponent list
-                    List<RemoteInstance> instances = NetworkDiscovery.GetRemoteInstances();
+                    ////update player list
+                    //IReadOnlyList<Player> instances = _communications.GetDiscoveredPlayers(top: 5);
                     
                     //get next key press, or continue
                     Key key = Key.None;
@@ -444,10 +445,6 @@ namespace Bricker
             {
                 //clear properties from renderer
                 _renderer.LobbyProps = null;
-
-                //dispose
-                client?.Dispose();
-                server?.Dispose();
             }
         }
 
