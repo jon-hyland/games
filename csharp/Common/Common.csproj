@@ -12,6 +12,8 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -34,6 +36,9 @@
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="SimpleTCP, Version=1.0.24.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SimpleTCP.1.0.24\lib\net45\SimpleTCP.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,14 +57,22 @@
     <Compile Include="Json\JsonSerialization.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogLevel.cs" />
-    <Compile Include="Networking\Tcp\SimpleTcpClient.cs" />
-    <Compile Include="Networking\Tcp\SimpleTcpServer.cs" />
+    <Compile Include="Networking\PacketBuilder.cs" />
+    <Compile Include="Networking\PacketParser.cs" />
+    <Compile Include="Networking\Simple\Discovery\DiscoveredPlayers.cs" />
+    <Compile Include="Networking\Simple\Discovery\DiscoveryClient.cs" />
+    <Compile Include="Networking\Simple\Discovery\DiscoveryPacket.cs" />
+    <Compile Include="Networking\Simple\Discovery\DiscoveryServer.cs" />
+    <Compile Include="Networking\Simple\GameCommunications.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Threading\SimpleTimer.cs" />
     <Compile Include="Utilities\CpsCalculator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Networking\Simple\GameCommunications.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

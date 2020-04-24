@@ -75,7 +75,5 @@ namespace Bricker.Networking
                 ErrorHandler.LogError(ex);
             }
         }
-
-
     }
 }

@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bricker", "Bricker\Bricker.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{3674C938-D6C5-4DEC-B723-A3330A826C4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpSendReceive", "Prototype\TcpSendReceive\TcpSendReceive.csproj", "{CDE21A01-9775-4D8C-BA00-FB557D36172B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CDE21A01-9775-4D8C-BA00-FB557D36172B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CDE21A01-9775-4D8C-BA00-FB557D36172B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CDE21A01-9775-4D8C-BA00-FB557D36172B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CDE21A01-9775-4D8C-BA00-FB557D36172B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
