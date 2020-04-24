@@ -100,6 +100,12 @@ namespace Common.Networking.Simple.Packets
                     case PacketType.Discovery:
                         return new DiscoveryPacket(parser);
 
+                    case PacketType.CommandRequest:
+                        return new CommandRequestPacket(parser);
+
+                    case PacketType.CommandResponse:
+                        return new CommandResponsePacket(parser);
+
                     default:
                         return null;
                 }
@@ -111,7 +117,7 @@ namespace Common.Networking.Simple.Packets
         }
 
         /// <summary>
-        /// Adds instance bytes.
+        /// Adds instance bytes to packet builder.
         /// </summary>
         protected abstract void AddInstanceBytes(PacketBuilder builder);
 
@@ -128,25 +134,25 @@ namespace Common.Networking.Simple.Packets
         /// UDP broadcast packet for player discovery.
         /// </summary>
         Discovery = 1,
-        
+
         /// <summary>
-        /// Request to connect to other player.
+        /// Command request packet.
         /// </summary>
-        Connect = 2,
-        
+        CommandRequest = 2,
+
         /// <summary>
-        /// Sent at measured interval to maintain connection.
+        /// Command response packet.
         /// </summary>
-        Heartbeat = 3,
-        
-        /// <summary>
-        /// One instance sends command (and waits for response).
-        /// </summary>
-        Command = 4,
-        
+        CommandResponse = 4,
+
         /// <summary>
         /// General data packet, no response required.
         /// </summary>
-        Data = 5
+        Data = 5,
+
+        /// <summary>
+        /// Sent at measured interval to maintain connection.
+        /// </summary>
+        Heartbeat = 6
     }
 }

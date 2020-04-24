@@ -62,6 +62,8 @@
     <Compile Include="Networking\PacketParser.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveredPlayers.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveryClient.cs" />
+    <Compile Include="Networking\Simple\Packets\CommandResponsePacket.cs" />
+    <Compile Include="Networking\Simple\Packets\CommandRequestPacket.cs" />
     <Compile Include="Networking\Simple\Packets\DiscoveryPacket.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveryServer.cs" />
     <Compile Include="Networking\Simple\GameCommunications.cs" />

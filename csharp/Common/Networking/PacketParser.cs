@@ -63,6 +63,15 @@ namespace Common.Networking
         }
 
         /// <summary>
+        /// Gets Boolean.
+        /// </summary>
+        public bool GetBoolean()
+        {
+            bool value = _bytes.Dequeue() > 0;
+            return value;
+        }
+
+        /// <summary>
         /// Gets Int16.
         /// </summary>
         public short GetInt16()

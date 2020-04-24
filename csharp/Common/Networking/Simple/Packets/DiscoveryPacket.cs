@@ -42,7 +42,7 @@ namespace Common.Networking.Simple.Packets
         }
 
         /// <summary>
-        /// Adds instance bytes.
+        /// Adds instance bytes to packet builder.
         /// </summary>
         protected override void AddInstanceBytes(PacketBuilder builder)
         {

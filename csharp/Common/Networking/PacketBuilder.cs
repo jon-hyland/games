@@ -41,6 +41,14 @@ namespace Common.Networking
         }
 
         /// <summary>
+        /// Adds Boolean (as byte).
+        /// </summary>
+        public void AddBoolean(bool value)
+        {
+            _bytes.Add((byte)(value ? 1 : 0));
+        }
+
+        /// <summary>
         /// Adds Int16.
         /// </summary>
         public void AddInt16(short value)
