@@ -127,9 +127,10 @@ namespace Bricker
                 //two player mode
                 else if (selection == MenuSelection.TwoPlayer)
                 {
+                    //get player initials
                     if (String.IsNullOrWhiteSpace(Config.Initials))
                     {
-                        string initials = InitialsLoop(new string[] { "enter your initials:", "" });
+                        string initials = InitialsLoop(new string[] { "enter your initials", "" });
                         if (!String.IsNullOrWhiteSpace(Config.Initials))
                         {
                             Config.SaveInitials(initials);
@@ -137,11 +138,14 @@ namespace Bricker
                         }
                     }
                     
-                    Opponent opponent = TwoPlayerLobbyLoop();
-                    if (opponent != null)
-                        _opponent = opponent;
-                    else
+                    //select discovered player from lobby
+                    Player player = PlayerLobbyLoop();
+                    if (player == null)
                         continue;
+
+                    //request match, get response
+                    Opponent opponent = RequestMatchLoop(player);
+
 
                     inGame = GameLoop();
                     _opponent = null;
@@ -375,9 +379,9 @@ namespace Bricker
         }
 
         /// <summary>
-        /// Two-player discovery lobby loop.
+        /// Discovered player selection loop.
         /// </summary>
-        private Opponent TwoPlayerLobbyLoop()
+        private Player PlayerLobbyLoop()
         {
             try
             {
@@ -412,6 +416,8 @@ namespace Bricker
                     //enter
                     else if (key == Key.Enter)
                     {
+                        if ((props.PlayerIndex >= (players.Count - 1)) && (props.PlayerIndex <= (players.Count - 1)))
+                            return players[props.PlayerIndex];
                         return null;
                     }
 
@@ -451,6 +457,15 @@ namespace Bricker
                 //clear properties from renderer
                 _renderer.LobbyProps = null;
             }
+        }
+
+        /// <summary>
+        /// Request match loop.  Connects, asks question, waits for response.
+        /// </summary>
+        private Opponent RequestMatchLoop(Player player)
+        {
+
+            return null;
         }
 
         /// <summary>
@@ -563,7 +578,7 @@ namespace Bricker
             ExplodeSpaces();
             if (_stats.IsHighScore())
             {
-                string initials = InitialsLoop(new string[] { "new high score!", "enter your initials:" });
+                string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
                 if (!String.IsNullOrWhiteSpace(initials))
                     _stats.AddHighScore(initials);
 
