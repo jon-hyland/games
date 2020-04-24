@@ -3,7 +3,6 @@ using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering;
 using Common.Networking.Simple;
-using Common.Networking.Simple.Discovery;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
@@ -131,7 +130,10 @@ namespace Bricker
                     {
                         string initials = InitialsLoop(new string[] { "enter your initials:", "" });
                         if (!String.IsNullOrWhiteSpace(Config.Initials))
+                        {
                             Config.SaveInitials(initials);
+                            _communications.ChangePlayerName(initials);
+                        }
                     }
                     
                     Opponent opponent = TwoPlayerLobbyLoop();
@@ -250,6 +252,7 @@ namespace Bricker
                     else if (key == Key.Enter)
                     {
                         Config.SaveInitials(props.Initials);
+                        _communications.ChangePlayerName(props.Initials);
                         return props.Initials;
                     }
 
@@ -559,7 +562,9 @@ namespace Bricker
             if (_stats.IsHighScore())
             {
                 string initials = InitialsLoop(new string[] { "new high score!", "enter your initials:" });
-                _stats.AddHighScore(initials);
+                if (!String.IsNullOrWhiteSpace(initials))
+                    _stats.AddHighScore(initials);
+
             }
             return false;
         }
