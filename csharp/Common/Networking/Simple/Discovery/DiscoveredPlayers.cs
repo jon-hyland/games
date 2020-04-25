@@ -92,14 +92,14 @@ namespace Common.Networking.Simple.Discovery
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(string gameTitle, Version gameVersion, IPAddress ip, int port, string name, DateTime lastDiscovery)
+        public Player(string gameTitle, Version gameVersion, IPAddress ip, int port, string name)
         {
             GameTitle = gameTitle;
             GameVersion = gameVersion;
             IP = ip;
             Port = port;
             Name = name;
-            LastDiscovery = lastDiscovery;
+            LastDiscovery = DateTime.Now;
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace Common.Networking.Simple.Discovery
         /// </summary>
         public static Player FromPacket(DiscoveryPacket packet)
         {
-            return new Player(packet.GameTitle, packet.GameVersion, packet.PlayerIP, packet.PlayerPort, packet.PlayerName, DateTime.Now);
+            return new Player(packet.GameTitle, packet.GameVersion, packet.PlayerIP, packet.PlayerPort, packet.PlayerName);
         }
 
         /// <summary>

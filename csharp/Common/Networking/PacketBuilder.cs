@@ -148,6 +148,40 @@ namespace Common.Networking
             return str;
         }
 
+        public static byte[] GetBytes(IEnumerable<object> values)
+        {
+            PacketBuilder builder = new PacketBuilder();
+            foreach (object value in values)
+            {
+                if (value is byte b)
+                    builder.AddByte(b);
+                else if (value is byte[] bs)
+                    builder.AddBytes(bs);
+                else if (value is bool bl)
+                    builder.AddBoolean(bl);
+                else if (value is short i16)
+                    builder.AddInt16(i16);
+                else if (value is ushort ui16)
+                    builder.AddUInt16(ui16);
+                else if (value is int i32)
+                    builder.AddInt32(i32);
+                else if (value is uint ui32)
+                    builder.AddUInt32(ui32);
+                else if (value is long i64)
+                    builder.AddInt64(i64);
+                else if (value is ulong ui64)
+                    builder.AddUInt64(ui64);
+                else if (value is string str)
+                    builder.AddString(str);
+                else if (value is Version ver)
+                    builder.AddVersion(ver);
+                else if (value is IPAddress ip)
+                    builder.AddIPAddress(ip);
+                else
+                    throw new Exception("Data type not supported");
+            }
+            return builder.ToBytes();
+        }
 
     }
 }

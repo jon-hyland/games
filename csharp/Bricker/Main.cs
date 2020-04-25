@@ -144,8 +144,10 @@ namespace Bricker
                         continue;
 
                     //request match, get response
-                    Opponent opponent = RequestMatchLoop(player);
+                    CommandResult result = InviteOpponentLoop(player, out Opponent opponent);
 
+
+                    //todo: do stuff
 
                     inGame = GameLoop();
                     _opponent = null;
@@ -460,15 +462,21 @@ namespace Bricker
         }
 
         /// <summary>
-        /// Request match loop.  Connects, asks question, waits for response.
+        /// Invite opponent loop.  Connects, asks question, waits for response.
         /// </summary>
-        private Opponent RequestMatchLoop(Player player)
+        private CommandResult InviteOpponentLoop(Player player, out Opponent opponent)
         {
-
-            //fix this
-            CommandResult result = _communications.ConnectToPlayer(player);
-            return null;
+            opponent = null;
             
+            bool success = _communications.SetOpponentAndConnect(player);
+            if (!success)
+                return CommandResult.Error;
+
+            CommandResult result = _communications.InviteOpponent();            
+            if (result == CommandResult.Accept)
+                opponent = new Opponent(Config.CleanInitials(player.Name), player.IP.ToString());
+            
+            return result;            
         }
 
         /// <summary>

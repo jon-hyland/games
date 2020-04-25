@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Common.Networking.Simple
 {
@@ -20,7 +21,7 @@ namespace Common.Networking.Simple
     public class GameCommunications : IDisposable
     {
         //const
-        private const int CONNECT_REPLY_TIMEOUT_MS = 10000;
+        private const int INVITE_TIMEOUT_MS = 10000;
 
         //private
         private readonly IErrorHandler _errorHandler;
@@ -28,25 +29,48 @@ namespace Common.Networking.Simple
         private readonly Version _gameVersion;
         private readonly IPAddress _localIP;
         private readonly ushort _gamePort;
-        private string _localPlayerName;
+        private readonly Player _localPlayer;
         private readonly DiscoveryClient _discoveryClient;
         private readonly DiscoveryServer _discoveryServer;
         private readonly DiscoveredPlayers _discoveredPlayers;
         private readonly SimpleTcpClient _dataClient;
         private readonly SimpleTcpServer _dataServer;
         private readonly CommandManager _commandManager;
-        private readonly SimpleTimer _timer;
-        private ConnectionState _connectionState;
+        private readonly SimpleTimer _maintenanceTimer;
+        private readonly List<PacketBase> _incomingPackets;
+        private readonly ManualResetEventSlim _incomingPacketSignal;
+        private readonly Thread _incomingPacketThread;
+        private readonly Thread _heartbeatThread;
+        private readonly object _inviteLock = new object();
         private ushort _commandSequence;
-        private IPAddress _remoteIP;
-        private Player _remotePlayer;
+        private ConnectionState _connectionState;
+        private Player _opponent;
+        private Player _pendingOpponent;
+        private long _heartbeatsSent;
+        private long _heartbeatsReceived;
+        private DateTime _lastHeartbeatReceived;
+        private bool _isStarted = false;
+        private bool _isStopped = false;
 
         //public
         public string GameTitle => _gameTitle;
         public Version GameVersion => _gameVersion;
         public IPAddress LocalIP => _localIP;
         public ushort GamePort => _gamePort;
-        public string LocalPlayerName { get => _localPlayerName; set => _localPlayerName = value; }
+        public Player LocalPlayer => _localPlayer;
+        public Player Opponent => _opponent;
+        public ConnectionState ConnectionState => _connectionState;
+        public long HeartbeatsSend => _heartbeatsSent;
+        public long HeartbeatsReceived => _heartbeatsReceived;
+        public DateTime LastHeartbeatReceived => _lastHeartbeatReceived;
+        public TimeSpan TimeSinceLastHeartbeatReceived => DateTime.Now - _lastHeartbeatReceived;
+
+        //events
+        public event Action<Player> OpponentConnected;
+        public event Action<Player> OpponentInviteReceived;
+        public event Action<CommandRequestPacket> CommandRequestReceived;
+        public event Action<CommandResponsePacket> CommandResponseReceived;
+        public event Action<DataPacket> DataReceived;
 
         /// <summary>
         /// Class constructor.
@@ -59,22 +83,35 @@ namespace Common.Networking.Simple
             _gameVersion = gameVersion;
             _localIP = localIP;
             _gamePort = gamePort;
-            _localPlayerName = playerName;
+            _localPlayer = new Player(gameTitle, gameVersion, localIP, gamePort, playerName);
             _discoveryClient = new DiscoveryClient(gameTitle, gameVersion, localIP, gamePort, playerName, errorHandler);
             _discoveryServer = new DiscoveryServer(gamePort, errorHandler);
             _discoveredPlayers = new DiscoveredPlayers();
             _dataClient = new SimpleTcpClient();
             _dataServer = new SimpleTcpServer();
             _commandManager = new CommandManager();
-            _timer = new SimpleTimer(Timer_Callback, 15, false);
-            _connectionState = ConnectionState.NotConnected;
+            _maintenanceTimer = new SimpleTimer(MaintenanceTimer_Callback, 15, false);
+            _incomingPackets = new List<PacketBase>();
+            _incomingPacketSignal = new ManualResetEventSlim();
+            _incomingPacketThread = new Thread(IncomingPacket_Thread)
+            {
+                IsBackground = true
+            };
+            _heartbeatThread = new Thread(Heartbeat_Thread)
+            {
+                IsBackground = true
+            };
             _commandSequence = 0;
-            _remoteIP = null;
-            _remotePlayer = null;
+            _connectionState = ConnectionState.NotConnected;
+            _opponent = null;
+            _pendingOpponent = null;
+            _heartbeatsSent = 0;
+            _heartbeatsReceived = 0;
+            _lastHeartbeatReceived = DateTime.MinValue;
 
             //events
             _discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
-            _dataServer.DataReceived += (s, m) => DataReceived(m?.Data);
+            _dataServer.DataReceived += (s, m) => PacketReceived(m?.Data);
         }
 
         /// <summary>
@@ -87,25 +124,38 @@ namespace Common.Networking.Simple
             _discoveryClient.Dispose();
             _dataClient.Dispose();
             _commandManager.Dispose();
-            _timer.Dispose();
+            _maintenanceTimer.Dispose();            
         }
+
+        #region Start / Stop
 
         /// <summary>
         /// Starts discovery server (UDP), discovery client (UDP broadbast), and data server (TCP).
         /// </summary>
         public void Start()
         {
+            //prevent restart
+            if (_isStarted)
+                throw new Exception("Cannot restart communications");
+            _isStarted = true;
+            
             //start discovery server
             _discoveryServer.Start();
 
             //start discovery broadcast client
             _discoveryClient.Start();
 
+            //start incoming packet thread
+            _incomingPacketThread.Start();
+
             //start data server
             _dataServer.Start(_gamePort);
 
             //start maintenance timer
-            _timer.Start();
+            _maintenanceTimer.Start();
+
+            //start heartbeat thread
+            _heartbeatThread.Start();
         }
 
         /// <summary>
@@ -113,12 +163,30 @@ namespace Common.Networking.Simple
         /// </summary>
         public void Stop()
         {
-            _timer.Stop();
+            //prevent restop
+            if (_isStopped)
+                return;
+            _isStopped = true;
+
+            //stop maintenance timer
+            _maintenanceTimer.Stop();
+            
+            //client disconnect from server
             _dataClient.Disconnect();
+            
+            //server stop receiving
             _dataServer.Stop();
+            
+            //stop discovery client
             _discoveryClient.Stop();
+            
+            //stop discovery server
             _discoveryServer.Stop();
         }
+
+        #endregion
+
+        #region Player Discovery
 
         /// <summary>
         /// Changes the broadcasted player's name.
@@ -126,6 +194,7 @@ namespace Common.Networking.Simple
         public void ChangePlayerName(string name)
         {
             _discoveryClient.PlayerName = name;
+            _localPlayer.Name = name;
         }
 
         /// <summary>
@@ -144,56 +213,197 @@ namespace Common.Networking.Simple
             return _discoveredPlayers.GetPlayerCount(_gameTitle, _gameVersion, _localIP, top);
         }
 
+        #endregion
+
+        #region Opponent Connect and Invites
+
         /// <summary>
-        /// Tries to connect to player to start new two-player game.  Connection
-        /// might fail or timeout, or player might reject invite.
+        /// Sets expected opponent player and opens connection, regardless of whether they have accepted invite.  
+        /// Allows invite and other communications to be sent.  Set pending to false, if called by receiving side
+        /// after *they've* accepted the invite.
         /// </summary>
-        public CommandResult ConnectToPlayer(Player player)
+        public bool SetOpponentAndConnect(Player opponent, bool pending = true)
         {
-            CommandResult result = CommandResult.Unspecified;
             try
             {
-                //close any existing connection
-                _remotePlayer = null;
-                _dataClient.Disconnect();
-                _connectionState = ConnectionState.NotConnected;
+                bool fireEvent = false;
+                try
+                {
+                    lock (_inviteLock)
+                    {
+                        //close any existing connection
+                        _dataClient.Disconnect();
+                        _connectionState = ConnectionState.NotConnected;
 
-                //connect socket
-                _dataClient.Connect(player.IP.ToString(), _gamePort);
-                _remoteIP = player.IP;
+                        //connect to opponent
+                        _dataClient.Connect(opponent.IP.ToString(), _gamePort);
+                        _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
-                //send connect-request command
-                _connectionState = ConnectionState.PendingAcceptance_SendSide;
-                result = SendCommand(1, TimeSpan.FromMilliseconds(CONNECT_REPLY_TIMEOUT_MS));
+                        //set opponent
+                        _opponent = opponent;
 
-                //do stuff..
+                        //fire event?
+                        if (!pending)
+                            fireEvent = true;
+
+                        //success
+                        return true;
+                    }
+                }
+                finally
+                {
+                    if (fireEvent)
+                        OpponentConnected?.Invoke(opponent);
+                }
             }
             catch (Exception ex)
             {
                 _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                return false;
             }
-            return result;
         }
 
         /// <summary>
-        /// Sends command, blocks until response or timeout.
+        /// Sends invite request to opponent, waits for response or timeout.
         /// </summary>
-        public CommandResult SendCommand(ushort type, TimeSpan timeout)
+        public CommandResult InviteOpponent()
         {
             try
             {
-                //not connected?
-                if (type == 1)
+                bool fireEvent = false;
+                try
                 {
-                    if ((_connectionState != ConnectionState.Connected) && (_connectionState != ConnectionState.PendingAcceptance_SendSide))
-                        throw new Exception("Data client not connected");
+                    lock (_inviteLock)
+                    {
+                        //no opponent?
+                        if (_opponent == null)
+                            throw new Exception("No opponent set");
+
+                        //send connect-request command
+                        byte[] data = PacketBuilder.GetBytes(new object[] { _opponent.Name });
+                        CommandResult result = SendCommandRequest(1, data, TimeSpan.FromMilliseconds(INVITE_TIMEOUT_MS));
+
+                        //accept
+                        if (result == CommandResult.Accept)
+                        {
+                            _connectionState = ConnectionState.Connected;
+                            fireEvent = true;
+                        }
+                        
+                        //reject
+                        else if (result == CommandResult.Reject)
+                        {
+                            _connectionState = ConnectionState.NotConnected;
+                            _opponent = null;
+                            _dataClient.Disconnect();
+                        }
+
+                        //timeout
+                        else if (result == CommandResult.Timeout)
+                        {
+                            _connectionState = ConnectionState.NotConnected;
+                            _opponent = null;
+                            _dataClient.Disconnect();
+                        }
+
+                        //error
+                        else if (result == CommandResult.Error)
+                        {
+                            _connectionState = ConnectionState.Error;
+                            _opponent = null;
+                            _dataClient.Disconnect();
+                        }
+
+                        //return
+                        return result;
+                    }
                 }
-                else
+                finally
                 {
-                    if (_connectionState != ConnectionState.Connected)
-                        throw new Exception("Data client not connected");
+                    if (fireEvent)
+                        OpponentConnected?.Invoke(_opponent);
                 }
+            }
+            catch (Exception ex)
+            {
+                _errorHandler?.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                return CommandResult.Error;
+            }
+        }
+
+        /// <summary>
+        /// Accepts an invite from a remote opponent.
+        /// </summary>
+        public bool AcceptInvite(Player opponent)
+        {
+            try
+            {
+                lock (_inviteLock)
+                {
+                    //return if opponents don't match
+                    if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
+                        return false;
+
+                    //set opponent and connect
+                    return SetOpponentAndConnect(opponent, false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorHandler.LogError(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Closes connection to opponent, removes opponent reference.
+        /// </summary>
+        public bool CloseConnection()
+        {
+            try
+            {
+                lock (_inviteLock)
+                {
+                    //set flag
+                    _connectionState = ConnectionState.NotConnected;
+
+                    //remove opponent reference
+                    _opponent = null;
+
+                    //close connection
+                    _dataClient.Disconnect();
+
+                    //success
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorHandler.LogError(ex);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Outgoing
+
+        /// <summary>
+        /// Sends command request, blocks until response or timeout.  Data is optional.
+        /// </summary>
+        public CommandResult SendCommandRequest(ushort type, byte[] data, TimeSpan timeout)
+        {
+            try
+            {
+                //no opponent?
+                if (_opponent == null)
+                    throw new Exception("No opponent set");
+
+                //reconnect if not connected
+                if (_dataClient.TcpClient?.Connected != true)
+                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
 
                 //vars
                 ushort sequence;
@@ -212,8 +422,8 @@ namespace Common.Networking.Simple
                     //create packet
                     CommandRequestPacket packet = new CommandRequestPacket(
                         gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP, 
-                        destinationIP: _remoteIP, destinationPort: _gamePort, commandType: type, 
-                        sequence: sequence, retryAttempt: retyAttempt++);
+                        destinationIP: _opponent.IP, destinationPort: _gamePort, commandType: type, 
+                        sequence: sequence, retryAttempt: retyAttempt++, data: data);
 
                     //send packet
                     byte[] bytes = packet.ToBytes();
@@ -248,36 +458,161 @@ namespace Common.Networking.Simple
             {
                 _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                return CommandResult.Error;
             }
-            return CommandResult.Error;
         }
 
-        
-        private void DataReceived(byte[] bytes)
+        /// <summary>
+        /// Sends command response.  Data is optional.
+        /// </summary>
+        public bool SendCommandResponse(ushort type, ushort sequence, CommandResult result, byte[] data)
         {
             try
             {
+                //no opponent?
+                if (_opponent == null)
+                    throw new Exception("No opponent set");
+
+                //reconnect if not connected
+                if (_dataClient.TcpClient?.Connected != true)
+                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+
+                //create packet
+                CommandResponsePacket packet = new CommandResponsePacket(
+                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
+                    destinationIP: _opponent.IP, destinationPort: _gamePort, commandType: type,
+                    sequence: sequence, result: result, data: data);
+
+                //send packet
+                byte[] bytes = packet.ToBytes();
+                _dataClient.Write(bytes);
+
+                //success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _errorHandler?.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends generic one-way data packet.
+        /// </summary>
+        public bool SendData(byte[] data)
+        {
+            try
+            {
+                //no opponent?
+                if (_opponent == null)
+                    throw new Exception("No opponent set");
+
+                //reconnect if not connected
+                if (_dataClient.TcpClient?.Connected != true)
+                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+
+                //create packet
+                DataPacket packet = new DataPacket(
+                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
+                    destinationIP: _opponent.IP, destinationPort: _gamePort, data: data);
+
+                //send packet
+                byte[] bytes = packet.ToBytes();
+                _dataClient.Write(bytes);
+
+                //success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _errorHandler?.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends heartbeat packet to opponent endpoint.
+        /// </summary>
+        public bool SendHeartbeat(long count)
+        {
+            try
+            {
+                //no opponent?
+                if (_opponent == null)
+                    throw new Exception("No opponent set");
+
+                //reconnect if not connected
+                if (_dataClient.TcpClient?.Connected != true)
+                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+
+                //create packet
+                HeartbeatPacket packet = new HeartbeatPacket(
+                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
+                    destinationIP: _opponent.IP, destinationPort: _gamePort, count: count);
+
+                //send packet
+                byte[] bytes = packet.ToBytes();
+                _dataClient.Write(bytes);
+
+                //success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _errorHandler?.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Incomming
+
+        /// <summary>
+        /// Fired when server object receives data from any client.  No restrictions
+        /// on who can connect, but packets that don't match are discarded.
+        /// </summary>
+        private void PacketReceived(byte[] bytes)
+        {
+            try
+            {
+                //reject if no data
                 if (bytes == null)
                     return;
                 
+                //reject if invalid
                 PacketBase packet = PacketBase.FromBytes(bytes);
                 if (packet == null)
                     return;
 
+                //reject if wrong game or version
                 if ((packet.GameTitle != _gameTitle) || (packet.GameVersion != _gameVersion))
                     return;
-
-                if (packet.Type == PacketType.CommandRequest)
+                
+                //special logic for invite requests
+                if ((packet is CommandRequestPacket p1) && (p1.CommandType == 1))
                 {
-                    CommandRequestPacket p = (CommandRequestPacket)packet;
-                    if (p.CommandType == 1)
-                    {
-
-                    }
-
+                    PacketParser parser = new PacketParser(p1.Data);
+                    string playerName = parser.GetString();
+                    _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _gamePort, playerName);
+                    Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
+                    return;
                 }
 
+                //reject if wrong opponent
+                if ((_opponent == null) || (packet.SourceIP != _opponent.IP))
+                    return;
 
+                //queue packet for processing
+                lock (_incomingPackets)
+                {
+                    _incomingPackets.Add(packet);
+                    _incomingPacketSignal.Set();
+                }
             }
             catch (Exception ex)
             {
@@ -287,38 +622,106 @@ namespace Common.Networking.Simple
         }
 
         /// <summary>
+        /// Thread to process incoming packets.
+        /// </summary>
+        private void IncomingPacket_Thread()
+        {
+            while (true)
+            {
+                try
+                {
+                    //exit if stopped
+                    if (_isStopped)
+                        return;
+
+                    //wait for data signal, or 15ms
+                    _incomingPacketSignal.Wait(15);
+
+                    //vars
+                    PacketBase[] packets = null;
+
+                    //lock queue
+                    lock (_incomingPackets)
+                    {
+                        //get packets, if exist
+                        if (_incomingPackets.Count > 0)
+                        {
+                            packets = _incomingPackets.ToArray();
+                            _incomingPackets.Clear();
+                            _incomingPacketSignal.Reset();
+                        }
+                    }
+                    if (packets == null)
+                        continue;
+
+                    //process packets
+                    foreach (PacketBase packet in packets)
+                    {
+                        //command request packet
+                        if (packet is CommandRequestPacket p1)
+                        {
+                            //fire event
+                            CommandRequestReceived?.Invoke(p1);
+                        }
+
+                        //command response packet
+                        else if (packet is CommandResponsePacket p2)
+                        {
+                            //record command response received
+                            _commandManager.ResponseReceived(p2);
+
+                            //fire event
+                            CommandResponseReceived?.Invoke(p2);
+                        }
+
+                        //data packet
+                        else if (packet is DataPacket p3)
+                        {
+                            //fire event
+                            DataReceived?.Invoke(p3);
+                        }
+
+                        //heartbeat packet
+                        else if (packet is HeartbeatPacket p4)
+                        {
+                            //increment count
+                            _heartbeatsReceived++;
+
+                            //record time
+                            _lastHeartbeatReceived = DateTime.Now;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _errorHandler?.LogError(ex);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Maintenance
+
+        /// <summary>
         /// Fired by timer, performs maintenance.
         /// </summary>
-        private void Timer_Callback()
+        private void MaintenanceTimer_Callback()
         {
             try
             {
                 //determine if error state
-                if (_connectionState == ConnectionState.Connected)
+                if ((_opponent != null) && (_connectionState == ConnectionState.Connected))
                     if (_dataClient?.TcpClient?.Connected != true)
                         _connectionState = ConnectionState.Error;
 
                 //if error, close and reconnect
-                if (_connectionState == ConnectionState.Error)
+                if ((_opponent != null) && (_connectionState == ConnectionState.Error))
                 {
-                    _remotePlayer = null;
                     _dataClient.Disconnect();
-                    if (_remoteIP != null)
-                        _dataClient.Connect(_remoteIP.ToString(), _gamePort);
-                    else
-                        _connectionState = ConnectionState.NotConnected;
-                    return;
+                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _connectionState = ConnectionState.Connected;
                 }
-
-                //receive-side accepted
-                if (_connectionState == ConnectionState.PendingAcceptance_ReceiveSide)
-                {
-                    //connect to send-side server
-
-                }
-
-
-
             }
             catch (Exception ex)
             {
@@ -326,17 +729,50 @@ namespace Common.Networking.Simple
             }
         }
 
+        /// <summary>
+        /// Heartbeat thread, sends heartbeat packets every ~100ms.
+        /// </summary>
+        private void Heartbeat_Thread()
+        {
+            while (true)
+            {
+                try
+                {
+                    //exit if stopped
+                    if (_isStopped)
+                        return;
+                    
+                    //sleep 100ms
+                    Thread.Sleep(100);                    
+
+                    //continue if no opponent
+                    if (_opponent == null)
+                        continue;
+                    
+                    //send heartbeat to opponent
+                    SendHeartbeat(++_heartbeatsSent);
+                }
+                catch (Exception ex)
+                {
+                    _errorHandler?.LogError(ex);
+                }
+            }
+        }
+
+        #endregion
+
     }
 
     /// <summary>
     /// Represents the system's connection states.
+    /// Mostly refers to this instance's client object, not it's server object
+    /// which is always open for connections.
     /// </summary>
     public enum ConnectionState
     {
         NotConnected,
-        Error,
-        PendingAcceptance_SendSide,
-        PendingAcceptance_ReceiveSide,
-        Connected
+        Connected_PendingInviteAcceptance,
+        Connected,
+        Error        
     }
 }

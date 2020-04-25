@@ -65,6 +65,8 @@
     <Compile Include="Networking\Simple\Discovery\DiscoveryClient.cs" />
     <Compile Include="Networking\Simple\Packets\CommandResponsePacket.cs" />
     <Compile Include="Networking\Simple\Packets\CommandRequestPacket.cs" />
+    <Compile Include="Networking\Simple\Packets\HeartbeatPacket.cs" />
+    <Compile Include="Networking\Simple\Packets\DataPacket.cs" />
     <Compile Include="Networking\Simple\Packets\DiscoveryPacket.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveryServer.cs" />
     <Compile Include="Networking\Simple\GameCommunications.cs" />
