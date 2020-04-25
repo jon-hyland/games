@@ -55,20 +55,6 @@ namespace Common.Networking.Game.Packets
             _destinationPort = parser.GetUInt16();
         }
 
-        /// <summary>
-        /// Adds base properties to packet builder.
-        /// </summary>
-        protected void AddBaseBytes(PacketBuilder builder)
-        {
-            builder.AddInt32(PACKET_HEADER);
-            builder.AddByte((byte)_type);
-            builder.AddString(_gameTitle);
-            builder.AddVersion(_gameVersion);
-            builder.AddIPAddress(_sourceIP);
-            builder.AddIPAddress(_destinationIP);
-            builder.AddUInt16(_destinationPort);
-        }
-
         public byte[] ToBytes()
         {
             PacketBuilder builder = new PacketBuilder();
@@ -80,6 +66,7 @@ namespace Common.Networking.Game.Packets
             builder.AddIPAddress(_destinationIP);
             builder.AddUInt16(_destinationPort);
             AddInstanceBytes(builder);
+            builder.AddInt32(PACKET_FOOTER);
             return builder.ToBytes();
         }
 
