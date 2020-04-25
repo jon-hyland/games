@@ -9,8 +9,8 @@ namespace Common.Networking.Game.Packets
     public abstract class PacketBase
     {
         //const
-        protected const int PACKET_HEADER = 1296911693;     // bytes 77,77,77,77
-        protected const int PACKET_FOOTER = 1448498774;     // bytes 86,86,86,86
+        public const int PACKET_HEADER = 1296911693;     // bytes 77,77,77,77
+        public const int PACKET_FOOTER = 1448498774;     // bytes 86,86,86,86
 
         //private
         protected readonly PacketType _type;

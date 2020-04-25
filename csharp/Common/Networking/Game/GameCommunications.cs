@@ -68,9 +68,9 @@ namespace Common.Networking.Game
         //events
         public event Action<Player> OpponentConnected;
         public event Action<Player> OpponentInviteReceived;
-        public event Action<CommandRequestPacket> CommandRequestReceived;
-        public event Action<CommandResponsePacket> CommandResponseReceived;
-        public event Action<DataPacket> DataReceived;
+        public event Action<CommandRequestPacket> CommandRequestPacketReceived;
+        public event Action<CommandResponsePacket> CommandResponsePacketReceived;
+        public event Action<DataPacket> DataPacketReceived;
 
         /// <summary>
         /// Class constructor.
@@ -111,7 +111,7 @@ namespace Common.Networking.Game
 
             //events
             _discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
-            _dataServer.DataReceived += (s, m) => PacketReceived(m?.Data);
+            _dataServer.DataReceived += (s, m) => DataReceived(m?.Data);
         }
 
         /// <summary>
@@ -576,7 +576,7 @@ namespace Common.Networking.Game
         /// Fired when server object receives data from any client.  No restrictions
         /// on who can connect, but packets that don't match are discarded.
         /// </summary>
-        private void PacketReceived(byte[] bytes)
+        private void DataReceived(byte[] bytes)
         {
             try
             {
@@ -661,7 +661,7 @@ namespace Common.Networking.Game
                         if (packet is CommandRequestPacket p1)
                         {
                             //fire event
-                            CommandRequestReceived?.Invoke(p1);
+                            CommandRequestPacketReceived?.Invoke(p1);
                         }
 
                         //command response packet
@@ -671,14 +671,14 @@ namespace Common.Networking.Game
                             _commandManager.ResponseReceived(p2);
 
                             //fire event
-                            CommandResponseReceived?.Invoke(p2);
+                            CommandResponsePacketReceived?.Invoke(p2);
                         }
 
                         //data packet
                         else if (packet is DataPacket p3)
                         {
                             //fire event
-                            DataReceived?.Invoke(p3);
+                            DataPacketReceived?.Invoke(p3);
                         }
 
                         //heartbeat packet
