@@ -669,7 +669,7 @@ namespace Common.Networking.Game
         private static int FindToken(IList<byte> buffer, int token)
         {
             byte[] tokenBytes = BitConverter.GetBytes(token);
-            for (int i = 0; i < buffer.Count; i++)
+            for (int i = 0; i < buffer.Count - 3; i++)
             {
                 if ((buffer[i] == tokenBytes[0])
                     && (buffer[i + 1] == tokenBytes[1])
