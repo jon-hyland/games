@@ -51,16 +51,7 @@ namespace Common.Networking.Simple.Packets
             builder.AddByte((byte)_result);
         }
 
-        /// <summary>
-        /// The result of a command request.
-        /// </summary>
-        public enum CommandResult : byte
-        {
-            Unspecified = 0,
-            Timeout = 1,
-            Reject = 2,
-            Accept = 3
-        }
+       
 
     }
 }

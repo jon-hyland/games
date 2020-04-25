@@ -60,6 +60,7 @@
     <Compile Include="Networking\NetworkDiscovery.cs" />
     <Compile Include="Networking\PacketBuilder.cs" />
     <Compile Include="Networking\PacketParser.cs" />
+    <Compile Include="Networking\Simple\CommandManager.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveredPlayers.cs" />
     <Compile Include="Networking\Simple\Discovery\DiscoveryClient.cs" />
     <Compile Include="Networking\Simple\Packets\CommandResponsePacket.cs" />

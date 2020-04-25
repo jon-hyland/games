@@ -84,6 +84,7 @@
     </ApplicationDefinition>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Networking\CommandType.cs" />
     <Compile Include="Rendering\Colors.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />
     <Compile Include="Rendering\InitialsEntryProperties.cs" />

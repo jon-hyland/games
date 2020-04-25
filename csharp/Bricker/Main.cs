@@ -465,7 +465,10 @@ namespace Bricker
         private Opponent RequestMatchLoop(Player player)
         {
 
+            //fix this
+            CommandResult result = _communications.ConnectToPlayer(player);
             return null;
+            
         }
 
         /// <summary>
