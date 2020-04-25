@@ -30,6 +30,7 @@ namespace Bricker
         private Opponent _opponent;
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
+        private Player _pendingOpponent;
 
         /// <summary>
         /// Class constructor.
@@ -47,6 +48,14 @@ namespace Bricker
             _stats = new GameStats();
             _spaces = null;
             _levelDropIntervals = new double[10];
+            _pendingOpponent = null;
+
+            //events
+            _communications.OpponentInviteReceived += (o) =>
+            {
+                if (_pendingOpponent == null)
+                    _pendingOpponent = o;
+            };
 
             ////TODO: REMOVE THIS!!
             //byte[,] matrix = new byte[10, 20];
@@ -108,6 +117,10 @@ namespace Bricker
             //program loop
             while (true)
             {
+                //opponent invite
+                if (_pendingOpponent != null)
+                    RespondOpponentLoop();
+                
                 //get menu selection
                 MenuSelection selection = MenuLoop(inGame);
 
@@ -181,6 +194,10 @@ namespace Bricker
                 //event loop
                 while (true)
                 {
+                    //return if opponent invite
+                    if (_pendingOpponent != null)
+                        return MenuSelection.None;
+                    
                     //get next key press
                     Key key = Key.None;
                     lock (_keyQueue)
@@ -477,6 +494,17 @@ namespace Bricker
                 opponent = new Opponent(Config.CleanInitials(player.Name), player.IP.ToString());
             
             return result;            
+        }
+
+        private void RespondOpponentLoop()
+        {
+            Player opponent = _pendingOpponent;
+            if (opponent == null)
+                return;
+
+            Thread.Sleep(3500);
+
+            _communications.AcceptInvite(opponent);
         }
 
         /// <summary>

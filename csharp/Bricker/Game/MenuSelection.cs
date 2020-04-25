@@ -5,6 +5,7 @@
     /// </summary>
     public enum MenuSelection
     {
+        None = 0,
         Resume = 1,
         New = 2,
         TwoPlayer = 3,
