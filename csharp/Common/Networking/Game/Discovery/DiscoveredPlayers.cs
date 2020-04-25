@@ -1,10 +1,10 @@
-﻿using Common.Networking.Simple.Packets;
+﻿using Common.Networking.Game.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 
-namespace Common.Networking.Simple.Discovery
+namespace Common.Networking.Game.Discovery
 {
     /// <summary>
     /// Stores and exposes list of discovered players.

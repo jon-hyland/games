@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace Common.Networking.Simple.Packets
+namespace Common.Networking.Game.Packets
 {
     /// <summary>
     /// Represents a TCP packet used to respond to command requests.

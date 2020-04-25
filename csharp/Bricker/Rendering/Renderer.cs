@@ -1,8 +1,8 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
-using Common.Networking.Simple;
-using Common.Networking.Simple.Discovery;
+using Common.Networking.Game;
+using Common.Networking.Game.Discovery;
 using Common.Utilities;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;

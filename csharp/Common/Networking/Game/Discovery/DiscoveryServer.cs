@@ -1,11 +1,11 @@
 ﻿using Common.Error;
-using Common.Networking.Simple.Packets;
+using Common.Networking.Game.Packets;
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace Common.Networking.Simple.Discovery
+namespace Common.Networking.Game.Discovery
 {
     /// <summary>
     /// Receives discovery packets over UDP broadcast, for use in two-player lobby.

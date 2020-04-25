@@ -1,12 +1,12 @@
 ﻿using Common.Error;
-using Common.Networking.Simple.Packets;
+using Common.Networking.Game.Packets;
 using Common.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 
-namespace Common.Networking.Simple
+namespace Common.Networking.Game
 {
     /// <summary>
     /// Manages commands, sent from one game instance and replied to (or timeout) from other instance.

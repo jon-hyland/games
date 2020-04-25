@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace Common.Networking.Simple.Packets
+namespace Common.Networking.Game.Packets
 {
     /// <summary>
     /// Base class for game packets.

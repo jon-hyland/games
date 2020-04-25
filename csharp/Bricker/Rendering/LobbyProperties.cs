@@ -1,4 +1,4 @@
-﻿using Common.Networking.Simple.Discovery;
+﻿using Common.Networking.Game.Discovery;
 using System.Collections.Generic;
 using System.Linq;
 

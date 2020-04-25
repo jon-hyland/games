@@ -1,11 +1,11 @@
 ﻿using Common.Error;
-using Common.Networking.Simple.Packets;
+using Common.Networking.Game.Packets;
 using Common.Threading;
 using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Common.Networking.Simple.Discovery
+namespace Common.Networking.Game.Discovery
 {
     /// <summary>
     /// Sends player discovery packets over UDP broadcast, to inform other game instances

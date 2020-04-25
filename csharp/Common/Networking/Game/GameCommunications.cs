@@ -1,6 +1,6 @@
 ﻿using Common.Error;
-using Common.Networking.Simple.Discovery;
-using Common.Networking.Simple.Packets;
+using Common.Networking.Game.Discovery;
+using Common.Networking.Game.Packets;
 using Common.Threading;
 using SimpleTCP;
 using System;
@@ -9,7 +9,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Common.Networking.Simple
+namespace Common.Networking.Game
 {
     /// <summary>
     /// Simple function SetPlayer.. disconnects if connected.
