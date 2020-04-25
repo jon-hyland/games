@@ -94,6 +94,12 @@ namespace Common.Networking.Game.Packets
                     case PacketType.CommandResponse:
                         return new CommandResponsePacket(parser);
 
+                    case PacketType.Data:
+                        return new DataPacket(parser);
+
+                    case PacketType.Heartbeat:
+                        return new HeartbeatPacket(parser);
+
                     default:
                         return null;
                 }

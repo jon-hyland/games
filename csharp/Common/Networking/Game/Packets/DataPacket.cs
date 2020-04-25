@@ -28,7 +28,7 @@ namespace Common.Networking.Game.Packets
         /// Class constructor.
         /// </summary>
         public DataPacket(PacketParser parser)
-            : base(PacketType.CommandResponse, parser)
+            : base(PacketType.Data, parser)
         {
             _data = parser.GetBytes();
         }

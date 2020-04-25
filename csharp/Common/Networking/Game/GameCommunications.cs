@@ -604,6 +604,10 @@ namespace Common.Networking.Game
                     //loop
                     while (true)
                     {
+                        //break if zero bytes
+                        if (_incomingBuffer.Count == 0)
+                            break;
+                        
                         //find first four matching footer bytes (terminator)
                         int firstIndex = FindToken(_incomingBuffer, PacketBase.PACKET_FOOTER);
 

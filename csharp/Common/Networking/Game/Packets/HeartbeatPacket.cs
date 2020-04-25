@@ -19,7 +19,7 @@ namespace Common.Networking.Game.Packets
         /// </summary>
         public HeartbeatPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
             ushort destinationPort, long count)
-            : base(PacketType.Data, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort)
+            : base(PacketType.Heartbeat, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort)
         {
             _count = count;
         }
@@ -28,7 +28,7 @@ namespace Common.Networking.Game.Packets
         /// Class constructor.
         /// </summary>
         public HeartbeatPacket(PacketParser parser)
-            : base(PacketType.CommandResponse, parser)
+            : base(PacketType.Heartbeat, parser)
         {
             _count = parser.GetInt64();
         }
