@@ -61,6 +61,7 @@ namespace Common.Networking.Simple
 
             //events
             _discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
+            _dataServer.DataReceived += (s, m) => DataReceived(m);
         }
 
         /// <summary>
@@ -218,6 +219,26 @@ namespace Common.Networking.Simple
                 _errorHandler?.LogError(ex);
             }
             return CommandResult.Error;
+        }
+
+        private void DataReceived(Message message)
+        {
+            try
+            {
+                if (message?.Data == null)
+                    return;
+                
+                PacketBase packet = PacketBase.FromBytes(message.Data);
+                if (packet == null)
+                    return;
+
+
+
+            }
+            catch (Exception ex)
+            {
+                _errorHandler?.LogError(ex);
+            }
         }
 
     }
