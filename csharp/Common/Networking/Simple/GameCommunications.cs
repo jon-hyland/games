@@ -21,7 +21,7 @@ namespace Common.Networking.Simple
     public class GameCommunications : IDisposable
     {
         //const
-        private const int INVITE_TIMEOUT_MS = 10000;
+        private const int INVITE_TIMEOUT_SEC = 120;
 
         //private
         private readonly IErrorHandler _errorHandler;
@@ -282,7 +282,7 @@ namespace Common.Networking.Simple
 
                         //send connect-request command
                         byte[] data = PacketBuilder.GetBytes(new object[] { _opponent.Name });
-                        CommandResult result = SendCommandRequest(1, data, TimeSpan.FromMilliseconds(INVITE_TIMEOUT_MS));
+                        CommandResult result = SendCommandRequest(1, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
 
                         //accept
                         if (result == CommandResult.Accept)
@@ -294,24 +294,24 @@ namespace Common.Networking.Simple
                         //reject
                         else if (result == CommandResult.Reject)
                         {
-                            _connectionState = ConnectionState.NotConnected;
                             _opponent = null;
+                            _connectionState = ConnectionState.NotConnected;
                             _dataClient.Disconnect();
                         }
 
                         //timeout
                         else if (result == CommandResult.Timeout)
                         {
-                            _connectionState = ConnectionState.NotConnected;
                             _opponent = null;
+                            _connectionState = ConnectionState.NotConnected;
                             _dataClient.Disconnect();
                         }
 
                         //error
                         else if (result == CommandResult.Error)
                         {
-                            _connectionState = ConnectionState.Error;
                             _opponent = null;
+                            _connectionState = ConnectionState.Error;
                             _dataClient.Disconnect();
                         }
 
