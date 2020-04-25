@@ -1,10 +1,12 @@
 ﻿using Common.Error;
+using Common.Extensions;
 using Common.Networking.Game.Discovery;
 using Common.Networking.Game.Packets;
 using Common.Threading;
 using SimpleTCP;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,6 +37,7 @@ namespace Common.Networking.Game
         private readonly DiscoveredPlayers _discoveredPlayers;
         private readonly SimpleTcpClient _dataClient;
         private readonly SimpleTcpServer _dataServer;
+        private readonly List<byte> _incomingBuffer;
         private readonly CommandManager _commandManager;
         private readonly SimpleTimer _maintenanceTimer;
         private readonly List<PacketBase> _incomingPackets;
@@ -89,6 +92,7 @@ namespace Common.Networking.Game
             _discoveredPlayers = new DiscoveredPlayers();
             _dataClient = new SimpleTcpClient();
             _dataServer = new SimpleTcpServer();
+            _incomingBuffer = new List<byte>();
             _commandManager = new CommandManager();
             _maintenanceTimer = new SimpleTimer(MaintenanceTimer_Callback, 15, false);
             _incomingPackets = new List<PacketBase>();
@@ -576,49 +580,106 @@ namespace Common.Networking.Game
         /// Fired when server object receives data from any client.  No restrictions
         /// on who can connect, but packets that don't match are discarded.
         /// </summary>
-        private void DataReceived(byte[] bytes)
+        private void DataReceived(byte[] buffer)
         {
             try
             {
                 //reject if no data
-                if (bytes == null)
-                    return;
-                
-                //reject if invalid
-                PacketBase packet = PacketBase.FromBytes(bytes);
-                if (packet == null)
+                if (buffer == null)
                     return;
 
-                //reject if wrong game or version
-                if ((packet.GameTitle != _gameTitle) || (packet.GameVersion != _gameVersion))
-                    return;
+                //vars
+                List<byte[]> packets = new List<byte[]>();
                 
-                //special logic for invite requests
-                if ((packet is CommandRequestPacket p1) && (p1.CommandType == 1))
+                //lock buffer
+                lock (_incomingBuffer)
                 {
-                    PacketParser parser = new PacketParser(p1.Data);
-                    string playerName = parser.GetString();
-                    _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _gamePort, playerName);
-                    Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
-                    return;
+                    //buffer overflow?
+                    if (_incomingBuffer.Count > 1000000)
+                        _incomingBuffer.Clear();
+                    
+                    //add to buffer
+                    _incomingBuffer.AddRange(buffer);
+
+                    //loop
+                    while (true)
+                    {
+                        //find first four matching footer bytes (terminator)
+                        int firstIndex = FindToken(_incomingBuffer, PacketBase.PACKET_FOOTER);
+
+                        //break if no footer
+                        if (firstIndex == -1)
+                            break;
+
+                        //dequeue bytes
+                        int count = firstIndex + 4;
+                        byte[] bytes = _incomingBuffer.Dequeue(count).ToArray();
+
+                        //add to list
+                        packets.Add(bytes);
+                    }
                 }
 
-                //reject if wrong opponent
-                if ((_opponent == null) || (packet.SourceIP != _opponent.IP))
-                    return;
-
-                //queue packet for processing
-                lock (_incomingPackets)
+                //loop through packet (candidates)
+                bool added = false;
+                foreach (byte[] bytes in packets)
                 {
-                    _incomingPackets.Add(packet);
+                    //reject if invalid
+                    PacketBase packet = PacketBase.FromBytes(bytes);
+                    if (packet == null)
+                        continue;
+
+                    //reject if wrong game or version
+                    if ((packet.GameTitle != _gameTitle) || (packet.GameVersion != _gameVersion))
+                        continue;
+
+                    //special logic for invite requests
+                    if ((packet is CommandRequestPacket p1) && (p1.CommandType == 1))
+                    {
+                        PacketParser parser = new PacketParser(p1.Data);
+                        string playerName = parser.GetString();
+                        _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _gamePort, playerName);
+                        Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
+                        continue;
+                    }
+
+                    //reject if wrong opponent
+                    if ((_opponent == null) || (packet.SourceIP != _opponent.IP))
+                        continue;
+
+                    //queue packet for processing
+                    lock (_incomingPackets)
+                    {
+                        _incomingPackets.Add(packet);
+                        added = true;
+                    }
+                }
+
+                //signal
+                if (added)
                     _incomingPacketSignal.Set();
-                }
             }
             catch (Exception ex)
             {
                 _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
             }
+        }
+
+        private static int FindToken(IList<byte> buffer, int token)
+        {
+            byte[] tokenBytes = BitConverter.GetBytes(token);
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                if ((buffer[i] == tokenBytes[0])
+                    && (buffer[i + 1] == tokenBytes[1])
+                    && (buffer[i + 2] == tokenBytes[2])
+                    && (buffer[i + 3] == tokenBytes[3]))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         /// <summary>
