@@ -32,7 +32,6 @@ namespace Bricker.Rendering
         private readonly SKPaint _linePaint;
         private readonly SKPaint _rectPaint;
         private readonly SKPaint _textPaint;
-        private MenuProperties_Old _menuProps_Old;
         private MenuProperties _menuProps;
         private InitialsEntryProperties _initialProps;
         private MessageProperties _messageProps;
@@ -43,7 +42,6 @@ namespace Bricker.Rendering
         //public
         public double FrameWidth => _frameWidth;
         public double FrameHeight => _frameHeight;
-        public MenuProperties_Old MenuProps_Old { get => _menuProps_Old; set => _menuProps_Old = value; }
         public MenuProperties MenuProps { get => _menuProps; set => _menuProps = value; }
         public InitialsEntryProperties InitialProps { get => _initialProps; set => _initialProps = value; }
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
@@ -82,7 +80,7 @@ namespace Bricker.Rendering
                 IsStroke = false,
                 IsAntialias = Config.AntiAlias
             };
-            _menuProps_Old = null;
+            _menuProps = null;
             _initialProps = null;
             _messageProps = null;
             _fps = new CpsCalculator(1);
@@ -169,9 +167,6 @@ namespace Bricker.Rendering
 
                 //high scores
                 DrawHighScores(frame, stats);
-
-                //menu
-                DrawMenu_Old(frame);
 
                 //menu
                 DrawMenu(frame);
@@ -431,53 +426,6 @@ namespace Bricker.Rendering
                     surface.DrawText_Right(Colors.White, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
                 }
                 frame.Blit(surface, _rightX, 389);
-            }
-        }
-
-        /// <summary>
-        /// Draws main menu.
-        /// </summary>
-        private void DrawMenu_Old(Surface frame)
-        {
-            MenuProperties_Old menuProps = _menuProps_Old;
-            if (menuProps == null)
-                return;
-
-            double betweenSpacing = 22;
-            double itemHeight = 56;
-            double width = 400;
-            double height = (itemHeight * 4) + (betweenSpacing * 5) + 4;
-
-            SKColor resumeColor = menuProps.InGame ? Colors.BrightWhite : Colors.Gray;
-            SKColor newColor = Colors.BrightWhite;
-            SKColor twoPlayerColor = Colors.BrightWhite;
-            SKColor quitColor = Colors.BrightWhite;
-            if (menuProps.Selection == MenuSelection.Resume)
-                resumeColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.New)
-                newColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.TwoPlayer)
-                twoPlayerColor = Colors.FluorescentOrange;
-            else if (menuProps.Selection == MenuSelection.Quit)
-                quitColor = Colors.FluorescentOrange;
-
-            using (Surface surface = new Surface(width, height, Colors.Black))
-            {
-                surface.DrawLine(Colors.BrightWhite, 0, 0, width - 1, 0, 1);
-                surface.DrawLine(Colors.BrightWhite, 0, 1, width - 1, 1, 1);
-                surface.DrawLine(Colors.BrightWhite, 0, height - 2, width - 1, height - 2, 1);
-                surface.DrawLine(Colors.BrightWhite, 0, height - 1, width - 1, height - 1, 1);
-                surface.DrawLine(Colors.BrightWhite, 0, 0, 0, height - 1, 1);
-                surface.DrawLine(Colors.BrightWhite, 1, 0, 1, height - 1, 1);
-                surface.DrawLine(Colors.BrightWhite, width - 2, 0, width - 2, height - 1, 1);
-                surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
-
-                surface.DrawText_Centered(resumeColor, "resume", 42, (itemHeight * 0) + (betweenSpacing * 1));
-                surface.DrawText_Centered(newColor, "new game", 42, (itemHeight * 1) + (betweenSpacing * 2));
-                surface.DrawText_Centered(twoPlayerColor, "two player", 42, (itemHeight * 2) + (betweenSpacing * 3));
-                surface.DrawText_Centered(quitColor, "quit", 42, (itemHeight * 3) + (betweenSpacing * 4));
-
-                frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
             }
         }
 

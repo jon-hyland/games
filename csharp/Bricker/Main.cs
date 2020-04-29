@@ -121,9 +121,9 @@ namespace Bricker
             //    options: new string[] { "menu option 1", "menu option 2", "menu option 3", "menu option 4", "menu option 5" }));
             //int j = MenuLoop(new MenuProperties(
             //    options: new string[] { "option one", "option two", "option three" }));
-            int k = MenuLoop(new MenuProperties(
-                options: new string[] { "resume", "new game", "two player", "quit" },
-                width: 400));
+            //int k = MenuLoop(new MenuProperties(
+            //    options: new string[] { "resume", "new game", "two player", "quit" },
+            //    width: 400));
 
             //program loop
             while (true)
@@ -131,9 +131,14 @@ namespace Bricker
                 //opponent invite
                 if (_pendingOpponent != null)
                     RespondOpponentLoop();
-                
-                //get menu selection
-                MenuSelection selection = MenuLoop(inGame);
+
+                //main menu loop
+                MenuSelection selection = (MenuSelection)MenuLoop(new MenuProperties(
+                    options: new string[] { "resume", "new game", "two player", "quit" },
+                    enabledOptions: new bool[] { inGame == true, true, true, true },
+                    allowEsc: false,
+                    allowPlayerInvite: true,
+                    width: 400));
 
                 //resume, run game loop
                 if (selection == MenuSelection.Resume)
@@ -189,66 +194,66 @@ namespace Bricker
             _dispatcher.Invoke(() => Application.Current.Shutdown());
         }
 
-        /// <summary>
-        /// The main menu loop.  Returns value indicating menu selection.
-        /// </summary>
-        private MenuSelection MenuLoop(bool inGame)
-        {
-            try
-            {
-                //vars
-                MenuProperties_Old props = new MenuProperties_Old(inGame ? MenuSelection.Resume : MenuSelection.New, inGame);
+        ///// <summary>
+        ///// The main menu loop.  Returns value indicating menu selection.
+        ///// </summary>
+        //private MenuSelection MenuLoop(bool inGame)
+        //{
+        //    try
+        //    {
+        //        //vars
+        //        MenuProperties_Old props = new MenuProperties_Old(inGame ? MenuSelection.Resume : MenuSelection.New, inGame);
 
-                //push properties to renderer
-                _renderer.MenuProps_Old = props;
+        //        //push properties to renderer
+        //        _renderer.MenuProps_Old = props;
 
-                //event loop
-                while (true)
-                {
-                    //return if opponent invite
-                    if (_pendingOpponent != null)
-                        return MenuSelection.None;
+        //        //event loop
+        //        while (true)
+        //        {
+        //            //return if opponent invite
+        //            if (_pendingOpponent != null)
+        //                return MenuSelection.None;
                     
-                    //get next key press
-                    Key key = Key.None;
-                    lock (_keyQueue)
-                    {
-                        if (_keyQueue.Count > 0)
-                            key = _keyQueue.Dequeue();
-                    }
+        //            //get next key press
+        //            Key key = Key.None;
+        //            lock (_keyQueue)
+        //            {
+        //                if (_keyQueue.Count > 0)
+        //                    key = _keyQueue.Dequeue();
+        //            }
                     
-                    //no key?
-                    if (key == Key.None)
-                    {
-                        Thread.Sleep(15);
-                        continue;
-                    }
+        //            //no key?
+        //            if (key == Key.None)
+        //            {
+        //                Thread.Sleep(15);
+        //                continue;
+        //            }
 
-                    //up
-                    else if ((key == Key.Left) || (key == Key.Up))
-                    {
-                        props.DecrementSelection();
-                    }
+        //            //up
+        //            else if ((key == Key.Left) || (key == Key.Up))
+        //            {
+        //                props.DecrementSelection();
+        //            }
 
-                    //down
-                    else if ((key == Key.Right) || (key == Key.Down))
-                    {
-                        props.IncrementSelection();
-                    }
+        //            //down
+        //            else if ((key == Key.Right) || (key == Key.Down))
+        //            {
+        //                props.IncrementSelection();
+        //            }
 
-                    //enter
-                    else if (key == Key.Enter)
-                    {
-                        return props.Selection;
-                    }
-                }
-            }
-            finally
-            {
-                //clear properties from renderer
-                _renderer.MenuProps_Old = null;
-            }
-        }
+        //            //enter
+        //            else if (key == Key.Enter)
+        //            {
+        //                return props.Selection;
+        //            }
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        //clear properties from renderer
+        //        _renderer.MenuProps_Old = null;
+        //    }
+        //}
 
         /// <summary>
         /// Enters a generic menu loop defined by the specified properties object.
