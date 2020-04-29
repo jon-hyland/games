@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Media.Animation;
 
 namespace Bricker.Rendering
 {
@@ -31,6 +32,7 @@ namespace Bricker.Rendering
         private readonly SKPaint _linePaint;
         private readonly SKPaint _rectPaint;
         private readonly SKPaint _textPaint;
+        private MenuProperties_Old _menuProps_Old;
         private MenuProperties _menuProps;
         private InitialsEntryProperties _initialProps;
         private MessageProperties _messageProps;
@@ -41,6 +43,7 @@ namespace Bricker.Rendering
         //public
         public double FrameWidth => _frameWidth;
         public double FrameHeight => _frameHeight;
+        public MenuProperties_Old MenuProps_Old { get => _menuProps_Old; set => _menuProps_Old = value; }
         public MenuProperties MenuProps { get => _menuProps; set => _menuProps = value; }
         public InitialsEntryProperties InitialProps { get => _initialProps; set => _initialProps = value; }
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
@@ -79,7 +82,7 @@ namespace Bricker.Rendering
                 IsStroke = false,
                 IsAntialias = Config.AntiAlias
             };
-            _menuProps = null;
+            _menuProps_Old = null;
             _initialProps = null;
             _messageProps = null;
             _fps = new CpsCalculator(1);
@@ -166,6 +169,9 @@ namespace Bricker.Rendering
 
                 //high scores
                 DrawHighScores(frame, stats);
+
+                //menu
+                DrawMenu_Old(frame);
 
                 //menu
                 DrawMenu(frame);
@@ -431,9 +437,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws main menu.
         /// </summary>
-        private void DrawMenu(Surface frame)
+        private void DrawMenu_Old(Surface frame)
         {
-            MenuProperties menuProps = _menuProps;
+            MenuProperties_Old menuProps = _menuProps_Old;
             if (menuProps == null)
                 return;
 
@@ -473,7 +479,87 @@ namespace Bricker.Rendering
 
                 frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
             }
-        }       
+        }
+
+        /// <summary>
+        /// Draws main menu.
+        /// </summary>
+        private void DrawMenu(Surface frame)
+        {
+            MenuProperties props = _menuProps;
+            if (props == null)
+                return;
+
+            double vertSpacing = 22;
+            double horizSpacing = 42;
+            double optionSpacing = 22;
+
+            if ((props.Width is Double.NaN) || (props.Height is Double.NaN))
+            {
+                double maxWidth = 0, totalHeight = 0;
+                double headerLineHeight = 0, optionLineHeight = 0;
+                foreach (string header in props.Header)
+                {
+                    Surface.MeasureText(header, props.HeaderSize, out double w, out double h);
+                    if (w > maxWidth)
+                        maxWidth = w;
+                    totalHeight += h;
+                    headerLineHeight = h;
+                }
+                foreach (string option in props.Options)
+                {
+                    Surface.MeasureText(option, props.OptionsSize, out double w, out double h);
+                    if (w > maxWidth)
+                        maxWidth = w;
+                    totalHeight += h;
+                    optionLineHeight = h;
+                }
+                props.Width = props.Width is Double.NaN ? (2 + horizSpacing + maxWidth + horizSpacing + 2) : props.Width;
+                double headerHeight = props.Header.Length > 0 ? vertSpacing : 0;
+                props.Height = 2 + totalHeight + vertSpacing + headerHeight + (optionSpacing * (props.Options.Length - 1)) + vertSpacing + 2;
+                props.HeaderLineHeight = headerLineHeight;
+                props.OptionLineHeight = optionLineHeight;
+            }
+
+            double width = props.Width, height = props.Height;
+            double y = 2 + vertSpacing;
+            using (Surface surface = new Surface(width, height, Colors.Black))
+            {
+                surface.DrawLine(Colors.BrightWhite, 0, 0, width - 1, 0, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, 1, width - 1, 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, height - 2, width - 1, height - 2, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, height - 1, width - 1, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, 0, 0, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 1, 0, 1, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, width - 2, 0, width - 2, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
+
+                if (props.Header.Length > 0)
+                {
+                    for (int i = 0; i < props.Header.Length; i++)
+                    {
+                        string header = props.Header[i];
+                        surface.DrawText_Centered(Colors.BrightWhite, header, props.HeaderSize, y);
+                        y += props.HeaderLineHeight;
+                    }
+                    y += vertSpacing;
+                }
+
+                for (int i = 0; i < props.Options.Length; i++)
+                {
+                    if (i > 0)
+                        y += optionSpacing;
+                    string option = props.Options[i];
+                    SKColor color = i == props.SelectionIndex ? Colors.FluorescentOrange : Colors.BrightWhite;
+                    if (!props.EnabledOptions[i])
+                        color = Colors.Gray;
+                    surface.DrawText_Centered(color, option, props.OptionsSize, y);
+                    y += props.OptionLineHeight;
+                }
+
+                frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
+            }
+        }
 
         /// <summary>
         /// Draws score-entry dialog.

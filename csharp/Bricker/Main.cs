@@ -114,6 +114,17 @@ namespace Bricker
             //start game communications
             _communications.Start();
 
+            //TODO: REMOVE THIS!!
+            //MessageBoxLoop("Here is some message, like whatever", MessageButtons.OK);
+            //int i = MenuLoop(new MenuProperties(
+            //    header: new string[] { "header line one goes here" },
+            //    options: new string[] { "menu option 1", "menu option 2", "menu option 3", "menu option 4", "menu option 5" }));
+            //int j = MenuLoop(new MenuProperties(
+            //    options: new string[] { "option one", "option two", "option three" }));
+            int k = MenuLoop(new MenuProperties(
+                options: new string[] { "resume", "new game", "two player", "quit" },
+                width: 400));
+
             //program loop
             while (true)
             {
@@ -186,10 +197,10 @@ namespace Bricker
             try
             {
                 //vars
-                MenuProperties props = new MenuProperties(inGame ? MenuSelection.Resume : MenuSelection.New, inGame);
+                MenuProperties_Old props = new MenuProperties_Old(inGame ? MenuSelection.Resume : MenuSelection.New, inGame);
 
                 //push properties to renderer
-                _renderer.MenuProps = props;
+                _renderer.MenuProps_Old = props;
 
                 //event loop
                 while (true)
@@ -235,8 +246,73 @@ namespace Bricker
             finally
             {
                 //clear properties from renderer
-                _renderer.MenuProps = null;
+                _renderer.MenuProps_Old = null;
             }
+        }
+
+        /// <summary>
+        /// Enters a generic menu loop defined by the specified properties object.
+        /// Returns 0-based index of selected option, or -1 for Esc (if allowed), or -2 for opponent invite.
+        /// </summary>
+        private int MenuLoop(MenuProperties props)
+        {
+            try
+            {
+                //push properties to renderer
+                _renderer.MenuProps = props;
+
+                //event loop
+                while (true)
+                { 
+                    //return if opponent invite
+                    if (_pendingOpponent != null)
+                        return -2;
+
+                    //get next key press
+                    Key key = Key.None;
+                    lock (_keyQueue)
+                    {
+                        if (_keyQueue.Count > 0)
+                            key = _keyQueue.Dequeue();
+                    }
+
+                    //no key?
+                    if (key == Key.None)
+                    {
+                        Thread.Sleep(15);
+                        continue;
+                    }
+
+                    //up
+                    else if ((key == Key.Left) || (key == Key.Up))
+                    {
+                        props.DecrementSelection();
+                    }
+
+                    //down
+                    else if ((key == Key.Right) || (key == Key.Down))
+                    {
+                        props.IncrementSelection();
+                    }
+
+                    //enter
+                    else if (key == Key.Enter)
+                    {
+                        return props.SelectionIndex;
+                    }
+
+                    //esc
+                    else if ((props.AllowEsc) && (key == Key.Escape))
+                    {
+                        return -1;
+                    }
+                }
+            }
+            finally
+            {
+                //clear properties from renderer
+                _renderer.MenuProps = null;
+            }            
         }
 
         /// <summary>
@@ -331,7 +407,7 @@ namespace Bricker
         /// <summary>
         /// The message box loop.
         /// </summary>
-        private bool MessageLoop(string message, MessageButtons buttons)
+        private bool MessageBoxLoop(string message, MessageButtons buttons)
         {
             try
             {
@@ -396,6 +472,8 @@ namespace Bricker
                 _renderer.MessageProps = null;
             }
         }
+
+    
 
         /// <summary>
         /// Discovered player selection loop.

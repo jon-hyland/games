@@ -89,6 +89,7 @@
     <Compile Include="Rendering\ExplodingSpace.cs" />
     <Compile Include="Rendering\InitialsEntryProperties.cs" />
     <Compile Include="Rendering\LobbyProperties.cs" />
+    <Compile Include="Rendering\MenuProperties_Old.cs" />
     <Compile Include="Rendering\MenuProperties.cs" />
     <Compile Include="Rendering\MessageProperties.cs" />
     <Compile Include="Rendering\Renderer.cs" />
