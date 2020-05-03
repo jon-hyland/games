@@ -4,6 +4,7 @@ using Bricker.Game;
 using Bricker.Rendering;
 using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
+using Common.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace Bricker
         private readonly Dispatcher _dispatcher;
         private readonly Queue<Key> _keyQueue;
         private Thread _programLoop;
+        private readonly Config _config;
         private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
@@ -31,6 +33,9 @@ namespace Bricker
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
+
+        //public
+        public Config Config => _config;
 
         #region Constructor
 
@@ -42,15 +47,17 @@ namespace Bricker
             //vars
             _dispatcher = window.Dispatcher;
             _keyQueue = new Queue<Key>();
-            _communications = new GameCommunications(Config.GameTitle, 
-                Config.GameVersion, Config.LocalIP, Config.LocalPort, 
-                Config.Initials, ErrorHandler.Instance);
-            _renderer = new Renderer(window);
+            _config = new Config();
+            _communications = new GameCommunications(_config, _config.Initials, ErrorHandler.Instance);
+            _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
-            _stats = new GameStats();
+            _stats = new GameStats(_config);
             _spaces = null;
             _levelDropIntervals = new double[10];
             _pendingOpponent = null;
+
+            //initialize
+            RenderProps.Initialize(_config);
 
             //events
             _communications.OpponentInviteReceived += (o) =>
@@ -154,16 +161,16 @@ namespace Bricker
                 else if (selection == MenuSelection.TwoPlayer)
                 {
                     //get player initials
-                    if (String.IsNullOrWhiteSpace(Config.Initials))
+                    if (String.IsNullOrWhiteSpace(_config.Initials))
                     {
                         string initials = InitialsLoop(new string[] { "enter your initials", "" });
-                        if (!String.IsNullOrWhiteSpace(Config.Initials))
+                        if (!String.IsNullOrWhiteSpace(_config.Initials))
                         {
-                            Config.SaveInitials(initials);
+                            _config.SaveInitials(initials);
                             _communications.ChangePlayerName(initials);
                         }
                     }
-                    
+
                     //select discovered player from lobby
                     Player player = PlayerLobbyLoop();
                     if (player == null)
@@ -252,16 +259,16 @@ namespace Bricker
                         return true;
 
                     //level up
-                    else if ((key == Key.PageUp) && (Config.Debug))
+                    else if ((key == Key.PageUp) && (_config.Debug))
                         _stats.SetLevel(_stats.Level + 1);
 
                     //level down
-                    else if ((key == Key.PageDown) && (Config.Debug))
+                    else if ((key == Key.PageDown) && (_config.Debug))
                         _stats.SetLevel(_stats.Level - 1);
 
                     //debug toggle
                     else if (key == Key.D)
-                        Config.Debug = !Config.Debug;
+                        RenderProps.Debug = !_config.Debug;
                 }
 
                 //drop brick timer?
@@ -290,7 +297,7 @@ namespace Bricker
         /// </summary>
         private void NewSinglePlayerGame()
         {
-            _stats = new GameStats();
+            _stats = new GameStats(_config);
             _matrix.NewGame();
         }
 
@@ -311,7 +318,7 @@ namespace Bricker
 
                 //event loop
                 while (true)
-                { 
+                {
                     //return if opponent invite
                     if (_pendingOpponent != null)
                         return -2;
@@ -360,7 +367,7 @@ namespace Bricker
             {
                 //clear properties from renderer
                 _renderer.MenuProps = null;
-            }            
+            }
         }
 
         /// <summary>
@@ -373,7 +380,7 @@ namespace Bricker
                 //vars
                 char[] chars = new char[] { ' ', ' ', ' ' };
                 int position = 0;
-                InitialsEntryProperties props = new InitialsEntryProperties(Config.Initials, header);
+                InitialsEntryProperties props = new InitialsEntryProperties(_config.Initials, header);
 
                 //push properties to renderer
                 _renderer.InitialProps = props;
@@ -399,7 +406,7 @@ namespace Bricker
                     //enter
                     else if (key == Key.Enter)
                     {
-                        Config.SaveInitials(props.Initials);
+                        _config.SaveInitials(props.Initials);
                         _communications.ChangePlayerName(props.Initials);
                         return props.Initials;
                     }
@@ -463,9 +470,9 @@ namespace Bricker
                 double size = 24;
                 double width = 500;
                 MessageProperties props = new MessageProperties(
-                    WrapText(message, size, width), 
-                    size, 
-                    buttons, 
+                    WrapText(message, size, width),
+                    size,
+                    buttons,
                     buttons >= MessageButtons.CancelOK ? 1 : 0);
 
                 //push properties to renderer
@@ -628,10 +635,6 @@ namespace Bricker
 
         #region Two-Player Respond
 
-        #endregion
-
-
-
         private void OpponentRespondLoop()
         {
             Player opponent = _pendingOpponent;
@@ -646,6 +649,12 @@ namespace Bricker
 
 
         }
+
+        #endregion
+
+
+
+
 
         /// <summary>
         /// Splits and wraps the text for display in a message box.
@@ -675,7 +684,7 @@ namespace Bricker
             return text.ToArray();
         }
 
-     
+
 
         #region Brick Logic
 

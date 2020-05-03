@@ -50,22 +50,22 @@ namespace Bricker.Game
             return matrix;
         }
 
-        /// <summary>
-        /// Processes an incoming packet.
-        /// </summary>
-        public void ProcessPacket(Packet packet)
-        {
-            lock (this)
-            {
-                _lastPacketTime = DateTime.Now;
-                for (int x = 0; x < 10; x++)
-                    for (int y = 0; y < 20; y++)
-                        _matrix[x, y] = 0;
-                _level = 1;
-                _lines = 0;
-                _score = 0;
-            }
-        }
+        ///// <summary>
+        ///// Processes an incoming packet.
+        ///// </summary>
+        //public void ProcessPacket(Packet packet)
+        //{
+        //    lock (this)
+        //    {
+        //        _lastPacketTime = DateTime.Now;
+        //        for (int x = 0; x < 10; x++)
+        //            for (int y = 0; y < 20; y++)
+        //                _matrix[x, y] = 0;
+        //        _level = 1;
+        //        _lines = 0;
+        //        _score = 0;
+        //    }
+        //}
 
 
 

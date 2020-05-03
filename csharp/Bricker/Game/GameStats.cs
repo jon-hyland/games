@@ -13,6 +13,7 @@ namespace Bricker.Game
     public class GameStats
     {
         //private
+        private readonly Config _config;
         private List<HighScore> _highScores;
         private int _score;
         private int _lines;
@@ -27,8 +28,9 @@ namespace Bricker.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public GameStats()
+        public GameStats(Config config)
         {
+            _config = config;
             _highScores = LoadHighScores();
             _score = 0;
             _lines = 0;
@@ -107,7 +109,7 @@ namespace Bricker.Game
             try
             {
                 string text = String.Join(Environment.NewLine, _highScores.Select(s => $"{s.Initials}\t{s.Score}"));
-                File.WriteAllText(Config.HighScoreFile, text);
+                File.WriteAllText(_config.HighScoreFile, text);
             }
             catch (Exception ex)
             {
@@ -122,9 +124,9 @@ namespace Bricker.Game
         {
             try
             {
-                if (!File.Exists(Config.HighScoreFile))
+                if (!File.Exists(_config.HighScoreFile))
                     return new List<HighScore>();
-                string[] lines = File.ReadAllLines(Config.HighScoreFile);
+                string[] lines = File.ReadAllLines(_config.HighScoreFile);
                 List<HighScore> scores = new List<HighScore>();
                 foreach (string line in lines)
                 {

@@ -1,4 +1,5 @@
-﻿using Common.Error;
+﻿using Common.Configuration;
+using Common.Error;
 using Common.Extensions;
 using Common.Networking.Game.Discovery;
 using Common.Networking.Game.Packets;
@@ -26,11 +27,8 @@ namespace Common.Networking.Game
         private const int INVITE_TIMEOUT_SEC = 120;
 
         //private
+        private readonly IConfig _config;
         private readonly IErrorHandler _errorHandler;
-        private readonly string _gameTitle;
-        private readonly Version _gameVersion;
-        private readonly IPAddress _localIP;
-        private readonly ushort _gamePort;
         private readonly Player _localPlayer;
         private readonly DiscoveryClient _discoveryClient;
         private readonly DiscoveryServer _discoveryServer;
@@ -56,10 +54,10 @@ namespace Common.Networking.Game
         private bool _isStopped = false;
 
         //public
-        public string GameTitle => _gameTitle;
-        public Version GameVersion => _gameVersion;
-        public IPAddress LocalIP => _localIP;
-        public ushort GamePort => _gamePort;
+        public string GameTitle => _config.GameTitle;
+        public Version GameVersion => _config.GameVersion;
+        public IPAddress LocalIP => _config.LocalIP;
+        public ushort GamePort => _config.GamePort;
         public Player LocalPlayer => _localPlayer;
         public Player Opponent => _opponent;
         public ConnectionState ConnectionState => _connectionState;
@@ -78,17 +76,14 @@ namespace Common.Networking.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public GameCommunications(string gameTitle, Version gameVersion, IPAddress localIP, ushort gamePort, string playerName, IErrorHandler errorHandler = null)
+        public GameCommunications(IConfig config, string playerName, IErrorHandler errorHandler = null)
         {
             //vars
             _errorHandler = errorHandler;
-            _gameTitle = gameTitle;
-            _gameVersion = gameVersion;
-            _localIP = localIP;
-            _gamePort = gamePort;
-            _localPlayer = new Player(gameTitle, gameVersion, localIP, gamePort, playerName);
-            _discoveryClient = new DiscoveryClient(gameTitle, gameVersion, localIP, gamePort, playerName, errorHandler);
-            _discoveryServer = new DiscoveryServer(gamePort, errorHandler);
+            _config = config;
+            _localPlayer = new Player(config.GameTitle, config.GameVersion, config.LocalIP, config.GamePort, playerName);
+            _discoveryClient = new DiscoveryClient(config.GameTitle, config.GameVersion, config.LocalIP, config.GamePort, playerName, errorHandler);
+            _discoveryServer = new DiscoveryServer(config.GamePort, errorHandler);
             _discoveredPlayers = new DiscoveredPlayers();
             _dataClient = new SimpleTcpClient();
             _dataServer = new SimpleTcpServer();
@@ -128,7 +123,7 @@ namespace Common.Networking.Game
             _discoveryClient.Dispose();
             _dataClient.Dispose();
             _commandManager.Dispose();
-            _maintenanceTimer.Dispose();            
+            _maintenanceTimer.Dispose();
         }
 
         #region Start / Stop
@@ -142,7 +137,7 @@ namespace Common.Networking.Game
             if (_isStarted)
                 throw new Exception("Cannot restart communications");
             _isStarted = true;
-            
+
             //start discovery server
             _discoveryServer.Start();
 
@@ -153,7 +148,7 @@ namespace Common.Networking.Game
             _incomingPacketThread.Start();
 
             //start data server
-            _dataServer.Start(_gamePort);
+            _dataServer.Start(_config.GamePort);
 
             //start maintenance timer
             _maintenanceTimer.Start();
@@ -174,16 +169,16 @@ namespace Common.Networking.Game
 
             //stop maintenance timer
             _maintenanceTimer.Stop();
-            
+
             //client disconnect from server
             _dataClient.Disconnect();
-            
+
             //server stop receiving
             _dataServer.Stop();
-            
+
             //stop discovery client
             _discoveryClient.Stop();
-            
+
             //stop discovery server
             _discoveryServer.Stop();
         }
@@ -206,7 +201,7 @@ namespace Common.Networking.Game
         /// </summary>
         public IReadOnlyList<Player> GetDiscoveredPlayers(int top = 5)
         {
-            return _discoveredPlayers.GetPlayers(_gameTitle, _gameVersion, _localIP, top);
+            return _discoveredPlayers.GetPlayers(_config.GameTitle, _config.GameVersion, _config.LocalIP, top);
         }
 
         /// <summary>
@@ -214,7 +209,7 @@ namespace Common.Networking.Game
         /// </summary>
         public int GetDiscoveredPlayerCount(int top = 5)
         {
-            return _discoveredPlayers.GetPlayerCount(_gameTitle, _gameVersion, _localIP, top);
+            return _discoveredPlayers.GetPlayerCount(_config.GameTitle, _config.GameVersion, _config.LocalIP, top);
         }
 
         #endregion
@@ -240,7 +235,7 @@ namespace Common.Networking.Game
                         _connectionState = ConnectionState.NotConnected;
 
                         //connect to opponent
-                        _dataClient.Connect(opponent.IP.ToString(), _gamePort);
+                        _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
                         _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
                         //set opponent
@@ -294,7 +289,7 @@ namespace Common.Networking.Game
                             _connectionState = ConnectionState.Connected;
                             fireEvent = true;
                         }
-                        
+
                         //reject
                         else if (result == CommandResult.Reject)
                         {
@@ -407,7 +402,7 @@ namespace Common.Networking.Game
 
                 //reconnect if not connected
                 if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //vars
                 ushort sequence;
@@ -425,8 +420,8 @@ namespace Common.Networking.Game
                 {
                     //create packet
                     CommandRequestPacket packet = new CommandRequestPacket(
-                        gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP, 
-                        destinationIP: _opponent.IP, destinationPort: _gamePort, commandType: type, 
+                        gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
+                        destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
                         sequence: sequence, retryAttempt: retyAttempt++, data: data);
 
                     //send packet
@@ -479,12 +474,12 @@ namespace Common.Networking.Game
 
                 //reconnect if not connected
                 if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
-                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
-                    destinationIP: _opponent.IP, destinationPort: _gamePort, commandType: type,
+                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
+                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
                     sequence: sequence, result: result, data: data);
 
                 //send packet
@@ -515,12 +510,12 @@ namespace Common.Networking.Game
 
                 //reconnect if not connected
                 if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 DataPacket packet = new DataPacket(
-                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
-                    destinationIP: _opponent.IP, destinationPort: _gamePort, data: data);
+                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
+                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, data: data);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
@@ -550,12 +545,12 @@ namespace Common.Networking.Game
 
                 //reconnect if not connected
                 if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
-                    gameTitle: _gameTitle, gameVersion: _gameVersion, sourceIP: _localIP,
-                    destinationIP: _opponent.IP, destinationPort: _gamePort, count: count);
+                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
+                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, count: count);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
@@ -590,14 +585,14 @@ namespace Common.Networking.Game
 
                 //vars
                 List<byte[]> packets = new List<byte[]>();
-                
+
                 //lock buffer
                 lock (_incomingBuffer)
                 {
                     //buffer overflow?
                     if (_incomingBuffer.Count > 1000000)
                         _incomingBuffer.Clear();
-                    
+
                     //add to buffer
                     _incomingBuffer.AddRange(buffer);
 
@@ -607,7 +602,7 @@ namespace Common.Networking.Game
                         //break if zero bytes
                         if (_incomingBuffer.Count == 0)
                             break;
-                        
+
                         //find first four matching footer bytes (terminator)
                         int firstIndex = FindToken(_incomingBuffer, PacketBase.PACKET_FOOTER);
 
@@ -634,7 +629,7 @@ namespace Common.Networking.Game
                         continue;
 
                     //reject if wrong game or version
-                    if ((packet.GameTitle != _gameTitle) || (packet.GameVersion != _gameVersion))
+                    if ((packet.GameTitle != _config.GameTitle) || (packet.GameVersion != _config.GameVersion))
                         continue;
 
                     //special logic for invite requests
@@ -642,7 +637,7 @@ namespace Common.Networking.Game
                     {
                         PacketParser parser = new PacketParser(p1.Data);
                         string playerName = parser.GetString();
-                        _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _gamePort, playerName);
+                        _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _config.GamePort, playerName);
                         Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
                         continue;
                     }
@@ -784,7 +779,7 @@ namespace Common.Networking.Game
                 if ((_opponent != null) && (_connectionState == ConnectionState.Error))
                 {
                     _dataClient.Disconnect();
-                    _dataClient.Connect(_opponent.IP.ToString(), _gamePort);
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
                     _connectionState = ConnectionState.Connected;
                 }
             }
@@ -806,14 +801,14 @@ namespace Common.Networking.Game
                     //exit if stopped
                     if (_isStopped)
                         return;
-                    
+
                     //sleep 100ms
-                    Thread.Sleep(100);                    
+                    Thread.Sleep(100);
 
                     //continue if no opponent
                     if (_opponent == null)
                         continue;
-                    
+
                     //send heartbeat to opponent
                     SendHeartbeat(++_heartbeatsSent);
                 }
@@ -838,6 +833,6 @@ namespace Common.Networking.Game
         NotConnected,
         Connected_PendingInviteAcceptance,
         Connected,
-        Error        
+        Error
     }
 }

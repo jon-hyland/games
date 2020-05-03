@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
 
-namespace Bricker.Rendering
+namespace Common.Rendering
 {
     /// <summary>
     /// Easy access to selected game colors.

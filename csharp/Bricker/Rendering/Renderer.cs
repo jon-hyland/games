@@ -1,8 +1,8 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
-using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
+using Common.Rendering;
 using Common.Utilities;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Windows;
-using System.Windows.Media.Animation;
+
 
 namespace Bricker.Rendering
 {
@@ -22,6 +22,7 @@ namespace Bricker.Rendering
     {
         //private
         private readonly Window _window;
+        private readonly Config _config;
         private double _frameWidth;
         private double _frameHeight;
         private double _displayScale;
@@ -50,9 +51,10 @@ namespace Bricker.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Renderer(Window window)
+        public Renderer(Window window, Config config)
         {
             _window = window;
+            _config = config;
             _displayScale = 1;
             _typeface = SKTypeface.FromFile(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "zorque.ttf"));
             _linePaint = new SKPaint()
@@ -62,7 +64,7 @@ namespace Bricker.Rendering
                 StrokeCap = SKStrokeCap.Square,
                 StrokeJoin = SKStrokeJoin.Bevel,
                 StrokeWidth = (float)(2 * _displayScale),
-                IsAntialias = Config.AntiAlias
+                IsAntialias = RenderProps.AntiAlias
             };
             _rectPaint = new SKPaint()
             {
@@ -70,7 +72,7 @@ namespace Bricker.Rendering
                 Style = SKPaintStyle.StrokeAndFill,
                 StrokeCap = SKStrokeCap.Square,
                 StrokeJoin = SKStrokeJoin.Bevel,
-                IsAntialias = Config.AntiAlias
+                IsAntialias = RenderProps.AntiAlias
             };
             _textPaint = new SKPaint()
             {
@@ -78,7 +80,7 @@ namespace Bricker.Rendering
                 Typeface = _typeface,
                 TextSize = (float)(12 * _displayScale),
                 IsStroke = false,
-                IsAntialias = Config.AntiAlias
+                IsAntialias = RenderProps.AntiAlias
             };
             _menuProps = null;
             _initialProps = null;
@@ -123,8 +125,8 @@ namespace Bricker.Rendering
                 //vars
                 SKImageInfo info = e.Info;
                 _displayScale = GetDisplayScale();
-                if (Config.DisplayScale != _displayScale)
-                    Config.SetDisplayScale(_displayScale);
+                if (RenderProps.DisplayScale != _displayScale)
+                    RenderProps.DisplayScale = _displayScale;
                 _frameWidth = info.Width / _displayScale;
                 _frameHeight = info.Height / _displayScale;
                 _sideWidth = (_frameWidth - 333d) / 2d;
@@ -209,7 +211,7 @@ namespace Bricker.Rendering
                         for (int y = 0; y < matrix.Brick.Height; y++)
                             if (matrix.Brick.Grid[x, y] > 0)
                                 surface.DrawRect(matrix.Brick.Color, ((matrix.Brick.X - 1 + x) * 33) + 2, ((matrix.Brick.Y - 1 + y) * 33) + 2, 32, 32);
-                            else if (Config.Debug)
+                            else if (RenderProps.Debug)
                                 surface.DrawRect(Colors.BrightWhite, ((matrix.Brick.X - 1 + x) * 33) + 17, ((matrix.Brick.Y - 1 + y) * 33) + 17, 2, 2);
 
                 for (int i = 1; i <= 10; i++)
@@ -258,7 +260,7 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.BrightWhite, matrixWidth - 2, 1, matrixWidth - 2, matrixHeight - 2, 1);
                 surface.DrawLine(Colors.BrightWhite, matrixWidth - 2, matrixHeight - 2, 1, matrixHeight - 2, 1);
                 surface.DrawLine(Colors.BrightWhite, 1, matrixHeight - 2, 1, 1, 1);
-                
+
                 frame.Blit(surface, (_sideWidth - surface.Width) / 2, 134);
             }
 
@@ -287,7 +289,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Centered(Colors.BrightWhite, "bricker", 64, 0);
-                surface.DrawText_Centered(Colors.BrightWhite, $"v{Config.GameVersion}  (c) 2017-2020  john hyland", 12, titleHeight + space);
+                surface.DrawText_Centered(Colors.BrightWhite, $"v{_config.GameVersion}  (c) 2017-2020  john hyland", 12, titleHeight + space);
                 frame.Blit(surface, (_sideWidth - width) / 2, 16);
             }
         }
@@ -674,7 +676,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawFps(Surface frame)
         {
-            if (!Config.Debug)
+            if (!RenderProps.Debug)
                 return;
 
             using (Surface surface = Surface.RenderText(Colors.White, $"fps: {(int)_fps.CPS}", 12))

@@ -1,4 +1,4 @@
-﻿using Bricker.Configuration;
+﻿using SkiaSharp;
 using System;
 using System.Windows;
 using System.Windows.Threading;
@@ -22,9 +22,12 @@ namespace Bricker
             //designer stuff
             InitializeComponent();
 
+            SKTypeface t = SKTypeface.FromFile(@"C:\Users\John\Git\games\csharp\Bricker\bin\Debug\Zorque.ttf");
+
+
             //vars
             _main = new Main(this);
-            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(Config.HighFrameRate ? 15 : 30), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
+            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(_main.Config.HighFrameRate ? 15 : 30), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
 
             //events
             _skia.PaintSurface += (s, e) => _main.DrawFrame(e);

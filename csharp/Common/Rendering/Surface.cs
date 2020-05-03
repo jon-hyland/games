@@ -1,10 +1,8 @@
-﻿using Bricker.Configuration;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
-namespace Bricker.Rendering
+namespace Common.Rendering
 {
     /// <summary>
     /// Encapsulates the SKBitmap and SKCanvas classes, providing singular ease of use,
@@ -20,7 +18,7 @@ namespace Bricker.Rendering
         private static SKPaint _linePaint;
         private static SKPaint _rectPaint;
         private static SKPaint _textPaint;
-        
+
         //public
         public double Width => _width;
         public double Height => _height;
@@ -32,9 +30,9 @@ namespace Bricker.Rendering
         {
             _width = width;
             _height = height;
-            _bitmap = new SKBitmap((int)Math.Round(_width * Config.DisplayScale), (int)Math.Round(_height * Config.DisplayScale));
+            _bitmap = new SKBitmap((int)Math.Round(_width * RenderProps.DisplayScale), (int)Math.Round(_height * RenderProps.DisplayScale));
             _canvas = new SKCanvas(_bitmap);
-            _canvas.Clear(color ?? (!Config.Debug ? Colors.Transparent : Colors.DebugBlack1));
+            _canvas.Clear(color ?? (!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack1));
         }
 
         /// <summary>
@@ -73,7 +71,7 @@ namespace Bricker.Rendering
         /// </summary>
         public void Clear(SKColor? color = null)
         {
-            _canvas.Clear(color ?? (!Config.Debug ? Colors.Transparent : Colors.DebugBlack1));
+            _canvas.Clear(color ?? (!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack1));
         }
 
         /// <summary>
@@ -87,12 +85,12 @@ namespace Bricker.Rendering
                 Style = SKPaintStyle.Stroke,
                 StrokeCap = SKStrokeCap.Square,
                 StrokeJoin = SKStrokeJoin.Bevel,
-                StrokeWidth = (float)(2 * Config.DisplayScale),
-                IsAntialias = Config.AntiAlias
+                StrokeWidth = (float)(2 * RenderProps.DisplayScale),
+                IsAntialias = RenderProps.AntiAlias
             };
             _linePaint.Color = color;
-            _linePaint.StrokeWidth = (float)(width * Config.DisplayScale);
-            _canvas.DrawLine((float)(x0 * Config.DisplayScale), (float)(y0 * Config.DisplayScale), (float)(x1 * Config.DisplayScale), (float)(y1 * Config.DisplayScale), _linePaint);
+            _linePaint.StrokeWidth = (float)(width * RenderProps.DisplayScale);
+            _canvas.DrawLine((float)(x0 * RenderProps.DisplayScale), (float)(y0 * RenderProps.DisplayScale), (float)(x1 * RenderProps.DisplayScale), (float)(y1 * RenderProps.DisplayScale), _linePaint);
         }
 
         /// <summary>
@@ -106,10 +104,10 @@ namespace Bricker.Rendering
                 Style = SKPaintStyle.StrokeAndFill,
                 StrokeCap = SKStrokeCap.Square,
                 StrokeJoin = SKStrokeJoin.Bevel,
-                IsAntialias = Config.AntiAlias
-            };            
+                IsAntialias = RenderProps.AntiAlias
+            };
             _rectPaint.Color = color;
-            _canvas.DrawRect(SKRect.Create((float)(x * Config.DisplayScale), (float)(y * Config.DisplayScale), (float)(width * Config.DisplayScale), (float)(height * Config.DisplayScale)), _rectPaint);
+            _canvas.DrawRect(SKRect.Create((float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale), (float)(width * RenderProps.DisplayScale), (float)(height * RenderProps.DisplayScale)), _rectPaint);
         }
 
         /// <summary>
@@ -120,17 +118,17 @@ namespace Bricker.Rendering
             _textPaint = _textPaint ?? new SKPaint()
             {
                 Color = Colors.White,
-                Typeface = Config.Typeface,
-                TextSize = (float)(12 * Config.DisplayScale),
+                Typeface = RenderProps.Typeface,
+                TextSize = (float)(12 * RenderProps.DisplayScale),
                 IsStroke = false,
-                IsAntialias = Config.AntiAlias
+                IsAntialias = RenderProps.AntiAlias
             };
 
-            _textPaint.TextSize = (float)(size * Config.DisplayScale);
+            _textPaint.TextSize = (float)(size * RenderProps.DisplayScale);
             SKRect r = new SKRect();
             _textPaint.MeasureText(text, ref r);
 
-            width = (r.Width / Config.DisplayScale) + 6;
+            width = (r.Width / RenderProps.DisplayScale) + 6;
             height = size * 1.333;
         }
 
@@ -142,11 +140,11 @@ namespace Bricker.Rendering
             MeasureText(text, size, out double width, out double height);
             _textPaint.Color = color;
 
-            float x = (float)(2 * Config.DisplayScale);
-            float y = (float)((size + (size * 0.05)) * Config.DisplayScale);
+            float x = (float)(2 * RenderProps.DisplayScale);
+            float y = (float)((size + (size * 0.05)) * RenderProps.DisplayScale);
 
             Surface surface = new Surface(width, height);
-            surface._canvas.Clear(!Config.Debug ? Colors.Transparent : Colors.DebugBlack2);
+            surface._canvas.Clear(!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack2);
             surface._canvas.DrawText(text, x, y, _textPaint);
             return surface;
         }
@@ -218,7 +216,7 @@ namespace Bricker.Rendering
         /// </summary>
         public void Blit(Surface surface, double x, double y)
         {
-            _canvas.DrawBitmap(surface._bitmap, (float)(x * Config.DisplayScale), (float)(y * Config.DisplayScale));
+            _canvas.DrawBitmap(surface._bitmap, (float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale));
         }
 
 

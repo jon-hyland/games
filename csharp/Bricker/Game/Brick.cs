@@ -1,4 +1,4 @@
-﻿using Bricker.Rendering;
+﻿using Common.Rendering;
 using SkiaSharp;
 using System;
 
@@ -120,7 +120,7 @@ namespace Bricker.Game
             _y = 1 - _topSpace;
             _lastDropTime = DateTime.Now;
         }
-        
+
         /// <summary>
         /// Returns color for specified brick shape.
         /// </summary>
@@ -129,45 +129,45 @@ namespace Bricker.Game
             switch (shape)
             {
                 //empty
-                case 0: 
+                case 0:
                     return Colors.Black;
 
                 //1
                 case 1:
                     return Colors.SilverPink;
-                
+
                 //2
                 case 2:
                     return Colors.TuftsBlue;
-                
+
                 //3
                 case 3:
                     return Colors.ChromeYellow;
-                
+
                 //4
                 case 4:
                     return Colors.Independence;
-                
+
                 //5
                 case 5:
                     return Colors.ForestGreen;
-                
+
                 //6
                 case 6:
                     return Colors.Byzantine;
-                
+
                 //7
                 case 7:
                     return Colors.Coquelicot;
-                
+
                 //edge
                 case 8:
                     return Colors.Transparent;
-                
+
                 //gray
                 case 9:
                     return Colors.Gray;
-                
+
                 //undefined
                 default:
                     return Colors.Transparent;

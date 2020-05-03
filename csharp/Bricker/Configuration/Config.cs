@@ -1,4 +1,5 @@
-﻿using Common.Json;
+﻿using Common.Configuration;
+using Common.Json;
 using Common.Networking;
 using SkiaSharp;
 using System;
@@ -11,33 +12,32 @@ namespace Bricker.Configuration
     /// <summary>
     /// Loads and exposes configuration settings and properties.
     /// </summary>
-    public static class Config
+    public class Config : IConfig
     {
-        public static string GameTitle { get; }
-        public static Version GameVersion { get; }
-        public static string DisplayVersion { get; }
-        public static IPAddress LocalIP { get; }
-        public static ushort LocalPort { get; }
-        public static string ApplicationFolder { get; }
-        public static string ConfigFile { get; }
-        public static string FontFile { get; }
-        public static string HighScoreFile { get; }
-        public static string InitialsFile { get; }
-        public static string RemoteInstanceFile { get; }
-        public static SKTypeface Typeface { get; }
-        public static bool AntiAlias { get; }
-        public static bool HighFrameRate { get; }
-        public static bool Debug { get; set; }
-        public static double DisplayScale { get; private set; }
-        public static string Initials { get; private set; }
+        public string GameTitle { get; }
+        public Version GameVersion { get; }
+        public string DisplayVersion { get; }
+        public IPAddress LocalIP { get; }
+        public ushort GamePort { get; }
+        public string ApplicationFolder { get; }
+        public string ConfigFile { get; }
+        public string FontFile { get; }
+        public string HighScoreFile { get; }
+        public string InitialsFile { get; }
+        public string RemoteInstanceFile { get; }
+        public SKTypeface Typeface { get; }
+        public bool AntiAlias { get; }
+        public bool HighFrameRate { get; }
+        public bool Debug { get; }
+        public string Initials { get; private set; }
 
-        static Config()
+        public Config()
         {
             GameTitle = "Bricker";
             GameVersion = GetVersion();
             DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
             LocalIP = NetworkDiscovery.GetLocalIP();
-            LocalPort = 8714;
+            GamePort = 8714;
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
@@ -50,34 +50,28 @@ namespace Bricker.Configuration
             AntiAlias = data.antiAlias == 1;
             HighFrameRate = data.highFrameRate == 1;
             Debug = data.debug == 1;
-            DisplayScale = 1;
-            Initials = LoadInitials();            
+            Initials = LoadInitials();
         }
 
         private static Version GetVersion()
         {
-            Version version = Assembly.GetExecutingAssembly().GetName().Version;            
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
             return version;
         }
-        
-        public static void SetDisplayScale(double scale)
-        {
-            DisplayScale = scale;
-        }
 
-        public static void SaveInitials(string initials)
+        public void SaveInitials(string initials)
         {
             try
             {
                 Initials = CleanInitials(initials);
-                File.WriteAllText(Config.InitialsFile, (Initials ?? "").Trim());
+                File.WriteAllText(InitialsFile, (Initials ?? "").Trim());
             }
             catch
             {
             }
         }
 
-        private static string LoadInitials()
+        private string LoadInitials()
         {
             try
             {
