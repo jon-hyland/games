@@ -32,6 +32,8 @@ namespace Bricker
         private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
 
+        #region Constructor
+
         /// <summary>
         /// Class constructor.
         /// </summary>
@@ -57,11 +59,8 @@ namespace Bricker
                     _pendingOpponent = o;
             };
 
-            ////TODO: REMOVE THIS!!
-            //byte[,] matrix = new byte[10, 20];
-            //Packet p1 = new Packet("10.0.1.220", "10.0.1.222", "JLH", matrix, 1, 10, 100, false, true, false, 10, 5);
-            //byte[] bytes = p1.ToBytes();
-            //Packet p2 = Packet.FromBytes(bytes);
+            //run tests (usually does nothing)
+            RunTests();
 
             //calculate level drop intervals
             double interval = 2000;
@@ -71,6 +70,10 @@ namespace Bricker
                 _levelDropIntervals[i] = interval;
             }
         }
+
+        #endregion
+
+        #region Window Events
 
         /// <summary>
         /// Logs a user keypress for processing.
@@ -103,6 +106,10 @@ namespace Bricker
             _programLoop.Start();
         }
 
+        #endregion
+
+        #region Program Loop
+
         /// <summary>
         /// Runs main game logic.
         /// </summary>
@@ -114,23 +121,13 @@ namespace Bricker
             //start game communications
             _communications.Start();
 
-            //TODO: REMOVE THIS!!
-            //MessageBoxLoop("Here is some message, like whatever", MessageButtons.OK);
-            //int i = MenuLoop(new MenuProperties(
-            //    header: new string[] { "header line one goes here" },
-            //    options: new string[] { "menu option 1", "menu option 2", "menu option 3", "menu option 4", "menu option 5" }));
-            //int j = MenuLoop(new MenuProperties(
-            //    options: new string[] { "option one", "option two", "option three" }));
-            //int k = MenuLoop(new MenuProperties(
-            //    options: new string[] { "resume", "new game", "two player", "quit" },
-            //    width: 400));
 
             //program loop
             while (true)
             {
                 //opponent invite
                 if (_pendingOpponent != null)
-                    RespondOpponentLoop();
+                    OpponentRespondLoop();
 
                 //main menu loop
                 MenuSelection selection = (MenuSelection)MenuLoop(new MenuProperties(
@@ -173,7 +170,7 @@ namespace Bricker
                         continue;
 
                     //request match, get response
-                    CommandResult result = InviteOpponentLoop(player, out Opponent opponent);
+                    CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
 
                     //todo: do stuff
@@ -194,66 +191,112 @@ namespace Bricker
             _dispatcher.Invoke(() => Application.Current.Shutdown());
         }
 
-        ///// <summary>
-        ///// The main menu loop.  Returns value indicating menu selection.
-        ///// </summary>
-        //private MenuSelection MenuLoop(bool inGame)
-        //{
-        //    try
-        //    {
-        //        //vars
-        //        MenuProperties_Old props = new MenuProperties_Old(inGame ? MenuSelection.Resume : MenuSelection.New, inGame);
+        #endregion
 
-        //        //push properties to renderer
-        //        _renderer.MenuProps_Old = props;
+        #region Game Loop
 
-        //        //event loop
-        //        while (true)
-        //        {
-        //            //return if opponent invite
-        //            if (_pendingOpponent != null)
-        //                return MenuSelection.None;
-                    
-        //            //get next key press
-        //            Key key = Key.None;
-        //            lock (_keyQueue)
-        //            {
-        //                if (_keyQueue.Count > 0)
-        //                    key = _keyQueue.Dequeue();
-        //            }
-                    
-        //            //no key?
-        //            if (key == Key.None)
-        //            {
-        //                Thread.Sleep(15);
-        //                continue;
-        //            }
+        /// <summary>
+        /// The main game loop.  Returns true if still in game (menu opened).
+        /// </summary>
+        private bool GameLoop()
+        {
+            //vars
+            bool gameOver = false;
+            bool hit;
 
-        //            //up
-        //            else if ((key == Key.Left) || (key == Key.Up))
-        //            {
-        //                props.DecrementSelection();
-        //            }
+            //event loop
+            while (!gameOver)
+            {
+                //reset hit flag
+                hit = false;
 
-        //            //down
-        //            else if ((key == Key.Right) || (key == Key.Down))
-        //            {
-        //                props.IncrementSelection();
-        //            }
+                //sleep
+                Thread.Sleep(15);
 
-        //            //enter
-        //            else if (key == Key.Enter)
-        //            {
-        //                return props.Selection;
-        //            }
-        //        }
-        //    }
-        //    finally
-        //    {
-        //        //clear properties from renderer
-        //        _renderer.MenuProps_Old = null;
-        //    }
-        //}
+                //get next key press
+                Key key = Key.None;
+                lock (_keyQueue)
+                {
+                    if (_keyQueue.Count > 0)
+                        key = _keyQueue.Dequeue();
+                }
+
+                //have key?
+                if (key != Key.None)
+                {
+                    //left
+                    if (key == Key.Left)
+                        MoveBrickLeft();
+
+                    //right
+                    else if (key == Key.Right)
+                        MoveBrickRight();
+
+                    //down
+                    else if (key == Key.Down)
+                        MoveBrickDown();
+
+                    //rotate
+                    else if (key == Key.Up)
+                        RotateBrick();
+
+                    //drop
+                    else if (key == Key.Space)
+                    {
+                        DropBrickToBottom();
+                        hit = true;
+                    }
+
+                    //menu
+                    else if ((key == Key.Escape) || (key == Key.Q))
+                        return true;
+
+                    //level up
+                    else if ((key == Key.PageUp) && (Config.Debug))
+                        _stats.SetLevel(_stats.Level + 1);
+
+                    //level down
+                    else if ((key == Key.PageDown) && (Config.Debug))
+                        _stats.SetLevel(_stats.Level - 1);
+
+                    //debug toggle
+                    else if (key == Key.D)
+                        Config.Debug = !Config.Debug;
+                }
+
+                //drop brick timer?
+                if (IsDropTime())
+                    hit = MoveBrickDown();
+
+                //brick hit bottom?
+                if (hit)
+                    gameOver = BrickHit();
+            }
+
+            //game over
+            ExplodeSpaces();
+            if (_stats.IsHighScore())
+            {
+                string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
+                if (!String.IsNullOrWhiteSpace(initials))
+                    _stats.AddHighScore(initials);
+
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Resets state and starts a new game.
+        /// </summary>
+        private void NewSinglePlayerGame()
+        {
+            _stats = new GameStats();
+            _matrix.NewGame();
+        }
+
+        #endregion
+
+        #region Input Loops
 
         /// <summary>
         /// Enters a generic menu loop defined by the specified properties object.
@@ -478,7 +521,9 @@ namespace Bricker
             }
         }
 
-    
+        #endregion
+
+        #region Two-Player Invite
 
         /// <summary>
         /// Discovered player selection loop.
@@ -499,7 +544,7 @@ namespace Bricker
                     //get discovered players
                     IReadOnlyList<Player> players = _communications.GetDiscoveredPlayers(top: 5);
                     props.UpdatePlayers(players);
-                    
+
                     //get next key press, or continue
                     Key key = Key.None;
                     lock (_keyQueue)
@@ -564,30 +609,42 @@ namespace Bricker
         /// <summary>
         /// Invite opponent loop.  Connects, asks question, waits for response.
         /// </summary>
-        private CommandResult InviteOpponentLoop(Player player, out Opponent opponent)
+        private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
         {
             opponent = null;
-            
+
             bool success = _communications.SetOpponentAndConnect(player);
             if (!success)
                 return CommandResult.Error;
 
-            CommandResult result = _communications.InviteOpponent();            
+            CommandResult result = _communications.InviteOpponent();
             if (result == CommandResult.Accept)
                 opponent = new Opponent(Config.CleanInitials(player.Name), player.IP.ToString());
-            
-            return result;            
+
+            return result;
         }
 
-        private void RespondOpponentLoop()
+        #endregion
+
+        #region Two-Player Respond
+
+        #endregion
+
+
+
+        private void OpponentRespondLoop()
         {
             Player opponent = _pendingOpponent;
             if (opponent == null)
                 return;
 
+            bool accept = MessageBoxLoop($"Opponent '{opponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
+
             Thread.Sleep(3500);
 
             _communications.AcceptInvite(opponent);
+
+
         }
 
         /// <summary>
@@ -618,109 +675,9 @@ namespace Bricker
             return text.ToArray();
         }
 
-        /// <summary>
-        /// The main game loop.  Returns true if still in game (menu opened).
-        /// </summary>
-        private bool GameLoop()
-        {
-            //vars
-            bool gameOver = false;
-            bool hit;
+     
 
-            //event loop
-            while (!gameOver)
-            {
-                //reset hit flag
-                hit = false;
-
-                //sleep
-                Thread.Sleep(15);
-
-                //get next key press
-                Key key = Key.None;
-                lock (_keyQueue)
-                {
-                    if (_keyQueue.Count > 0)
-                        key = _keyQueue.Dequeue();
-                }
-
-                //have key?
-                if (key != Key.None)
-                {
-                    //left
-                    if (key == Key.Left)
-                        MoveBrickLeft();
-
-                    //right
-                    else if (key == Key.Right)
-                        MoveBrickRight();
-
-                    //down
-                    else if (key == Key.Down)
-                        MoveBrickDown();
-
-                    //rotate
-                    else if (key == Key.Up)
-                        RotateBrick();
-
-                    //drop
-                    else if (key == Key.Space)
-                    {
-                        DropBrickToBottom();
-                        hit = true;
-                    }
-
-                    //menu
-                    else if ((key == Key.Escape) || (key == Key.Q))
-                        return true;
-
-                    //level up
-                    else if ((key == Key.PageUp) && (Config.Debug))
-                        _stats.SetLevel(_stats.Level + 1);
-
-                    //level down
-                    else if ((key == Key.PageDown) && (Config.Debug))
-                        _stats.SetLevel(_stats.Level - 1);
-
-                    //debug toggle
-                    else if (key == Key.D)
-                        Config.Debug = !Config.Debug;
-                }
-
-                //drop brick timer?
-                if (IsDropTime())
-                    hit = MoveBrickDown();
-
-                //brick hit bottom?
-                if (hit)
-                    gameOver = BrickHit();
-            }
-
-            //game over
-            ExplodeSpaces();
-            if (_stats.IsHighScore())
-            {
-                string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
-                if (!String.IsNullOrWhiteSpace(initials))
-                    _stats.AddHighScore(initials);
-
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Resets state and starts a new game.
-        /// </summary>
-        private void NewSinglePlayerGame()
-        {
-            _stats = new GameStats();
-            _matrix.NewGame();
-        }
-
-        private void NewTwoPlayerGame()
-        {
-
-        }
+        #region Brick Logic
 
         /// <summary>
         /// Moves brick left.
@@ -909,6 +866,10 @@ namespace Bricker
             return true;
         }
 
+        #endregion
+
+        #region Exploding Spaces
+
         /// <summary>
         /// Explodes matrix spaces outwards on game over.
         /// </summary>
@@ -955,7 +916,29 @@ namespace Bricker
             }
         }
 
+        #endregion
 
+        #region Testing & Misc
+
+        private void RunTests()
+        {
+            //byte[,] matrix = new byte[10, 20];
+            //Packet p1 = new Packet("10.0.1.220", "10.0.1.222", "JLH", matrix, 1, 10, 100, false, true, false, 10, 5);
+            //byte[] bytes = p1.ToBytes();
+            //Packet p2 = Packet.FromBytes(bytes);
+
+            //MessageBoxLoop("Here is some message, like whatever", MessageButtons.OK);
+            //int i = MenuLoop(new MenuProperties(
+            //    header: new string[] { "header line one goes here" },
+            //    options: new string[] { "menu option 1", "menu option 2", "menu option 3", "menu option 4", "menu option 5" }));
+            //int j = MenuLoop(new MenuProperties(
+            //    options: new string[] { "option one", "option two", "option three" }));
+            //int k = MenuLoop(new MenuProperties(
+            //    options: new string[] { "resume", "new game", "two player", "quit" },
+            //    width: 400));
+        }
+
+        #endregion
 
     }
 }
