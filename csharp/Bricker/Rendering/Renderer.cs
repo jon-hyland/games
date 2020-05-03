@@ -1,6 +1,7 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
+using Bricker.Rendering.Properties;
 using Common.Networking.Game.Discovery;
 using Common.Rendering;
 using Common.Utilities;

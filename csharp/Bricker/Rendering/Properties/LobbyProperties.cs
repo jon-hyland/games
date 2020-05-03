@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bricker.Rendering
+namespace Bricker.Rendering.Properties
 {
     /// <summary>
     /// Stores message properties for rendering.

@@ -1,6 +1,6 @@
 ﻿using Bricker.Configuration;
 
-namespace Bricker.Rendering
+namespace Bricker.Rendering.Properties
 {
     /// <summary>
     /// Stores initials-entry properties for rendering.

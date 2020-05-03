@@ -1,5 +1,4 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -21,9 +20,6 @@ namespace Bricker
         {
             //designer stuff
             InitializeComponent();
-
-            SKTypeface t = SKTypeface.FromFile(@"C:\Users\John\Git\games\csharp\Bricker\bin\Debug\Zorque.ttf");
-
 
             //vars
             _main = new Main(this);

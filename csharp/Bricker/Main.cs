@@ -2,6 +2,7 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering;
+using Bricker.Rendering.Properties;
 using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
 using Common.Rendering;
@@ -470,7 +471,7 @@ namespace Bricker
                 double size = 24;
                 double width = 500;
                 MessageProperties props = new MessageProperties(
-                    WrapText(message, size, width),
+                    Surface.WrapText(message, size, width),
                     size,
                     buttons,
                     buttons >= MessageButtons.CancelOK ? 1 : 0);
@@ -651,40 +652,6 @@ namespace Bricker
         }
 
         #endregion
-
-
-
-
-
-        /// <summary>
-        /// Splits and wraps the text for display in a message box.
-        /// </summary>
-        private string[] WrapText(string message, double size, double width)
-        {
-            string[] lines = message.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            List<string> text = new List<string>();
-            foreach (string line in lines)
-            {
-                string[] split = line.Split(' ');
-                List<string> words = new List<string>();
-                foreach (string word in split)
-                {
-                    string test = String.Join(" ", words);
-                    test += (test.Length > 0 ? " " : "") + word;
-                    Surface.MeasureText(test, size, out double w, out double _);
-                    if (w > width)
-                    {
-                        text.Add(String.Join(" ", words));
-                        words.Clear();
-                    }
-                    words.Add(word);
-                }
-                text.Add(String.Join(" ", words));
-            }
-            return text.ToArray();
-        }
-
-
 
         #region Brick Logic
 

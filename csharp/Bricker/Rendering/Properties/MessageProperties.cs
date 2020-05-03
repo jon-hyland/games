@@ -1,4 +1,4 @@
-﻿namespace Bricker.Rendering
+﻿namespace Bricker.Rendering.Properties
 {
     /// <summary>
     /// Represents buttons displayed under message.

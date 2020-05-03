@@ -219,7 +219,33 @@ namespace Common.Rendering
             _canvas.DrawBitmap(surface._bitmap, (float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale));
         }
 
-
+        /// <summary>
+        /// Measures and splits the text into appropriate length lines for display in a message box.
+        /// </summary>
+        public static string[] WrapText(string message, double size, double width)
+        {
+            string[] lines = message.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            List<string> text = new List<string>();
+            foreach (string line in lines)
+            {
+                string[] split = line.Split(' ');
+                List<string> words = new List<string>();
+                foreach (string word in split)
+                {
+                    string test = String.Join(" ", words);
+                    test += (test.Length > 0 ? " " : "") + word;
+                    Surface.MeasureText(test, size, out double w, out double _);
+                    if (w > width)
+                    {
+                        text.Add(String.Join(" ", words));
+                        words.Clear();
+                    }
+                    words.Add(word);
+                }
+                text.Add(String.Join(" ", words));
+            }
+            return text.ToArray();
+        }
 
     }
 }

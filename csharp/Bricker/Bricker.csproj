@@ -89,10 +89,10 @@
     <Compile Include="Main.cs" />
     <Compile Include="Networking\CommandType.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />
-    <Compile Include="Rendering\InitialsEntryProperties.cs" />
-    <Compile Include="Rendering\LobbyProperties.cs" />
-    <Compile Include="Rendering\MenuProperties.cs" />
-    <Compile Include="Rendering\MessageProperties.cs" />
+    <Compile Include="Rendering\Properties\InitialsEntryProperties.cs" />
+    <Compile Include="Rendering\Properties\LobbyProperties.cs" />
+    <Compile Include="Rendering\Properties\MenuProperties.cs" />
+    <Compile Include="Rendering\Properties\MessageProperties.cs" />
     <Compile Include="Rendering\Renderer.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

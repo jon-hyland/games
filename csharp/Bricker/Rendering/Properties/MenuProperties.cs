@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Bricker.Rendering
+namespace Bricker.Rendering.Properties
 {
     public class MenuProperties
     {
