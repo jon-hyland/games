@@ -868,28 +868,25 @@ namespace Common.Networking.Game
             try
             {
                 //too long since heartbeat received?
-                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 3))
+                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 2))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
                     _dataClient.Disconnect();
                     Disconnected?.InvokeFromTask();
+                    return;
                 }
 
-                //determine if error state
-                if ((_opponent != null) && (_connectionState == ConnectionState.Connected))
-                    if (_dataClient?.TcpClient?.Connected != true)
-                        _connectionState = ConnectionState.Error;
-
-                //if error, close and reconnect
-                if ((_opponent != null) && (_connectionState == ConnectionState.Error))
+                //connection broken?
+                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
                 {
+                    _connectionState = ConnectionState.NotConnected;
+                    _opponent = null;
+                    _pendingOpponent = null;
                     _dataClient.Disconnect();
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
-                    _dataClient.TcpClient.SendTimeout = 1000;
-                    _dataClient.TcpClient.ReceiveTimeout = 1000;
-                    _connectionState = ConnectionState.Connected;
+                    Disconnected?.InvokeFromTask();
+                    return;
                 }
             }
             catch (Exception ex)
