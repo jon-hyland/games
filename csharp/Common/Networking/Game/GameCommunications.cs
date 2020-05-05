@@ -539,17 +539,18 @@ namespace Common.Networking.Game
             try
             {
                 //no opponent?
+                Player opponent = type != 1 ? _opponent : _pendingOpponent;
                 if (_opponent == null)
                     throw new Exception("No opponent set");
 
                 //reconnect if not connected
                 if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
+                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
+                    destinationIP: opponent.IP, destinationPort: _config.GamePort, commandType: type,
                     sequence: sequence, result: result, data: data);
 
                 //send packet
