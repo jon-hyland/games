@@ -717,7 +717,7 @@ namespace Common.Networking.Game
                     }
 
                     //reject if wrong opponent
-                    if ((_opponent == null) || (packet.SourceIP != _opponent.IP))
+                    if ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP)))
                         continue;
 
                     //queue packet for processing
