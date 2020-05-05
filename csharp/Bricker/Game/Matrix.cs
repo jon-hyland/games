@@ -1,6 +1,4 @@
-﻿using Bricker.Rendering;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Bricker.Game
@@ -12,15 +10,11 @@ namespace Bricker.Game
     {
         //private
         private readonly Random _random;
-        private readonly int _width;
-        private readonly int _height;
         private byte[,] _grid;
         private Brick _brick;
         private Brick _nextBrick;
 
         //public
-        public int Width => _width;
-        public int Height => _height;
         public byte[,] Grid => _grid;
         public Brick Brick => _brick;
         public Brick NextBrick => _nextBrick;
@@ -31,8 +25,8 @@ namespace Bricker.Game
         public Matrix()
         {
             _random = new Random();
-            _width = 12;
-            _height = 22;            
+            //_width = 12;
+            //_height = 22;            
             NewGame(false);
         }
 
@@ -41,16 +35,16 @@ namespace Bricker.Game
         /// </summary>
         public void NewGame(bool spawnBrick = true)
         {
-            _grid = new byte[_width, _height];
-            for (int x = 0; x < _width; x++)
+            _grid = new byte[12, 22];
+            for (int x = 0; x < 12; x++)
             {
                 _grid[x, 0] = 8;
-                _grid[x, _height - 1] = 8;
+                _grid[x, 22 - 1] = 8;
             }
-            for (int y = 0; y < _height; y++)
+            for (int y = 0; y < 22; y++)
             {
                 _grid[0, y] = 8;
-                _grid[_width - 1, y] = 8;
+                _grid[12 - 1, y] = 8;
             }
             _brick = null;
             _nextBrick = null;

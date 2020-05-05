@@ -39,7 +39,6 @@ namespace Bricker.Rendering
         private MessageProperties _messageProps;
         private LobbyProperties _lobbyProps;
         private readonly CpsCalculator _fps;
-        private readonly bool _twoPlayer = false;
 
         //public
         public double FrameWidth => _frameWidth;
@@ -119,7 +118,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Renders a new frame.
         /// </summary>
-        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications)
+        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications, Opponent opponent)
         {
             try
             {
@@ -145,7 +144,7 @@ namespace Bricker.Rendering
                 DrawMatrix(frame, matrix);
 
                 //opponent matrix
-                DrawOpponentMatrix(frame, matrix, stats);
+                DrawOpponentMatrix(frame, opponent);
 
                 //exploding spaces
                 DrawExplodingSpaces(frame, spaces);
@@ -154,7 +153,7 @@ namespace Bricker.Rendering
                 DrawTitle(frame);
 
                 //controls
-                DrawControls(frame);
+                DrawControls(frame, opponent);
 
                 //next
                 DrawNext(frame, matrix);
@@ -202,8 +201,8 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                for (int x = 1; x < matrix.Width; x++)
-                    for (int y = 1; y < matrix.Height; y++)
+                for (int x = 1; x < 12; x++)
+                    for (int y = 1; y < 22; y++)
                         if (matrix.Grid[x, y] > 0)
                             surface.DrawRect(Brick.BrickToColor(matrix.Grid[x, y]), ((x - 1) * 33) + 2, ((y - 1) * 33) + 2, 32, 32);
 
@@ -236,26 +235,27 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws other player's matrix.
         /// </summary>
-        private void DrawOpponentMatrix(Surface frame, Matrix matrix, GameStats stats)
+        private void DrawOpponentMatrix(Surface frame, Opponent opponent)
         {
-            if (!_twoPlayer)
+            if (opponent == null)
                 return;
 
+            byte[,] matrix = opponent.GetMatrix();
             double matrixWidth = 164 + 9;
             double matrixHeight = 324 + 19;
 
             using (Surface surface = new Surface(matrixWidth, matrixHeight))
             {
-                for (int x = 1; x < matrix.Width; x++)
-                    for (int y = 1; y < matrix.Height; y++)
-                        if (matrix.Grid[x, y] > 0)
-                            surface.DrawRect(Brick.BrickToColor(matrix.Grid[x, y]), ((x - 1) * 17) + 1.5, ((y - 1) * 17) + 1.5, 16, 16);
+                for (int x = 1; x < 12; x++)
+                    for (int y = 1; y < 22; y++)
+                        if (matrix[x, y] > 0)
+                            surface.DrawRect(Brick.BrickToColor(matrix[x, y]), ((x - 1) * 17) + 1.5, ((y - 1) * 17) + 1.5, 16, 16);
 
-                if (matrix.Brick != null)
-                    for (int x = 0; x < matrix.Brick.Width; x++)
-                        for (int y = 0; y < matrix.Brick.Height; y++)
-                            if (matrix.Brick.Grid[x, y] > 0)
-                                surface.DrawRect(matrix.Brick.Color, ((matrix.Brick.X - 1 + x) * 17) + 1.5, ((matrix.Brick.Y - 1 + y) * 17) + 1.5, 16, 16);
+                //if (matrix.Brick != null)
+                //    for (int x = 0; x < matrix.Brick.Width; x++)
+                //        for (int y = 0; y < matrix.Brick.Height; y++)
+                //            if (matrix.Brick.Grid[x, y] > 0)
+                //                surface.DrawRect(matrix.Brick.Color, ((matrix.Brick.X - 1 + x) * 17) + 1.5, ((matrix.Brick.Y - 1 + y) * 17) + 1.5, 16, 16);
 
                 surface.DrawLine(Colors.BrightWhite, 1, 1, matrixWidth - 2, 0, 1);
                 surface.DrawLine(Colors.BrightWhite, matrixWidth - 2, 1, matrixWidth - 2, matrixHeight - 2, 1);
@@ -270,8 +270,8 @@ namespace Bricker.Rendering
             double textHeight = 24;
             using (Surface surface = new Surface(readoutWidth, readoutHeight))
             {
-                surface.DrawText_Left(Colors.White, $"Player: {"JLH"}", 18, 4);
-                surface.DrawText_Right(Colors.White, $"Level: {stats.Level}        Lines: {stats.Lines.ToString("N0")}        Score: {stats.Score.ToString("N0")}", 12, textHeight + 6);
+                surface.DrawText_Left(Colors.White, $"Player: {opponent.Player.Name}", 18, 4);
+                surface.DrawText_Right(Colors.White, $"Level: {opponent.Level}        Lines: {opponent.Lines.ToString("N0")}        Score: {opponent.Score.ToString("N0")}", 12, textHeight + 6);
                 frame.Blit(surface, _leftX, 134 + matrixHeight + 6);
             }
         }
@@ -298,9 +298,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws controls readout.
         /// </summary>
-        private void DrawControls(Surface frame)
+        private void DrawControls(Surface frame, Opponent opponent)
         {
-            if (_twoPlayer)
+            if (opponent != null)
                 return;
 
             double width = 240;

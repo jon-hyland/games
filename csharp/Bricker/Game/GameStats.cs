@@ -18,12 +18,14 @@ namespace Bricker.Game
         private int _score;
         private int _lines;
         private int _level;
+        private int _linesSent;
 
         //public
         public IReadOnlyList<HighScore> HighScores => _highScores.AsReadOnly();
         public int Score => _score;
         public int Lines => _lines;
         public int Level => _level;
+        public int LinesSent => _linesSent;
 
         /// <summary>
         /// Class constructor.
@@ -75,6 +77,14 @@ namespace Bricker.Game
             if (level < 1)
                 level = 1;
             _level = level;
+        }
+
+        /// <summary>
+        /// Increments lines sent (two-player mode).
+        /// </summary>
+        public void IncrementLinesSent(int value)
+        {
+            _linesSent += value;
         }
 
         /// <summary>

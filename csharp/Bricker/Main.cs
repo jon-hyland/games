@@ -1,11 +1,12 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
-using Bricker.Networking;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
+using Common.Networking;
 using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
+using Common.Networking.Game.Packets;
 using Common.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
@@ -70,6 +71,7 @@ namespace Bricker
                 if (_pendingOpponent == null)
                     _pendingOpponent = o;
             };
+            _communications.DataPacketReceived += (p) => ReceiveGameStatus(p);
 
             //run tests (usually does nothing)
             RunTests();
@@ -103,7 +105,7 @@ namespace Bricker
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications);
+            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications, _opponent);
         }
 
         /// <summary>
@@ -637,20 +639,42 @@ namespace Bricker
         private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
         {
             CommandResult result = CommandResult.Unspecified;
+            opponent = null;
             try
             {
-                opponent = null;
+                //show message
+                MessageProperties props = new MessageProperties(
+                    text: Surface.WrapText("Connecting to opponent", 24, 500),
+                    size: 24,
+                    buttons: MessageButtons.None,
+                    buttonIndex: 0);
+                _renderer.MessageProps = props;
 
+                //connect to opponent
+                Thread.Sleep(650);
                 bool success = _communications.SetOpponentAndConnect(player);
                 if (!success)
                     return result = CommandResult.Error;
 
+                //show message
+                props = new MessageProperties(
+                    text: Surface.WrapText("Waiting for response..", 24, 500),
+                    size: 24,
+                    buttons: MessageButtons.None,
+                    buttonIndex: 0);
+                _renderer.MessageProps = props;
+
+                //send invite and wait
                 result = _communications.InviteOpponent();
                 if (result == CommandResult.Accept)
                     opponent = new Opponent(player);
             }
             finally
             {
+                //clear message
+                _renderer.MessageProps = null;
+
+                //show message if no acceptance
                 if (result == CommandResult.Error)
                     MessageBoxLoop("Unable to connect, an error occurred.", MessageButtons.OK);
                 else if (result == CommandResult.Reject)
@@ -660,6 +684,8 @@ namespace Bricker
                 else if (result == CommandResult.Unspecified)
                     MessageBoxLoop("Unable to connect, an unspecified error occurred.", MessageButtons.OK);
             }
+
+            //return
             return result;
         }
 
@@ -674,18 +700,24 @@ namespace Bricker
         private void OpponentRespondLoop()
         {
 
+            //return if no pending oppponent
             Player pendingOpponent = _pendingOpponent;
             if (pendingOpponent == null)
                 return;
 
+            //prompt user to accept
             bool accept = MessageBoxLoop($"Opponent '{pendingOpponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
+
+            //decline?
             if (!accept)
             {
+                //connect, send rejection, disconnect
                 _communications.RejectInvite(pendingOpponent);
                 _pendingOpponent = null;
                 return;
             }
 
+            //connect and send acceptance
             bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
             if (!success)
             {
@@ -693,8 +725,10 @@ namespace Bricker
                 return;
             }
 
+            //set opponent
             _opponent = new Opponent(pendingOpponent);
 
+            //run new game loop
             GameLoop(newGame: true);
         }
 
@@ -709,18 +743,50 @@ namespace Bricker
         {
             try
             {
+                //return if no opponent
                 if (_opponent == null)
                     return;
 
-                StatusPacket packet = new StatusPacket(
-                    matrix: (byte[,])_matrix.Grid.Clone(),
-                    level: (ushort)_stats.Level,
-                    lines: (ushort)_stats.Lines,
-                    score: (ushort)_stats.Score,
-                    linesSent: 0);
-                byte[] bytes = packet.ToBytes();
+                //serialize data                
+                PacketBuilder builder = new PacketBuilder();
+                builder.AddBytes2D((byte[,])_matrix.Grid.Clone());
+                builder.AddUInt16((ushort)_stats.Level);
+                builder.AddUInt16((ushort)_stats.Lines);
+                builder.AddUInt16((ushort)_stats.Score);
+                builder.AddUInt16((ushort)_stats.LinesSent);
+                byte[] bytes = builder.ToBytes();
 
+                //send data packet
                 _communications.SendData(bytes);
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Fired when game status packet received.
+        /// </summary>
+        private void ReceiveGameStatus(DataPacket packet)
+        {
+            try
+            {
+                //return if no opponent
+                Opponent opponent = _opponent;
+                if (opponent == null)
+                    return;
+
+                //deserialize data
+                PacketParser parser = new PacketParser(packet.Data);
+                byte[,] matrix = parser.GetBytes2D();
+                int level = parser.GetUInt16();
+                int lines = parser.GetUInt16();
+                int score = parser.GetUInt16();
+                int linesSent = parser.GetUInt16();
+
+                //update opponent
+                opponent.UpdateOpponent(matrix, level, lines, score, linesSent);
             }
             catch (Exception ex)
             {

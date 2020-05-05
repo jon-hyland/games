@@ -34,7 +34,7 @@ namespace Bricker.Game
         {
             _player = player;
             _lastPacketTime = DateTime.MinValue;
-            _matrix = new byte[10, 20];
+            _matrix = new byte[12, 22];
         }
 
         /// <summary>
@@ -50,24 +50,24 @@ namespace Bricker.Game
             return matrix;
         }
 
-        //public
+        /// <summary>
+        /// Updates opponent after status packet received.
+        /// </summary>
+        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent)
+        {
+            lock (this)
+            {
+                for (int x = 0; x < matrix.GetLength(0); x++)
+                    for (int y = 0; y < matrix.GetLength(1); y++)
+                        _matrix[x, y] = matrix[x, y];
+                _level = level;
+                _lines = lines;
+                _score = score;
+                _linesSent = linesSent;
+            }
+        }
 
-        ///// <summary>
-        ///// Processes an incoming packet.
-        ///// </summary>
-        //public void ProcessPacket(Packet packet)
-        //{
-        //    lock (this)
-        //    {
-        //        _lastPacketTime = DateTime.Now;
-        //        for (int x = 0; x < 10; x++)
-        //            for (int y = 0; y < 20; y++)
-        //                _matrix[x, y] = 0;
-        //        _level = 1;
-        //        _lines = 0;
-        //        _score = 0;
-        //    }
-        //}
+
 
 
 
