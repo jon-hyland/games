@@ -73,6 +73,7 @@
   <ItemGroup>
     <Compile Include="Configuration\IConfig.cs" />
     <Compile Include="Error\IErrorHandler.cs" />
+    <Compile Include="Extensions\ActionExtension.cs" />
     <Compile Include="Extensions\IListExtension.cs" />
     <Compile Include="Extensions\SocketExtension.cs" />
     <Compile Include="Extensions\TcpClientExtension.cs" />

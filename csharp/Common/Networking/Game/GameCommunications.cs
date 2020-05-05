@@ -84,6 +84,7 @@ namespace Common.Networking.Game
         public event Action<CommandRequestPacket> CommandRequestPacketReceived;
         public event Action<CommandResponsePacket> CommandResponsePacketReceived;
         public event Action<DataPacket> DataPacketReceived;
+        public event Action Disconnected;
 
         /// <summary>
         /// Class constructor.
@@ -193,6 +194,9 @@ namespace Common.Networking.Game
 
             //stop discovery server
             _discoveryServer.Stop();
+
+            //fire event
+            Disconnected?.InvokeFromTask();
         }
 
         #endregion
@@ -231,7 +235,7 @@ namespace Common.Networking.Game
         /// <summary>
         /// Sets expected opponent player and opens connection, regardless of whether they have accepted invite.  
         /// Allows invite and other communications to be sent.  Set pending to false, if called by receiving side
-        /// after *they've* accepted the invite.
+        /// after *they have* accepted the invite.
         /// </summary>
         public bool SetOpponentAndConnect(Player opponent, bool pending = true)
         {
@@ -264,7 +268,7 @@ namespace Common.Networking.Game
                 finally
                 {
                     if (fireEvent)
-                        OpponentConnected?.Invoke(opponent);
+                        OpponentConnected?.InvokeFromTask(opponent);
                 }
             }
             catch (Exception ex)
@@ -858,6 +862,16 @@ namespace Common.Networking.Game
         {
             try
             {
+                //too long since heartbeat received?
+                if ((_opponent != null) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 3))
+                {
+                    _connectionState = ConnectionState.NotConnected;
+                    _opponent = null;
+                    _pendingOpponent = null;
+                    _dataClient.Disconnect();
+                    Disconnected?.InvokeFromTask();
+                }
+
                 //determine if error state
                 if ((_opponent != null) && (_connectionState == ConnectionState.Connected))
                     if (_dataClient?.TcpClient?.Connected != true)

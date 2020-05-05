@@ -19,7 +19,8 @@ X - Create generic menu logic, replace original menu.
 X - Write up basic two-player initialization.
 X - Send status changes to opponent.
 X - Add packets sent/received to debug output.
-- Improve messages.
+X - Improve messages.
+X - Fix reject-invite bug.
 - Add player disconnect.
 - Add player game-over, then restart.
 - Add lines sent (no animation).

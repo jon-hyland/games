@@ -299,10 +299,23 @@ namespace Bricker
                 if (hit)
                     gameOver = BrickHit();
 
-                //send status packet
-                SendGameStatus();
+                //two-player mode?
+                if (_opponent != null)
+                {
+                    //disconnected?
+                    if (_communications.ConnectionState == ConnectionState.NotConnected)
+                    {
+                        _opponent = null;
+                        _pendingOpponent = null;
+                        MessageBoxLoop("Player has disconnected.", MessageButtons.OK);
+                        continue;
+                    }
 
-                //two-player game over logic
+                    //send game status
+                    SendGameStatus();
+
+                    //two-player game over logic
+                }
             }
 
             //game over
@@ -678,9 +691,9 @@ namespace Bricker
                 if (result == CommandResult.Error)
                     MessageBoxLoop("Unable to connect, an error occurred.", MessageButtons.OK);
                 else if (result == CommandResult.Reject)
-                    MessageBoxLoop("Other player declined your invite.", MessageButtons.OK);
+                    MessageBoxLoop("Player has declined your invite.", MessageButtons.OK);
                 else if (result == CommandResult.Timeout)
-                    MessageBoxLoop("Request timeout, or no playet response.", MessageButtons.OK);
+                    MessageBoxLoop("Request timeout, or no player response.", MessageButtons.OK);
                 else if (result == CommandResult.Unspecified)
                     MessageBoxLoop("Unable to connect, an unspecified error occurred.", MessageButtons.OK);
             }
