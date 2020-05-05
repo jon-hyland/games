@@ -275,6 +275,9 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawTitle(Surface frame)
         {
+            if (RenderProps.Debug)
+                return;
+
             double titleHeight = 86;
             double space = -16;
             double copyrightHeight = 16;
@@ -686,7 +689,7 @@ namespace Bricker.Rendering
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {
-                frame.Blit(surface, 7, 100);
+                frame.Blit(surface, 20, 25);
             }
         }
 

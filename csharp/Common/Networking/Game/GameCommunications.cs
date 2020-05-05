@@ -24,7 +24,7 @@ namespace Common.Networking.Game
     public class GameCommunications : IDisposable
     {
         //const
-        private const int INVITE_TIMEOUT_SEC = 120;
+        private const int INVITE_TIMEOUT_SEC = 20;
 
         //private
         private readonly IConfig _config;
@@ -252,8 +252,8 @@ namespace Common.Networking.Game
 
                         //connect to opponent
                         _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-                        _dataClient.TcpClient.SendTimeout = 1000;
-                        _dataClient.TcpClient.ReceiveTimeout = 1000;
+                        _dataClient.TcpClient.SendTimeout = 2000;
+                        _dataClient.TcpClient.ReceiveTimeout = 2000;
                         _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
                         //set opponent
@@ -275,8 +275,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
         }
@@ -304,6 +304,7 @@ namespace Common.Networking.Game
                         //accept
                         if (result == CommandResult.Accept)
                         {
+                            _pendingOpponent = null;
                             _lastHeartbeatReceived = DateTime.Now;
                             _connectionState = ConnectionState.Connected;
                             fireEvent = true;
@@ -313,6 +314,7 @@ namespace Common.Networking.Game
                         else if (result == CommandResult.Reject)
                         {
                             _opponent = null;
+                            _pendingOpponent = null;
                             _connectionState = ConnectionState.NotConnected;
                             _dataClient.Disconnect();
                         }
@@ -321,6 +323,7 @@ namespace Common.Networking.Game
                         else if (result == CommandResult.Timeout)
                         {
                             _opponent = null;
+                            _pendingOpponent = null;
                             _connectionState = ConnectionState.NotConnected;
                             _dataClient.Disconnect();
                         }
@@ -329,6 +332,7 @@ namespace Common.Networking.Game
                         else if (result == CommandResult.Error)
                         {
                             _opponent = null;
+                            _pendingOpponent = null;
                             _connectionState = ConnectionState.Error;
                             _dataClient.Disconnect();
                         }
@@ -345,8 +349,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return CommandResult.Error;
             }
         }
@@ -368,7 +372,11 @@ namespace Common.Networking.Game
                     _lastHeartbeatReceived = DateTime.Now;
                     bool success = SetOpponentAndConnect(opponent, false);
                     if (!success)
+                    {
+                        _opponent = null;
+                        _pendingOpponent = null;
                         return false;
+                    }
 
                     //send acceptance
                     return SendCommandResponse(
@@ -380,7 +388,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
         }
@@ -404,8 +413,8 @@ namespace Common.Networking.Game
 
                     //connect to opponent
                     _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-                    _dataClient.TcpClient.SendTimeout = 1000;
-                    _dataClient.TcpClient.ReceiveTimeout = 1000;
+                    _dataClient.TcpClient.SendTimeout = 2000;
+                    _dataClient.TcpClient.ReceiveTimeout = 2000;
 
                     //send rejection
                     return SendCommandResponse(
@@ -417,7 +426,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler.LogError(ex);
+                _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
             finally
@@ -448,6 +458,7 @@ namespace Common.Networking.Game
 
                     //remove opponent reference
                     _opponent = null;
+                    _pendingOpponent = null;
 
                     //close connection
                     _dataClient.Disconnect();
@@ -477,10 +488,6 @@ namespace Common.Networking.Game
                 //no opponent?
                 if (_opponent == null)
                     throw new Exception("No opponent set");
-
-                ////reconnect if not connected
-                //if (_dataClient.TcpClient?.Connected != true)
-                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //vars
                 ushort sequence;
@@ -534,8 +541,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return CommandResult.Error;
             }
         }
@@ -551,10 +558,6 @@ namespace Common.Networking.Game
                 Player opponent = type != 1 ? _opponent : _pendingOpponent;
                 if (opponent == null)
                     throw new Exception("No opponent set");
-
-                ////reconnect if not connected
-                //if (_dataClient.TcpClient?.Connected != true)
-                //    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
@@ -572,8 +575,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
         }
@@ -588,10 +591,6 @@ namespace Common.Networking.Game
                 //no opponent?
                 if (_opponent == null)
                     throw new Exception("No opponent set");
-
-                ////reconnect if not connected
-                //if (_dataClient.TcpClient?.Connected != true)
-                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 DataPacket packet = new DataPacket(
@@ -608,8 +607,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
         }
@@ -624,10 +623,6 @@ namespace Common.Networking.Game
                 //no opponent?
                 if (_opponent == null)
                     throw new Exception("No opponent set");
-
-                ////reconnect if not connected
-                //if (_dataClient.TcpClient?.Connected != true)
-                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
@@ -644,8 +639,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
                 return false;
             }
         }
@@ -744,8 +739,8 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
-                _errorHandler?.LogError(ex);
                 _connectionState = ConnectionState.Error;
+                _errorHandler?.LogError(ex);
             }
         }
 
