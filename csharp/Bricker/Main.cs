@@ -636,16 +636,30 @@ namespace Bricker
         /// </summary>
         private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
         {
-            opponent = null;
+            CommandResult result = CommandResult.Unspecified;
+            try
+            {
+                opponent = null;
 
-            bool success = _communications.SetOpponentAndConnect(player);
-            if (!success)
-                return CommandResult.Error;
+                bool success = _communications.SetOpponentAndConnect(player);
+                if (!success)
+                    return result = CommandResult.Error;
 
-            CommandResult result = _communications.InviteOpponent();
-            if (result == CommandResult.Accept)
-                opponent = new Opponent(player);
-
+                result = _communications.InviteOpponent();
+                if (result == CommandResult.Accept)
+                    opponent = new Opponent(player);
+            }
+            finally
+            {
+                if (result == CommandResult.Error)
+                    MessageBoxLoop("Unable to connect, an error occurred.", MessageButtons.OK);
+                else if (result == CommandResult.Reject)
+                    MessageBoxLoop("The other player declined your invite.", MessageButtons.OK);
+                else if (result == CommandResult.Timeout)
+                    MessageBoxLoop("The request has timed out, or played did not respond.", MessageButtons.OK);
+                else if (result == CommandResult.Unspecified)
+                    MessageBoxLoop("Unable to connect, an unspecified error occurred.", MessageButtons.OK);
+            }
             return result;
         }
 

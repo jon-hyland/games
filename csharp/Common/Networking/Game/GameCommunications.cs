@@ -369,6 +369,42 @@ namespace Common.Networking.Game
         }
 
         /// <summary>
+        /// Connects to opponent in order to respond, sends rejection, disconnects.
+        /// </summary>
+        public bool RejectInvite(Player opponent)
+        {
+            try
+            {
+                lock (_inviteLock)
+                {
+                    //return if opponents don't match
+                    if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
+                        return false;
+
+                    ////set opponent and connect
+                    //return SetOpponentAndConnect(opponent, false);
+
+                    //close any existing connection
+                    _dataClient.Disconnect();
+                    _connectionState = ConnectionState.NotConnected;
+
+                    //connect to opponent
+                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
+                    _connectionState = ConnectionState.Connected;
+
+                    //send rejection
+                    SendCommandResponse(type: 1, opponent.Seq)
+
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorHandler.LogError(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Closes connection to opponent, removes opponent reference.
         /// </summary>
         public bool CloseConnection()
