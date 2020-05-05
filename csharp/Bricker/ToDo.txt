@@ -13,4 +13,9 @@ X - Write packet serialization / deserialization.
 X - Refactor matrix and brick grid structures.
 X - Create DiscoveryClient class.
 X - Create DiscoveryServer class.
-- Design Two-Player Lobby rendering.
+X - Design Two-Player Lobby rendering.
+X - Write TCP communications library.
+X - Create generic menu logic, replace original menu.
+X - Write up basic two-player initialization.
+- Send status changes to opponent.
+- Add packets sent/received to debug output.

@@ -49,6 +49,12 @@ namespace Common.Networking.Game
         private Player _pendingOpponent;
         private long _heartbeatsSent;
         private long _heartbeatsReceived;
+        private long _dataSent;
+        private long _dataReceived;
+        private long _commandRequestsSent;
+        private long _commandRequestsReceived;
+        private long _commandResponsesSent;
+        private long _commandResponsesReceived;
         private DateTime _lastHeartbeatReceived;
         private bool _isStarted = false;
         private bool _isStopped = false;
@@ -61,8 +67,14 @@ namespace Common.Networking.Game
         public Player LocalPlayer => _localPlayer;
         public Player Opponent => _opponent;
         public ConnectionState ConnectionState => _connectionState;
-        public long HeartbeatsSend => _heartbeatsSent;
+        public long HeartbeatsSent => _heartbeatsSent;
         public long HeartbeatsReceived => _heartbeatsReceived;
+        public long DataSent => _dataSent;
+        public long DataReceived => _dataReceived;
+        public long CommandRequestsSent => _commandRequestsSent;
+        public long CommandRequestsReceived => _commandRequestsReceived;
+        public long CommandResponsesSent => _commandResponsesSent;
+        public long CommandResponsesReceived => _commandResponsesReceived;
         public DateTime LastHeartbeatReceived => _lastHeartbeatReceived;
         public TimeSpan TimeSinceLastHeartbeatReceived => DateTime.Now - _lastHeartbeatReceived;
 
@@ -110,7 +122,7 @@ namespace Common.Networking.Game
 
             //events
             _discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
-            _dataServer.DataReceived += (s, m) => DataReceived(m?.Data);
+            _dataServer.DataReceived += (s, m) => IncomingData(m?.Data);
         }
 
         /// <summary>
@@ -280,7 +292,7 @@ namespace Common.Networking.Game
                             throw new Exception("No opponent set");
 
                         //send connect-request command
-                        byte[] data = PacketBuilder.GetBytes(new object[] { _opponent.Name });
+                        byte[] data = PacketBuilder.ToBytes(new object[] { _opponent.Name });
                         CommandResult result = SendCommandRequest(1, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
 
                         //accept
@@ -335,7 +347,7 @@ namespace Common.Networking.Game
         /// <summary>
         /// Accepts an invite from a remote opponent.
         /// </summary>
-        public bool AcceptInvite(Player opponent)
+        public bool AcceptInviteAndConnect(Player opponent)
         {
             try
             {
@@ -427,6 +439,7 @@ namespace Common.Networking.Game
                     //send packet
                     byte[] bytes = packet.ToBytes();
                     _dataClient.Write(bytes);
+                    _commandRequestsSent++;
 
                     //record command request has been sent
                     _commandManager.RequestSent(packet, timeout);
@@ -485,6 +498,7 @@ namespace Common.Networking.Game
                 //send packet
                 byte[] bytes = packet.ToBytes();
                 _dataClient.Write(bytes);
+                _commandResponsesSent++;
 
                 //success
                 return true;
@@ -520,6 +534,7 @@ namespace Common.Networking.Game
                 //send packet
                 byte[] bytes = packet.ToBytes();
                 _dataClient.Write(bytes);
+                _dataSent++;
 
                 //success
                 return true;
@@ -535,7 +550,7 @@ namespace Common.Networking.Game
         /// <summary>
         /// Sends heartbeat packet to opponent endpoint.
         /// </summary>
-        public bool SendHeartbeat(long count)
+        public bool SendHeartbeat()
         {
             try
             {
@@ -550,11 +565,12 @@ namespace Common.Networking.Game
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, count: count);
+                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, count: _heartbeatsSent + 1);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
                 _dataClient.Write(bytes);
+                _heartbeatsSent++;
 
                 //success
                 return true;
@@ -575,7 +591,7 @@ namespace Common.Networking.Game
         /// Fired when server object receives data from any client.  No restrictions
         /// on who can connect, but packets that don't match are discarded.
         /// </summary>
-        private void DataReceived(byte[] buffer)
+        private void IncomingData(byte[] buffer)
         {
             try
             {
@@ -635,6 +651,7 @@ namespace Common.Networking.Game
                     //special logic for invite requests
                     if ((packet is CommandRequestPacket p1) && (p1.CommandType == 1))
                     {
+                        _commandRequestsReceived++;
                         PacketParser parser = new PacketParser(p1.Data);
                         string playerName = parser.GetString();
                         _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _config.GamePort, playerName);
@@ -665,6 +682,10 @@ namespace Common.Networking.Game
             }
         }
 
+        /// <summary>
+        /// Finds and returns first index of matching four-byte pattern defined by specified token.
+        /// Returns -1 if not found.
+        /// </summary>
         private static int FindToken(IList<byte> buffer, int token)
         {
             byte[] tokenBytes = BitConverter.GetBytes(token);
@@ -720,6 +741,9 @@ namespace Common.Networking.Game
                         //command request packet
                         if (packet is CommandRequestPacket p1)
                         {
+                            //increment counter
+                            _commandRequestsReceived++;
+
                             //fire event
                             CommandRequestPacketReceived?.Invoke(p1);
                         }
@@ -727,6 +751,9 @@ namespace Common.Networking.Game
                         //command response packet
                         else if (packet is CommandResponsePacket p2)
                         {
+                            //increment counter
+                            _commandResponsesReceived++;
+
                             //record command response received
                             _commandManager.ResponseReceived(p2);
 
@@ -737,6 +764,9 @@ namespace Common.Networking.Game
                         //data packet
                         else if (packet is DataPacket p3)
                         {
+                            //increment counter
+                            _dataReceived++;
+
                             //fire event
                             DataPacketReceived?.Invoke(p3);
                         }
@@ -744,7 +774,7 @@ namespace Common.Networking.Game
                         //heartbeat packet
                         else if (packet is HeartbeatPacket p4)
                         {
-                            //increment count
+                            //increment counter
                             _heartbeatsReceived++;
 
                             //record time
@@ -810,7 +840,7 @@ namespace Common.Networking.Game
                         continue;
 
                     //send heartbeat to opponent
-                    SendHeartbeat(++_heartbeatsSent);
+                    SendHeartbeat();
                 }
                 catch (Exception ex)
                 {

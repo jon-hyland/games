@@ -63,6 +63,19 @@ namespace Common.Networking
         }
 
         /// <summary>
+        /// Gets Byte[,].
+        /// </summary>
+        public byte[,] GetBytes2D()
+        {
+            ushort length0 = BitConverter.ToUInt16(_bytes.Dequeue(2), 0);
+            ushort length1 = BitConverter.ToUInt16(_bytes.Dequeue(2), 0);
+            byte[] bytes = _bytes.Dequeue(length0 * length1);
+            byte[,] value = new byte[length0, length1];
+            Buffer.BlockCopy(bytes, 0, value, 0, value.Length);
+            return value;
+        }
+
+        /// <summary>
         /// Gets Boolean.
         /// </summary>
         public bool GetBoolean()

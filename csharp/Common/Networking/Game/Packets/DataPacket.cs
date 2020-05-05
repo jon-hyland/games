@@ -6,7 +6,7 @@ namespace Common.Networking.Game.Packets
     /// <summary>
     /// Represents a TCP packet used to send generic one-way data.
     /// </summary>
-    public class DataPacket : PacketBase
+    public sealed class DataPacket : PacketBase
     {
         //private
         private readonly byte[] _data;

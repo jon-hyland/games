@@ -9,3 +9,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
 [assembly: SuppressMessage("Style", "IDE0071:Simplify interpolation", Justification = "<Pending>")]
 [assembly: SuppressMessage("Style", "IDE0071WithoutSuggestion:Simplify interpolation", Justification = "<Pending>")]
+[assembly: SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "<Pending>", Scope = "member", Target = "~M:Bricker.Rendering.Renderer.DrawDebugInfo(Common.Rendering.Surface,Common.Networking.Game.GameCommunications)")]

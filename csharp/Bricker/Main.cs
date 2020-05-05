@@ -1,6 +1,7 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Game;
+using Bricker.Networking;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
 using Common.Networking.Game;
@@ -30,10 +31,11 @@ namespace Bricker
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
         private GameStats _stats;
-        private Opponent _opponent;
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
+        private Opponent _opponent;
+        private bool _inGame;
 
         //public
         public Config Config => _config;
@@ -56,6 +58,8 @@ namespace Bricker
             _spaces = null;
             _levelDropIntervals = new double[10];
             _pendingOpponent = null;
+            _opponent = null;
+            _inGame = false;
 
             //initialize
             RenderProps.Initialize(_config);
@@ -99,7 +103,7 @@ namespace Bricker
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            _renderer.DrawFrame(e, _matrix, _stats, _spaces);
+            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications);
         }
 
         /// <summary>
@@ -123,8 +127,8 @@ namespace Bricker
         /// </summary>
         private void ProgramLoop()
         {
-            //vars
-            bool inGame = false;
+            //set flag
+            _inGame = false;
 
             //start game communications
             _communications.Start();
@@ -140,7 +144,7 @@ namespace Bricker
                 //main menu loop
                 MenuSelection selection = (MenuSelection)MenuLoop(new MenuProperties(
                     options: new string[] { "resume", "new game", "two player", "quit" },
-                    enabledOptions: new bool[] { inGame == true, true, true, true },
+                    enabledOptions: new bool[] { _inGame == true, true, true, true },
                     allowEsc: false,
                     allowPlayerInvite: true,
                     width: 400));
@@ -148,14 +152,13 @@ namespace Bricker
                 //resume, run game loop
                 if (selection == MenuSelection.Resume)
                 {
-                    inGame = GameLoop();
+                    GameLoop(newGame: false);
                 }
 
                 //start new game, run game loop
                 else if (selection == MenuSelection.New)
                 {
-                    NewSinglePlayerGame();
-                    inGame = GameLoop();
+                    GameLoop(newGame: true);
                 }
 
                 //two player mode
@@ -180,11 +183,12 @@ namespace Bricker
                     //request match, get response
                     CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
-
-                    //todo: do stuff
-
-                    inGame = GameLoop();
-                    _opponent = null;
+                    //new game?
+                    if ((result == CommandResult.Accept) && (opponent != null))
+                    {
+                        _opponent = opponent;
+                        GameLoop(newGame: true);
+                    }
                 }
 
                 //quit program
@@ -206,11 +210,21 @@ namespace Bricker
         /// <summary>
         /// The main game loop.  Returns true if still in game (menu opened).
         /// </summary>
-        private bool GameLoop()
+        private void GameLoop(bool newGame)
         {
             //vars
             bool gameOver = false;
             bool hit;
+
+            //new game?
+            if (newGame)
+            {
+                _stats = new GameStats(_config);
+                _matrix.NewGame();
+            }
+
+            //set flag
+            _inGame = true;
 
             //event loop
             while (!gameOver)
@@ -257,7 +271,10 @@ namespace Bricker
 
                     //menu
                     else if ((key == Key.Escape) || (key == Key.Q))
-                        return true;
+                    {
+                        _inGame = true;
+                        return;
+                    }
 
                     //level up
                     else if ((key == Key.PageUp) && (_config.Debug))
@@ -279,6 +296,11 @@ namespace Bricker
                 //brick hit bottom?
                 if (hit)
                     gameOver = BrickHit();
+
+                //send status packet
+                SendGameStatus();
+
+                //two-player game over logic
             }
 
             //game over
@@ -290,17 +312,12 @@ namespace Bricker
                     _stats.AddHighScore(initials);
 
             }
-            return false;
+
+            //set flag
+            _inGame = false;
         }
 
-        /// <summary>
-        /// Resets state and starts a new game.
-        /// </summary>
-        private void NewSinglePlayerGame()
-        {
-            _stats = new GameStats(_config);
-            _matrix.NewGame();
-        }
+
 
         #endregion
 
@@ -627,7 +644,7 @@ namespace Bricker
 
             CommandResult result = _communications.InviteOpponent();
             if (result == CommandResult.Accept)
-                opponent = new Opponent(Config.CleanInitials(player.Name), player.IP.ToString());
+                opponent = new Opponent(player);
 
             return result;
         }
@@ -636,19 +653,64 @@ namespace Bricker
 
         #region Two-Player Respond
 
+        /// <summary>
+        /// Prompts user with opponent request, and starts two-player game loop (or
+        /// returns to caller).
+        /// </summary>
         private void OpponentRespondLoop()
         {
-            Player opponent = _pendingOpponent;
-            if (opponent == null)
+
+            Player pendingOpponent = _pendingOpponent;
+            if (pendingOpponent == null)
                 return;
 
-            bool accept = MessageBoxLoop($"Opponent '{opponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
+            bool accept = MessageBoxLoop($"Opponent '{pendingOpponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
+            if (!accept)
+            {
+                _pendingOpponent = null;
+                return;
+            }
 
-            Thread.Sleep(3500);
+            bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
+            if (!success)
+            {
+                _pendingOpponent = null;
+                return;
+            }
 
-            _communications.AcceptInvite(opponent);
+            _opponent = new Opponent(pendingOpponent);
 
+            GameLoop(newGame: true);
+        }
 
+        #endregion
+
+        #region Communications
+
+        /// <summary>
+        /// Sends a data packet to opponent containing game status.
+        /// </summary>
+        private void SendGameStatus()
+        {
+            try
+            {
+                if (_opponent == null)
+                    return;
+
+                StatusPacket packet = new StatusPacket(
+                    matrix: (byte[,])_matrix.Grid.Clone(),
+                    level: (ushort)_stats.Level,
+                    lines: (ushort)_stats.Lines,
+                    score: (ushort)_stats.Score,
+                    linesSent: 0);
+                byte[] bytes = packet.ToBytes();
+
+                _communications.SendData(bytes);
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
         }
 
         #endregion

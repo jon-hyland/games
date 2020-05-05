@@ -2,6 +2,7 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering.Properties;
+using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
 using Common.Rendering;
 using Common.Utilities;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Windows;
-
 
 namespace Bricker.Rendering
 {
@@ -119,7 +119,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Renders a new frame.
         /// </summary>
-        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces)
+        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications)
         {
             try
             {
@@ -183,8 +183,8 @@ namespace Bricker.Rendering
                 //discovery lobby
                 DrawLobbyMenu(frame);
 
-                //fps
-                DrawFps(frame);
+                //debug info
+                DrawDebugInfo(frame, communications);
             }
             catch (Exception ex)
             {
@@ -675,14 +675,24 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws fps readout.
         /// </summary>
-        private void DrawFps(Surface frame)
+        private void DrawDebugInfo(Surface frame, GameCommunications communications)
         {
             if (!RenderProps.Debug)
                 return;
 
-            using (Surface surface = Surface.RenderText(Colors.White, $"fps: {(int)_fps.CPS}", 12))
+            List<string> lines = new List<string>();
+            lines.Add($"fps:   {(int)_fps.CPS}");
+            if (communications != null)
             {
-                frame.Blit(surface, 7, 680);
+                lines.Add($"heartbeats:   s={communications.HeartbeatsSent}, r={communications.HeartbeatsReceived}");
+                lines.Add($"cmd_requests:   s={communications.CommandRequestsSent}, r={communications.CommandRequestsReceived}");
+                lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
+                lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
+            }
+
+            using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
+            {
+                frame.Blit(surface, 7, 100);
             }
         }
 

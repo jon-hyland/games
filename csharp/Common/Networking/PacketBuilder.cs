@@ -41,6 +41,18 @@ namespace Common.Networking
         }
 
         /// <summary>
+        /// Adds two-dimensional Byte[] (ushort length + ushort length + byte array).
+        /// </summary>
+        public void AddBytes2D(byte[,] value)
+        {
+            _bytes.AddRange(BitConverter.GetBytes((ushort)value.GetLength(0)));
+            _bytes.AddRange(BitConverter.GetBytes((ushort)value.GetLength(1)));
+            byte[] bytes = new byte[value.Length];
+            Buffer.BlockCopy(value, 0, bytes, 0, value.Length);
+            _bytes.AddRange(bytes);
+        }
+
+        /// <summary>
         /// Adds Boolean (as byte).
         /// </summary>
         public void AddBoolean(bool value)
@@ -148,7 +160,10 @@ namespace Common.Networking
             return str;
         }
 
-        public static byte[] GetBytes(IEnumerable<object> values)
+        /// <summary>
+        /// Builds packet from list of supoprted types and returns bytes as a single operation.
+        /// </summary>
+        public static byte[] ToBytes(IEnumerable<object> values)
         {
             PacketBuilder builder = new PacketBuilder();
             foreach (object value in values)
@@ -157,6 +172,8 @@ namespace Common.Networking
                     builder.AddByte(b);
                 else if (value is byte[] bs)
                     builder.AddBytes(bs);
+                else if (value is byte[,] bs2)
+                    builder.AddBytes2D(bs2);
                 else if (value is bool bl)
                     builder.AddBoolean(bl);
                 else if (value is short i16)
