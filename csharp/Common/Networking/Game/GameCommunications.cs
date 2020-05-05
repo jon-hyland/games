@@ -337,7 +337,7 @@ namespace Common.Networking.Game
                 finally
                 {
                     if (fireEvent)
-                        OpponentConnected?.Invoke(_opponent);
+                        OpponentConnected?.InvokeFromTask(_opponent);
                 }
             }
             catch (Exception ex)
@@ -717,7 +717,7 @@ namespace Common.Networking.Game
                         PacketParser parser = new PacketParser(p1.Data);
                         string playerName = parser.GetString();
                         _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _config.GamePort, playerName, p1.Sequence);
-                        Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
+                        Task.Run(() => OpponentInviteReceived?.InvokeFromTask(_pendingOpponent));
                         continue;
                     }
 
@@ -807,7 +807,7 @@ namespace Common.Networking.Game
                             _commandRequestsReceived++;
 
                             //fire event
-                            CommandRequestPacketReceived?.Invoke(p1);
+                            CommandRequestPacketReceived?.InvokeFromTask(p1);
                         }
 
                         //command response packet
@@ -820,7 +820,7 @@ namespace Common.Networking.Game
                             _commandManager.ResponseReceived(p2);
 
                             //fire event
-                            CommandResponsePacketReceived?.Invoke(p2);
+                            CommandResponsePacketReceived?.InvokeFromTask(p2);
                         }
 
                         //data packet
@@ -830,7 +830,7 @@ namespace Common.Networking.Game
                             _dataReceived++;
 
                             //fire event
-                            DataPacketReceived?.Invoke(p3);
+                            DataPacketReceived?.InvokeFromTask(p3);
                         }
 
                         //heartbeat packet
