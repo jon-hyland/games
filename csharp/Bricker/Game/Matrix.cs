@@ -25,8 +25,6 @@ namespace Bricker.Game
         public Matrix()
         {
             _random = new Random();
-            //_width = 12;
-            //_height = 22;            
             NewGame(false);
         }
 
@@ -69,19 +67,14 @@ namespace Bricker.Game
         /// </summary>
         public void AddBrickToMatrix()
         {
-            if (_brick != null)
-            {
-                for (int x = 0; x < _brick.Width; x++)
-                {
-                    for (int y = 0; y < _brick.Height; y++)
-                    {
-                        if (_brick.Grid[x, y] > 0)
-                        {
-                            _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
-                        }
-                    }
-                }
-            }
+            if (_brick == null)
+                return;
+
+            for (int x = 0; x < _brick.Width; x++)
+                for (int y = 0; y < _brick.Height; y++)
+                    if (_brick.Grid[x, y] > 0)
+                        _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
+
             _brick = null;
         }
 

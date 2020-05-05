@@ -251,12 +251,6 @@ namespace Bricker.Rendering
                         if (matrix[x, y] > 0)
                             surface.DrawRect(Brick.BrickToColor(matrix[x, y]), ((x - 1) * 17) + 1.5, ((y - 1) * 17) + 1.5, 16, 16);
 
-                //if (matrix.Brick != null)
-                //    for (int x = 0; x < matrix.Brick.Width; x++)
-                //        for (int y = 0; y < matrix.Brick.Height; y++)
-                //            if (matrix.Brick.Grid[x, y] > 0)
-                //                surface.DrawRect(matrix.Brick.Color, ((matrix.Brick.X - 1 + x) * 17) + 1.5, ((matrix.Brick.Y - 1 + y) * 17) + 1.5, 16, 16);
-
                 surface.DrawLine(Colors.BrightWhite, 1, 1, matrixWidth - 2, 0, 1);
                 surface.DrawLine(Colors.BrightWhite, matrixWidth - 2, 1, matrixWidth - 2, matrixHeight - 2, 1);
                 surface.DrawLine(Colors.BrightWhite, matrixWidth - 2, matrixHeight - 2, 1, matrixHeight - 2, 1);

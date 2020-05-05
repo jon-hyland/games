@@ -747,9 +747,20 @@ namespace Bricker
                 if (_opponent == null)
                     return;
 
+                //copy matrix, add live brick
+                byte[,] matrix = (byte[,])_matrix.Grid.Clone();
+                Brick brick = _matrix.Brick;
+                if (brick != null)
+                {
+                    for (int x = 0; x < brick.Width; x++)
+                        for (int y = 0; y < brick.Height; y++)
+                            if (brick.Grid[x, y] > 0)
+                                matrix[x + brick.X, y + brick.Y] = brick.Grid[x, y];
+                }
+
                 //serialize data                
                 PacketBuilder builder = new PacketBuilder();
-                builder.AddBytes2D((byte[,])_matrix.Grid.Clone());
+                builder.AddBytes2D(matrix);
                 builder.AddUInt16((ushort)_stats.Level);
                 builder.AddUInt16((ushort)_stats.Lines);
                 builder.AddUInt16((ushort)_stats.Score);
