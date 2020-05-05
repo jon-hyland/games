@@ -16,7 +16,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace Bricker
+namespace Bricker.Game
 {
     /// <summary>
     /// Contains game entry point, basic logic, and primary game objects.
@@ -901,21 +901,26 @@ namespace Bricker
         /// </summary>
         private bool BrickHit()
         {
+            //add brick to matrix
             _matrix.AddBrickToMatrix();
-            List<int> rowsToErase = _matrix.IdentifySolidRows();
-            int rows = rowsToErase.Count;
-            if (rows > 0)
+
+            //identify any solid rows
+            List<int> rows = _matrix.IdentifySolidRows();
+            if (rows.Count > 0)
             {
-                _stats.IncrementLines(rows);
+                _stats.IncrementLines(rows.Count);
+                
                 int points = 40;
-                if (rows == 2)
+                if (rows.Count == 2)
                     points = 100;
-                else if (rows == 3)
+                else if (rows.Count == 3)
                     points = 300;
-                else if (rows == 4)
+                else if (rows.Count == 4)
                     points = 1200;
+
+
                 _stats.IncrementScore(points);
-                EraseFilledRows(rowsToErase);
+                EraseFilledRows(rows);
                 DropGrid();
             }
             bool collision = _matrix.SpawnBrick();

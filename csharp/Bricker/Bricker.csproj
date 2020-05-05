@@ -86,7 +86,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Main.cs" />
+    <Compile Include="Game\Main.cs" />
     <Compile Include="Networking\CommandType.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />
     <Compile Include="Rendering\Properties\InitialsEntryProperties.cs" />

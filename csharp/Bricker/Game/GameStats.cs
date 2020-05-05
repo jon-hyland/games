@@ -19,6 +19,7 @@ namespace Bricker.Game
         private int _lines;
         private int _level;
         private int _linesSent;
+        private int _lastLinesSent;
 
         //public
         public IReadOnlyList<HighScore> HighScores => _highScores.AsReadOnly();
@@ -26,6 +27,7 @@ namespace Bricker.Game
         public int Lines => _lines;
         public int Level => _level;
         public int LinesSent => _linesSent;
+        public int LastLinesSent => _lastLinesSent;
 
         /// <summary>
         /// Class constructor.
@@ -37,6 +39,8 @@ namespace Bricker.Game
             _score = 0;
             _lines = 0;
             _level = 1;
+            _linesSent = 0;
+            _lastLinesSent = 0;
         }
 
         /// <summary>
@@ -48,6 +52,8 @@ namespace Bricker.Game
             _score = 0;
             _lines = 0;
             _level = 1;
+            _linesSent = 0;
+            _lastLinesSent = 0;
         }
 
         /// <summary>
@@ -85,6 +91,14 @@ namespace Bricker.Game
         public void IncrementLinesSent(int value)
         {
             _linesSent += value;
+        }
+
+        /// <summary>
+        /// Sets last lines sent.
+        /// </summary>
+        public void SetLastLinesSent(int value)
+        {
+            _lastLinesSent = value;
         }
 
         /// <summary>
