@@ -654,7 +654,7 @@ namespace Common.Networking.Game
                         _commandRequestsReceived++;
                         PacketParser parser = new PacketParser(p1.Data);
                         string playerName = parser.GetString();
-                        _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _config.GamePort, playerName);
+                        _pendingOpponent = new Player(p1.GameTitle, p1.GameVersion, p1.SourceIP, _config.GamePort, playerName, p1.Sequence);
                         Task.Run(() => OpponentInviteReceived?.Invoke(_pendingOpponent));
                         continue;
                     }

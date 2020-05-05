@@ -88,11 +88,12 @@ namespace Common.Networking.Game.Discovery
         public int Port { get; }
         public string Name { get; set; }
         public DateTime LastDiscovery { get; set; }
+        public ushort InviteSequence { get; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(string gameTitle, Version gameVersion, IPAddress ip, int port, string name)
+        public Player(string gameTitle, Version gameVersion, IPAddress ip, int port, string name, ushort inviteSequence = 0)
         {
             GameTitle = gameTitle;
             GameVersion = gameVersion;
@@ -100,6 +101,7 @@ namespace Common.Networking.Game.Discovery
             Port = port;
             Name = name;
             LastDiscovery = DateTime.Now;
+            InviteSequence = inviteSequence;
         }
 
         /// <summary>
