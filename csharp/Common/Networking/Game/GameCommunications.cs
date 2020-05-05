@@ -868,7 +868,7 @@ namespace Common.Networking.Game
             try
             {
                 //too long since heartbeat received?
-                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 2))
+                if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 2))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
@@ -879,7 +879,7 @@ namespace Common.Networking.Game
                 }
 
                 //connection broken?
-                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
+                if ((_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
@@ -890,7 +890,7 @@ namespace Common.Networking.Game
                 }
 
                 //error state?
-                if ((_opponent != null) && (_connectionState == ConnectionState.Error))
+                if ((_connectionState == ConnectionState.Error))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
