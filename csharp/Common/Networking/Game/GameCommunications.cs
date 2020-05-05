@@ -358,7 +358,16 @@ namespace Common.Networking.Game
                         return false;
 
                     //set opponent and connect
-                    return SetOpponentAndConnect(opponent, false);
+                    bool success = SetOpponentAndConnect(opponent, false);
+                    if (!success)
+                        return false;
+
+                    //send acceptance
+                    return SendCommandResponse(
+                        type: 1,
+                        sequence: opponent.InviteSequence,
+                        result: CommandResult.Accept,
+                        data: null);
                 }
             }
             catch (Exception ex)
@@ -381,9 +390,6 @@ namespace Common.Networking.Game
                     if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
                         return false;
 
-                    ////set opponent and connect
-                    //return SetOpponentAndConnect(opponent, false);
-
                     //close any existing connection
                     _dataClient.Disconnect();
                     _connectionState = ConnectionState.NotConnected;
@@ -393,14 +399,29 @@ namespace Common.Networking.Game
                     _connectionState = ConnectionState.Connected;
 
                     //send rejection
-                    SendCommandResponse(type: 1, opponent.Seq)
-
+                    return SendCommandResponse(
+                        type: 1,
+                        sequence: opponent.InviteSequence,
+                        result: CommandResult.Reject,
+                        data: null);
                 }
             }
             catch (Exception ex)
             {
                 _errorHandler.LogError(ex);
                 return false;
+            }
+            finally
+            {
+                try
+                {
+                    _dataClient.Disconnect();
+                    _connectionState = ConnectionState.NotConnected;
+                }
+                catch (Exception ex)
+                {
+                    _errorHandler.LogError(ex);
+                }
             }
         }
 

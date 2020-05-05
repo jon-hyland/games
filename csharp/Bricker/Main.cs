@@ -681,6 +681,7 @@ namespace Bricker
             bool accept = MessageBoxLoop($"Opponent '{pendingOpponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
             if (!accept)
             {
+                _communications.RejectInvite(pendingOpponent);
                 _pendingOpponent = null;
                 return;
             }
