@@ -644,21 +644,21 @@ namespace Bricker
             {
                 //show message
                 MessageProperties props = new MessageProperties(
-                    text: Surface.WrapText("Connecting to opponent", 24, 500),
+                    text: Surface.WrapText("Connecting to opponent..", 24, 500),
                     size: 24,
                     buttons: MessageButtons.None,
                     buttonIndex: 0);
                 _renderer.MessageProps = props;
 
                 //connect to opponent
-                Thread.Sleep(650);
+                Thread.Sleep(1200);
                 bool success = _communications.SetOpponentAndConnect(player);
                 if (!success)
                     return result = CommandResult.Error;
 
                 //show message
                 props = new MessageProperties(
-                    text: Surface.WrapText("Waiting for response..", 24, 500),
+                    text: Surface.WrapText("Invite sent.  Waiting for response..", 24, 500),
                     size: 24,
                     buttons: MessageButtons.None,
                     buttonIndex: 0);
@@ -678,9 +678,9 @@ namespace Bricker
                 if (result == CommandResult.Error)
                     MessageBoxLoop("Unable to connect, an error occurred.", MessageButtons.OK);
                 else if (result == CommandResult.Reject)
-                    MessageBoxLoop("The other player declined your invite.", MessageButtons.OK);
+                    MessageBoxLoop("Other player declined your invite.", MessageButtons.OK);
                 else if (result == CommandResult.Timeout)
-                    MessageBoxLoop("The request has timed out, or played did not respond.", MessageButtons.OK);
+                    MessageBoxLoop("Request timeout, or no playet response.", MessageButtons.OK);
                 else if (result == CommandResult.Unspecified)
                     MessageBoxLoop("Unable to connect, an unspecified error occurred.", MessageButtons.OK);
             }
@@ -706,7 +706,7 @@ namespace Bricker
                 return;
 
             //prompt user to accept
-            bool accept = MessageBoxLoop($"Opponent '{pendingOpponent.Name}' is challenging you to a two-player match!  Do you accept?", MessageButtons.NoYes);
+            bool accept = MessageBoxLoop($"{pendingOpponent.Name} has challenged you to a match!{Environment.NewLine}Do you accept?", MessageButtons.NoYes);
 
             //decline?
             if (!accept)
