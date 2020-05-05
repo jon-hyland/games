@@ -863,7 +863,7 @@ namespace Common.Networking.Game
             try
             {
                 //too long since heartbeat received?
-                if ((_opponent != null) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 3))
+                if ((_opponent != null) && (_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 3))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
