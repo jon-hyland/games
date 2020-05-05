@@ -540,7 +540,7 @@ namespace Common.Networking.Game
             {
                 //no opponent?
                 Player opponent = type != 1 ? _opponent : _pendingOpponent;
-                if (_opponent == null)
+                if (opponent == null)
                     throw new Exception("No opponent set");
 
                 //reconnect if not connected
