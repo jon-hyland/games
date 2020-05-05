@@ -251,6 +251,8 @@ namespace Common.Networking.Game
                         _connectionState = ConnectionState.NotConnected;
 
                         //connect to opponent
+                        _dataClient.TcpClient.SendTimeout = 1000;
+                        _dataClient.TcpClient.ReceiveTimeout = 1000;
                         _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
                         _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
@@ -401,8 +403,9 @@ namespace Common.Networking.Game
                     _connectionState = ConnectionState.NotConnected;
 
                     //connect to opponent
+                    _dataClient.TcpClient.SendTimeout = 1000;
+                    _dataClient.TcpClient.ReceiveTimeout = 1000;
                     _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-                    _connectionState = ConnectionState.Connected;
 
                     //send rejection
                     return SendCommandResponse(
@@ -475,9 +478,9 @@ namespace Common.Networking.Game
                 if (_opponent == null)
                     throw new Exception("No opponent set");
 
-                //reconnect if not connected
-                if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
+                ////reconnect if not connected
+                //if (_dataClient.TcpClient?.Connected != true)
+                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //vars
                 ushort sequence;
@@ -549,9 +552,9 @@ namespace Common.Networking.Game
                 if (opponent == null)
                     throw new Exception("No opponent set");
 
-                //reconnect if not connected
-                if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
+                ////reconnect if not connected
+                //if (_dataClient.TcpClient?.Connected != true)
+                //    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
@@ -586,9 +589,9 @@ namespace Common.Networking.Game
                 if (_opponent == null)
                     throw new Exception("No opponent set");
 
-                //reconnect if not connected
-                if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
+                ////reconnect if not connected
+                //if (_dataClient.TcpClient?.Connected != true)
+                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 DataPacket packet = new DataPacket(
@@ -622,9 +625,9 @@ namespace Common.Networking.Game
                 if (_opponent == null)
                     throw new Exception("No opponent set");
 
-                //reconnect if not connected
-                if (_dataClient.TcpClient?.Connected != true)
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
+                ////reconnect if not connected
+                //if (_dataClient.TcpClient?.Connected != true)
+                //    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
 
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
@@ -883,6 +886,8 @@ namespace Common.Networking.Game
                 if ((_opponent != null) && (_connectionState == ConnectionState.Error))
                 {
                     _dataClient.Disconnect();
+                    _dataClient.TcpClient.SendTimeout = 1000;
+                    _dataClient.TcpClient.ReceiveTimeout = 1000;
                     _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
                     _connectionState = ConnectionState.Connected;
                 }
