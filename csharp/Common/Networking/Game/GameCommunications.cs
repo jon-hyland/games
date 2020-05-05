@@ -302,6 +302,7 @@ namespace Common.Networking.Game
                         //accept
                         if (result == CommandResult.Accept)
                         {
+                            _lastHeartbeatReceived = DateTime.Now;
                             _connectionState = ConnectionState.Connected;
                             fireEvent = true;
                         }
@@ -362,6 +363,7 @@ namespace Common.Networking.Game
                         return false;
 
                     //set opponent and connect
+                    _lastHeartbeatReceived = DateTime.Now;
                     bool success = SetOpponentAndConnect(opponent, false);
                     if (!success)
                         return false;
