@@ -888,6 +888,17 @@ namespace Common.Networking.Game
                     Disconnected?.InvokeFromTask();
                     return;
                 }
+
+                //error state?
+                if ((_opponent != null) && (_connectionState == ConnectionState.Error))
+                {
+                    _connectionState = ConnectionState.NotConnected;
+                    _opponent = null;
+                    _pendingOpponent = null;
+                    _dataClient.Disconnect();
+                    Disconnected?.InvokeFromTask();
+                    return;
+                }
             }
             catch (Exception ex)
             {
