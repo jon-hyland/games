@@ -17,5 +17,12 @@ X - Design Two-Player Lobby rendering.
 X - Write TCP communications library.
 X - Create generic menu logic, replace original menu.
 X - Write up basic two-player initialization.
-- Send status changes to opponent.
-- Add packets sent/received to debug output.
+X - Send status changes to opponent.
+X - Add packets sent/received to debug output.
+- Improve messages.
+- Add player disconnect.
+- Add player game-over, then restart.
+- Add lines sent (no animation).
+- Add hold feature, six next pieces, redesign layout.
+- Improve game animation.
+- Add music and sound effects.
