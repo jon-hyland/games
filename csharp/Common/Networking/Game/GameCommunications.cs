@@ -251,9 +251,9 @@ namespace Common.Networking.Game
                         _connectionState = ConnectionState.NotConnected;
 
                         //connect to opponent
+                        _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
                         _dataClient.TcpClient.SendTimeout = 1000;
                         _dataClient.TcpClient.ReceiveTimeout = 1000;
-                        _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
                         _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
                         //set opponent
@@ -403,9 +403,9 @@ namespace Common.Networking.Game
                     _connectionState = ConnectionState.NotConnected;
 
                     //connect to opponent
+                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
                     _dataClient.TcpClient.SendTimeout = 1000;
                     _dataClient.TcpClient.ReceiveTimeout = 1000;
-                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
 
                     //send rejection
                     return SendCommandResponse(
@@ -886,9 +886,9 @@ namespace Common.Networking.Game
                 if ((_opponent != null) && (_connectionState == ConnectionState.Error))
                 {
                     _dataClient.Disconnect();
+                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
                     _dataClient.TcpClient.SendTimeout = 1000;
                     _dataClient.TcpClient.ReceiveTimeout = 1000;
-                    _dataClient.Connect(_opponent.IP.ToString(), _config.GamePort);
                     _connectionState = ConnectionState.Connected;
                 }
             }
