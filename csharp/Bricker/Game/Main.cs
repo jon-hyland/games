@@ -1,6 +1,5 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
-using Bricker.Game;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
 using Common.Networking;
@@ -31,6 +30,7 @@ namespace Bricker.Game
         private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
+        private readonly Random _random;
         private GameStats _stats;
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
@@ -55,6 +55,7 @@ namespace Bricker.Game
             _communications = new GameCommunications(_config, _config.Initials, ErrorHandler.Instance);
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
+            _random = new Random();
             _stats = new GameStats(_config);
             _spaces = null;
             _levelDropIntervals = new double[10];
@@ -245,6 +246,8 @@ namespace Bricker.Game
                         key = _keyQueue.Dequeue();
                 }
 
+                bool foo = false;
+
                 //have key?
                 if (key != Key.None)
                 {
@@ -289,6 +292,10 @@ namespace Bricker.Game
                     //debug toggle
                     else if (key == Key.D)
                         RenderProps.Debug = !_config.Debug;
+
+                    //remove this!!
+                    else if (key == Key.S)
+                        foo = true;
                 }
 
                 //drop brick timer?
@@ -313,6 +320,14 @@ namespace Bricker.Game
 
                     //send game status
                     SendGameStatus();
+
+                    //todo: remove this!!
+                    if (foo)
+                        _stats.IncrementLinesSent(_random.Next(3) + 1);
+
+                    //have new sent lines?
+                    if (_stats.LinesSent > _stats.LastLinesSent)
+                        gameOver = AddSentLines();
 
                     //two-player game over logic
                 }
@@ -906,22 +921,48 @@ namespace Bricker.Game
 
             //identify any solid rows
             List<int> rows = _matrix.IdentifySolidRows();
+
+            //have rows?
             if (rows.Count > 0)
             {
+                //increment lines
                 _stats.IncrementLines(rows.Count);
-                
-                int points = 40;
-                if (rows.Count == 2)
-                    points = 100;
-                else if (rows.Count == 3)
-                    points = 300;
-                else if (rows.Count == 4)
-                    points = 1200;
 
+                //calculate base score + bonus
+                int points, linesToSend = 0;
+                switch (rows.Count)
+                {
+                    case 1:
+                        points = 40;
+                        break;
+                    case 2:
+                        points = 100 + (_opponent != null ? 40 : 0);
+                        linesToSend = _opponent != null ? 1 : 0;
+                        break;
+                    case 3:
+                        points = 300 + (_opponent != null ? 100 : 0);
+                        linesToSend = _opponent != null ? 2 : 0;
+                        break;
+                    case 4:
+                        points = 1200 + (_opponent != null ? 1200 : 0);
+                        linesToSend = _opponent != null ? 4 : 0;
+                        break;
+                    default:
+                        points = 0;
+                        linesToSend = 0;
+                        break;
+                }
 
+                //increment score
                 _stats.IncrementScore(points);
+
+                //animation + matrix change
+                //todo: add send lines animations
                 EraseFilledRows(rows);
                 DropGrid();
+
+                //increment sent lines
+                _stats.IncrementLinesSent(linesToSend);
             }
             bool collision = _matrix.SpawnBrick();
             return collision;
@@ -1012,6 +1053,56 @@ namespace Bricker.Game
             for (int x = 1; x <= 10; x++)
                 _matrix.Grid[x, 1] = 0;
             return true;
+        }
+
+        private bool AddSentLines()
+        {
+            //vars
+            int newLines = _stats.LastLinesSent - _stats.LinesSent;
+            int gapIndex = _random.Next(10) + 1;
+
+            //move lines up
+            bool outBounds = false;
+            for (int y = 1; y <= 20; y++)
+            {
+                for (int x = 1; x <= 10; x++)
+                {
+                    if (_matrix.Grid[x, y] != 0)
+                    {
+                        int newY = y - newLines;
+                        if (newY > 0)
+                            _matrix.Grid[x, newY] = _matrix.Grid[x, y];
+                        else
+                            outBounds = true;
+                        _matrix.Grid[x, y] = 0;
+                    }
+                }
+            }
+
+            //add lines (animated)
+            DateTime start = DateTime.Now;
+            double xPerSecond = 50;
+            int xx = 0;
+            while (xx < 10)
+            {
+                Thread.Sleep(5);
+                TimeSpan elapsed = DateTime.Now - start;
+                int expectedX = (int)Math.Round(xPerSecond * elapsed.TotalSeconds);
+                while (xx < expectedX)
+                {
+                    xx++;
+                    if ((xx < 1) || (xx > 10))
+                        break;
+                    for (int y = 20; y > 20 - newLines; y--)
+                        _matrix.Grid[xx, y] = (byte)(xx != gapIndex ? 9 : 0);
+                }
+            }
+
+            //set last value
+            _stats.SetLastLinesSent(_stats.LinesSent);
+
+            //return
+            return outBounds;
         }
 
         #endregion
