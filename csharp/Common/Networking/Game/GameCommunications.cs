@@ -890,7 +890,7 @@ namespace Common.Networking.Game
                 }
 
                 //error state?
-                if ((_connectionState == ConnectionState.Error))
+                if (_connectionState == ConnectionState.Error)
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
