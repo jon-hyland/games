@@ -344,9 +344,11 @@ namespace Bricker.Game
                     SendGameStatus();
 
                     //have new sent lines?
-                    if (_stats.LinesSent > _stats.LastLinesSent)
+                    if (opponent.LinesSent > opponent.LastLinesSent)
                     {
-                        bool gameOver = AddSentLines();
+                        int newLines = opponent.LinesSent - opponent.LastLinesSent;
+                        opponent.SetLastLinesSent(opponent.LinesSent);
+                        bool gameOver = AddSentLines(newLines);
                         if (gameOver)
                         {
                             _stats.SetGameOver();
@@ -1139,10 +1141,12 @@ namespace Bricker.Game
             return true;
         }
 
-        private bool AddSentLines()
+        /// <summary>
+        /// Adds lines sent by opponent.
+        /// </summary>
+        private bool AddSentLines(int newLines)
         {
             //vars
-            int newLines = _stats.LinesSent - _stats.LastLinesSent;
             int gapIndex = _random.Next(10) + 1;
 
             //move lines up
@@ -1181,9 +1185,6 @@ namespace Bricker.Game
                         _matrix.Grid[xx, y] = (byte)(xx != gapIndex ? 9 : 0);
                 }
             }
-
-            //set last value
-            _stats.SetLastLinesSent(_stats.LinesSent);
 
             //return
             return outBounds;
