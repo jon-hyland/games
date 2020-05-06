@@ -498,16 +498,16 @@ namespace Common.Networking.Game
                         _commandSequence = 1;
                     sequence = _commandSequence;
                 }
-                ushort retyAttempt = 0;
+                //ushort retyAttempt = 0;
 
-                //loop
-                while (true)
-                {
+                ////loop
+                //while (true)
+                //{
                     //create packet
                     CommandRequestPacket packet = new CommandRequestPacket(
                         gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
                         destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
-                        sequence: sequence, retryAttempt: retyAttempt++, data: data);
+                        sequence: sequence, retryAttempt: 0, data: data);
 
                     //send packet
                     byte[] bytes = packet.ToBytes();
@@ -533,11 +533,11 @@ namespace Common.Networking.Game
                         //sleep
                         Thread.Sleep(2);
 
-                        //break if time to retry packet
-                        if ((DateTime.Now - start).TotalMilliseconds >= 250)
-                            break;
+                        ////break if time to retry packet
+                        //if ((DateTime.Now - start).TotalMilliseconds >= 250)
+                        //    break;
                     }
-                }
+                //}
             }
             catch (Exception ex)
             {

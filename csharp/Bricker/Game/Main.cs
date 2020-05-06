@@ -734,7 +734,6 @@ namespace Bricker.Game
         /// </summary>
         private void OpponentRespondLoop()
         {
-
             //return if no pending oppponent
             Player pendingOpponent = _pendingOpponent;
             if (pendingOpponent == null)
