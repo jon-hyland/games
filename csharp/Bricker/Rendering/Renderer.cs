@@ -118,7 +118,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Renders a new frame.
         /// </summary>
-        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications, Opponent opponent)
+        public void DrawFrame(SKPaintSurfaceEventArgs e, Matrix matrix, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications, Opponent opponent, GameState gameState)
         {
             try
             {
@@ -183,7 +183,7 @@ namespace Bricker.Rendering
                 DrawLobbyMenu(frame);
 
                 //debug info
-                DrawDebugInfo(frame, communications);
+                DrawDebugInfo(frame, communications, gameState);
             }
             catch (Exception ex)
             {
@@ -206,13 +206,14 @@ namespace Bricker.Rendering
                         if (matrix.Grid[x, y] > 0)
                             surface.DrawRect(Brick.BrickToColor(matrix.Grid[x, y]), ((x - 1) * 33) + 2, ((y - 1) * 33) + 2, 32, 32);
 
-                if (matrix.Brick != null)
-                    for (int x = 0; x < matrix.Brick.Width; x++)
-                        for (int y = 0; y < matrix.Brick.Height; y++)
-                            if (matrix.Brick.Grid[x, y] > 0)
-                                surface.DrawRect(matrix.Brick.Color, ((matrix.Brick.X - 1 + x) * 33) + 2, ((matrix.Brick.Y - 1 + y) * 33) + 2, 32, 32);
+                Brick brick = matrix.Brick;
+                if (brick != null)
+                    for (int x = 0; x < brick.Width; x++)
+                        for (int y = 0; y < brick.Height; y++)
+                            if (brick.Grid[x, y] > 0)
+                                surface.DrawRect(brick.Color, ((brick.X - 1 + x) * 33) + 2, ((brick.Y - 1 + y) * 33) + 2, 32, 32);
                             else if (RenderProps.Debug)
-                                surface.DrawRect(Colors.BrightWhite, ((matrix.Brick.X - 1 + x) * 33) + 17, ((matrix.Brick.Y - 1 + y) * 33) + 17, 2, 2);
+                                surface.DrawRect(Colors.BrightWhite, ((brick.X - 1 + x) * 33) + 17, ((brick.Y - 1 + y) * 33) + 17, 2, 2);
 
                 for (int i = 1; i <= 10; i++)
                     surface.DrawLine(Colors.Gray, (i * 33) + 1, 2, (i * 33) + 1, 660, 1);
@@ -672,13 +673,14 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws fps readout.
         /// </summary>
-        private void DrawDebugInfo(Surface frame, GameCommunications communications)
+        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState)
         {
             if (!RenderProps.Debug)
                 return;
 
             List<string> lines = new List<string>();
             lines.Add($"fps:   {(int)_fps.CPS}");
+            lines.Add($"game_state:   {gameState}");
             if (communications != null)
             {
                 lines.Add($"heartbeats:   s={communications.HeartbeatsSent}, r={communications.HeartbeatsReceived}");

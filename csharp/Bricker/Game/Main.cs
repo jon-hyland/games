@@ -107,7 +107,7 @@ namespace Bricker.Game
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications, _opponent);
+            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications, _opponent, _gameState);
         }
 
         /// <summary>
