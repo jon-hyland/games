@@ -21,9 +21,9 @@ X - Send status changes to opponent.
 X - Add packets sent/received to debug output.
 X - Improve messages.
 X - Fix reject-invite bug.
-- Add player disconnect.
+X - Add player disconnect.
 - Add player game-over, then restart.
-- Add lines sent (no animation).
+X - Add lines sent (no animation).
 - Add hold feature, six next pieces, redesign layout.
 - Improve game animation.
 - Add music and sound effects.

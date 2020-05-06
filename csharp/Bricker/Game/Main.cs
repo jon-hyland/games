@@ -146,13 +146,21 @@ namespace Bricker.Game
                 if (_pendingOpponent != null)
                     OpponentRespondLoop();
 
+                //vars
+                MenuSelection selection = MenuSelection.None;
+
+                //auto-restart game?
+                if ((_gameState == GameState.GameOver) || (_gameState == GameState.GameOver_OpponentLoss))
+                    selection = MenuSelection.New;
+
                 //main menu loop
-                MenuSelection selection = (MenuSelection)MenuLoop(new MenuProperties(
-                    options: new string[] { "resume", "new game", "two player", "quit" },
-                    enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, true, true },
-                    allowEsc: false,
-                    allowPlayerInvite: true,
-                    width: 400));
+                if (selection == MenuSelection.None)
+                    selection = (MenuSelection)MenuLoop(new MenuProperties(
+                        options: new string[] { "resume", "new game", "two player", "quit" },
+                        enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, true, true },
+                        allowEsc: false,
+                        allowPlayerInvite: true,
+                        width: 400));
 
                 //resume, run game loop
                 if (selection == MenuSelection.Resume)
@@ -234,7 +242,7 @@ namespace Bricker.Game
             //event loop
             while (true)
             {
-                //set opponent reference (thread safety)
+                //get opponent reference (thread safety)
                 opponent = _opponent;
 
                 //return if opponent invite
