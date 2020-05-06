@@ -12,8 +12,8 @@ namespace Common.Rendering
         private static readonly SKColor _errorBlack;
         private static readonly SKColor _debugBlack1;
         private static readonly SKColor _debugBlack2;
+        private static readonly SKColor _dimWhite;
         private static readonly SKColor _white;
-        private static readonly SKColor _brightWhite;
         private static readonly SKColor _gray;
         private static readonly SKColor _pansyPurple;
         private static readonly SKColor _pinkRaspberry;
@@ -33,8 +33,8 @@ namespace Common.Rendering
         public static SKColor ErrorBlack => _errorBlack;
         public static SKColor DebugBlack1 => _debugBlack1;
         public static SKColor DebugBlack2 => _debugBlack2;
+        public static SKColor DimWhite => _dimWhite;
         public static SKColor White => _white;
-        public static SKColor BrightWhite => _brightWhite;
         public static SKColor Gray => _gray;
         public static SKColor PansyPurple => _pansyPurple;
         public static SKColor PinkRaspberry => _pinkRaspberry;
@@ -56,8 +56,8 @@ namespace Common.Rendering
             _errorBlack = new SKColor(50, 0, 0);
             _debugBlack1 = new SKColor(25, 0, 0);
             _debugBlack2 = new SKColor(50, 0, 0);
-            _white = new SKColor(196, 187, 175);
-            _brightWhite = new SKColor(240, 230, 220);
+            _dimWhite = new SKColor(196, 187, 175);
+            _white = new SKColor(240, 230, 220);
             _gray = new SKColor(25, 25, 25);
             _pansyPurple = new SKColor(87, 24, 69);
             _pinkRaspberry = new SKColor(144, 12, 62);
