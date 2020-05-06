@@ -162,7 +162,8 @@ namespace Bricker.Game
                         enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, true, true },
                         allowEsc: false,
                         allowPlayerInvite: true,
-                        width: 400));
+                        width: 400,
+                        height: 380));
 
                 //resume, run game loop
                 if (selection == MenuSelection.Resume)
@@ -182,7 +183,7 @@ namespace Bricker.Game
                     //get player initials
                     if (String.IsNullOrWhiteSpace(_config.Initials))
                     {
-                        string initials = InitialsLoop(new string[] { "enter your initials", "" });
+                        string initials = InitialsLoop(new string[] { "two player mode", "enter your initials" });
                         if (!String.IsNullOrWhiteSpace(_config.Initials))
                         {
                             _config.SaveInitials(initials);
@@ -256,6 +257,7 @@ namespace Bricker.Game
 
                 //vars
                 bool hit = false;
+                bool collision = false;
 
                 //sleep
                 Thread.Sleep(15);
@@ -294,6 +296,10 @@ namespace Bricker.Game
                         hit = true;
                     }
 
+                    //hold
+                    else if (key == Key.C)
+                        collision = HoldBrick();
+
                     //menu
                     else if ((key == Key.Escape) || (key == Key.Q))
                     {
@@ -328,6 +334,14 @@ namespace Bricker.Game
                         _gameState = GameState.GameOver;
                         break;
                     }
+                }
+
+                //hold-swap collision?
+                if (collision)
+                {
+                    _stats.SetGameOver();
+                    _gameState = GameState.GameOver;
+                    break;
                 }
 
                 //two-player mode?
@@ -958,6 +972,14 @@ namespace Bricker.Game
         private void RotateBrick()
         {
             _matrix.RotateBrick();
+        }
+
+        /// <summary>
+        /// Swaps hold brick.  Tries to avoid a collision, but returns true (game over) if it can't.
+        /// </summary>
+        private bool HoldBrick()
+        {
+            return _matrix.HoldBrick();
         }
 
         /// <summary>

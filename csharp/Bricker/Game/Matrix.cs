@@ -14,10 +14,12 @@ namespace Bricker.Game
         private readonly byte[,] _grid;
         private readonly Queue<Brick> _nextBricks;
         private Brick _brick;
+        private Brick _hold;
 
         //public
         public byte[,] Grid => _grid;
         public Brick Brick => _brick;
+        public Brick Hold => _hold;
 
         /// <summary>
         /// Class constructor.
@@ -28,6 +30,7 @@ namespace Bricker.Game
             _grid = new byte[12, 22];
             _nextBricks = new Queue<Brick>();
             _brick = null;
+            _hold = null;
             NewGame(false);
         }
 
@@ -48,6 +51,7 @@ namespace Bricker.Game
                 _grid[12 - 1, y] = 8;
             }
             _brick = null;
+            _hold = null;
             if (spawnBrick)
                 SpawnBrick();
         }
@@ -131,6 +135,40 @@ namespace Bricker.Game
         {
             if (_brick != null)
                 _brick.Rotate(_grid);
+        }
+
+        /// <summary>
+        /// Takes the currently live brick and puts it in hold.  If there's already
+        /// a brick held, the two swap.  Returns true if swap causes collision.
+        /// </summary>
+        public bool HoldBrick()
+        {
+            lock (_nextBricks)
+            {
+                if (_brick == null)
+                    return false;
+
+                int oX = _brick.X;
+                int oY = _brick.Y;
+
+                if (_hold == null)
+                {
+                    _hold = _brick;
+                    _hold.SetXY(0, 0);
+                    SpawnBrick();
+                    _brick.SetXY(oX, oY, _grid);
+                    return _brick.Collision(_grid);
+                }
+                else
+                {
+                    Brick temp = _hold;
+                    _hold = _brick;
+                    _hold.SetXY(0, 0);
+                    _brick = temp;
+                    _brick.SetXY(oX, oY, _grid);
+                    return _brick.Collision(_grid);
+                }
+            }
         }
 
         /// <summary>

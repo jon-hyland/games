@@ -181,7 +181,7 @@ namespace Bricker.Rendering
                 _title_XCenter = _left_Center1;
                 _title_YCenter = 62d;
                 _controls_XCenter = _left_Center2;
-                _controls_YCenter = 450d;
+                _controls_YCenter = 460d;
                 _level_XCenter = _right_Center1;
                 _level_YCenter = 75;
                 _lines_XCenter = _right_Center1;
@@ -245,8 +245,8 @@ namespace Bricker.Rendering
                 //discovery lobby
                 DrawLobbyMenu(frame);
 
-                ////debug info
-                //DrawDebugInfo(frame, communications, gameState);
+                //debug info
+                DrawDebugInfo(frame, communications, gameState);
             }
             catch (Exception ex)
             {
@@ -312,9 +312,9 @@ namespace Bricker.Rendering
 
                 surface.DrawText_Centered(Colors.White, "hold", 28, 20);
 
-                if (matrix.Brick != null)
+                if (matrix.Hold != null)
                 {
-                    byte[,] grid = ReduceBrick(matrix.Brick.Grid);
+                    byte[,] grid = ReduceBrick(matrix.Hold.Grid);
                     double swidth = (grid.GetLength(0) * 25) + 1;
                     double sheight = (grid.GetLength(1) * 25) + 1;
                     using (Surface brick = new Surface(swidth, sheight))
@@ -445,7 +445,7 @@ namespace Bricker.Rendering
                 return;
 
             double width = 310;
-            double height = 210;
+            double height = 230;
             double titleSpacing = 54;
             double lineSpacing = 23;
 
@@ -457,18 +457,19 @@ namespace Bricker.Rendering
                 surface.DrawText_Left(Colors.White, "down", 18, titleSpacing + (lineSpacing * 2), 10);
                 surface.DrawText_Left(Colors.White, "rotate", 18, titleSpacing + (lineSpacing * 3), 10);
                 surface.DrawText_Left(Colors.White, "drop", 18, titleSpacing + (lineSpacing * 4), 10);
-                surface.DrawText_Left(Colors.White, "pause", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Left(Colors.White, "hold", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Left(Colors.White, "pause", 18, titleSpacing + (lineSpacing * 6), 10);
+
                 surface.DrawText_Right(Colors.White, "left", 18, titleSpacing + (lineSpacing * 0), 10);
                 surface.DrawText_Right(Colors.White, "right", 18, titleSpacing + (lineSpacing * 1), 10);
                 surface.DrawText_Right(Colors.White, "down", 18, titleSpacing + (lineSpacing * 2), 10);
                 surface.DrawText_Right(Colors.White, "up", 18, titleSpacing + (lineSpacing * 3), 10);
                 surface.DrawText_Right(Colors.White, "space", 18, titleSpacing + (lineSpacing * 4), 10);
-                surface.DrawText_Right(Colors.White, "esc", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Right(Colors.White, "c", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Right(Colors.White, "esc", 18, titleSpacing + (lineSpacing * 6), 10);
                 frame.Blit(surface, _controls_XCenter - (width / 2), _controls_YCenter - (height / 2));
             }
         }
-
-
 
         /// <summary>
         /// Draws current level readout.
@@ -553,11 +554,11 @@ namespace Bricker.Rendering
             if (props == null)
                 return;
 
-            double vertSpacing = 22;
+            double vertSpacing = 26;
             double horizSpacing = 42;
             double optionSpacing = 22;
 
-            if ((props.Width is Double.NaN) || (props.Height is Double.NaN))
+            if ((props.Width is Double.NaN) || (props.Height is Double.NaN) || (props.CalculatedHeight is Double.NaN))
             {
                 double maxWidth = 0, totalHeight = 0;
                 double headerLineHeight = 0, optionLineHeight = 0;
@@ -579,13 +580,14 @@ namespace Bricker.Rendering
                 }
                 props.Width = props.Width is Double.NaN ? (2 + horizSpacing + maxWidth + horizSpacing + 2) : props.Width;
                 double headerHeight = props.Header.Length > 0 ? vertSpacing : 0;
-                props.Height = 2 + totalHeight + vertSpacing + headerHeight + (optionSpacing * (props.Options.Length - 1)) + vertSpacing + 2;
+                props.CalculatedHeight = 2 + totalHeight + vertSpacing + headerHeight + (optionSpacing * (props.Options.Length - 1)) + vertSpacing + 2;
+                props.Height = Math.Max(props.Height is Double.NaN ? props.CalculatedHeight : props.Height, props.CalculatedHeight);
                 props.HeaderLineHeight = headerLineHeight;
                 props.OptionLineHeight = optionLineHeight;
             }
 
             double width = props.Width, height = props.Height;
-            double y = 2 + vertSpacing;
+            double y = vertSpacing + ((props.Height - props.CalculatedHeight) / 2d);
             using (Surface surface = new Surface(width, height, Colors.Black))
             {
                 surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
@@ -633,12 +635,20 @@ namespace Bricker.Rendering
             if (initialProps == null)
                 return;
 
-            double spacing = 10;
-            double lineHeight = 38;
+
+            double vSpacing = 32;
+            double line1Height = 48;
+            double lineSpacing = 0;
+            double line2Height = 38;
+            double middleSpacing = 14;
             double charWidth = 60;
             double charHeight = 82;
-            double width = 400;
-            double height = (spacing * 4) + (lineHeight * 2) + charHeight + 4;
+            double width = 420;
+            double height = 2 + vSpacing + line1Height + lineSpacing + line2Height + middleSpacing + charHeight + vSpacing + 2;
+            double line1Y = 2 + vSpacing;
+            double line2Y = line1Y + line1Height + lineSpacing;
+            double charY = line2Y + line2Height + middleSpacing;
+
             string inits = initialProps.Initials.PadRight(3);
 
             using (Surface surface = new Surface(width, height, Colors.Black))
@@ -652,8 +662,8 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
                 surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
 
-                surface.DrawText_Centered(Colors.White, initialProps.Header[0], 28, spacing + 2);
-                surface.DrawText_Centered(Colors.White, initialProps.Header[1], 28, spacing + lineHeight + 2);
+                surface.DrawText_Centered(Colors.White, initialProps.Header[0], 36, line1Y);
+                surface.DrawText_Centered(Colors.White, initialProps.Header[1], 28, line2Y);
                 using (Surface initials = new Surface(charWidth * 3, charHeight))
                 {
                     using (Surface char1 = Surface.RenderText(Colors.FluorescentOrange, inits[0].ToString(), 64))
@@ -668,7 +678,7 @@ namespace Bricker.Rendering
                     {
                         initials.Blit(char3, ((charWidth - char3.Width) / 2) + (charWidth * 2), (charHeight - char3.Height) / 2);
                     }
-                    surface.Blit(initials, (surface.Width - initials.Width) / 2, (spacing * 2) + (lineHeight * 2) + 2);
+                    surface.Blit(initials, (surface.Width - initials.Width) / 2, charY);
                 }
 
                 frame.Blit(surface, (_frame_Width - width) / 2, (_frame_Height - height) / 2);
@@ -806,7 +816,7 @@ namespace Bricker.Rendering
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {
-                frame.Blit(surface, 20, 25);
+                frame.Blit(surface, 35, 25);
             }
         }
 

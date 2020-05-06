@@ -305,6 +305,17 @@ namespace Bricker.Game
             }
             _grid = newGrid;
 
+            PreventCollision(matrix);
+            _topSpace = CalculateTopSpace();
+            _bottomSpace = CalculateBottomSpace();
+        }
+
+        /// <summary>
+        /// Tries moving brick up to three steps in any direction to avoid a collision.  If not,
+        /// brick remains at original location.
+        /// </summary>
+        private void PreventCollision(byte[,] matrix)
+        {
             int steps = 0;
             while (Collision(matrix))
             {
@@ -352,9 +363,17 @@ namespace Bricker.Game
                     break;
                 }
             }
+        }
 
-            _topSpace = CalculateTopSpace();
-            _bottomSpace = CalculateBottomSpace();
+        /// <summary>
+        /// Changes the X/Y location, usually on hold swap.
+        /// </summary>
+        public void SetXY(int x, int y, byte[,] matrix = null)
+        {
+            _x = x;
+            _y = y;
+            if ((matrix != null) && ((x != 0) || (y != 0)))
+                PreventCollision(matrix);
         }
 
     }

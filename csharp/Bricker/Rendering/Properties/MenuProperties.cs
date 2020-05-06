@@ -15,10 +15,11 @@ namespace Bricker.Rendering.Properties
         public int SelectionIndex { get; private set; }
         public double Width { get; set; }
         public double Height { get; set; }
+        public double CalculatedHeight { get; set; }
         public double HeaderLineHeight { get; set; }
         public double OptionLineHeight { get; set; }
 
-        public MenuProperties(string[] options, double optionsSize = 42, bool[] enabledOptions = null, string[] header = null, double headerSize = 24, bool allowEsc = false, bool allowPlayerInvite = false, int selectionIndex = 0, double width = Double.NaN)
+        public MenuProperties(string[] options, double optionsSize = 42, bool[] enabledOptions = null, string[] header = null, double headerSize = 24, bool allowEsc = false, bool allowPlayerInvite = false, int selectionIndex = 0, double width = Double.NaN, double height = Double.NaN)
         {
             Options = options;
             OptionsSize = optionsSize;
@@ -33,7 +34,8 @@ namespace Bricker.Rendering.Properties
             AllowPlayerInvite = allowPlayerInvite;
             SelectionIndex = selectionIndex;
             Width = width;
-            Height = Double.NaN;
+            Height = height;
+            CalculatedHeight = Double.NaN;
             HeaderLineHeight = Double.NaN;
             OptionLineHeight = Double.NaN;
             while (!EnabledOptions[SelectionIndex])
