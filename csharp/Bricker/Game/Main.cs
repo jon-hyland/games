@@ -12,7 +12,6 @@ using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -180,35 +179,31 @@ namespace Bricker.Game
                 //two player mode
                 else if (selection == MenuSelection.TwoPlayer)
                 {
-                    ////get player initials
-                    //if (String.IsNullOrWhiteSpace(_config.Initials))
-                    //{
-                    //    string initials = InitialsLoop(new string[] { "enter your initials", "" });
-                    //    if (!String.IsNullOrWhiteSpace(_config.Initials))
-                    //    {
-                    //        _config.SaveInitials(initials);
-                    //        _communications.ChangePlayerName(initials);
-                    //    }
-                    //}
+                    //get player initials
+                    if (String.IsNullOrWhiteSpace(_config.Initials))
+                    {
+                        string initials = InitialsLoop(new string[] { "enter your initials", "" });
+                        if (!String.IsNullOrWhiteSpace(_config.Initials))
+                        {
+                            _config.SaveInitials(initials);
+                            _communications.ChangePlayerName(initials);
+                        }
+                    }
 
-                    ////select discovered player from lobby
-                    //Player player = PlayerLobbyLoop();
-                    //if (player == null)
-                    //    continue;
+                    //select discovered player from lobby
+                    Player player = PlayerLobbyLoop();
+                    if (player == null)
+                        continue;
 
-                    ////request match, get response
-                    //CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
+                    //request match, get response
+                    CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
-                    ////new game?
-                    //if ((result == CommandResult.Accept) && (opponent != null))
-                    //{
-                    //    _opponent = opponent;
-                    //    GameLoop(newGame: true);
-                    //}
-
-                    //TODO: REMOVE THIS!!
-                    _opponent = new Opponent(new Player(_config.GameTitle, _config.GameVersion, IPAddress.Parse("10.0.1.55"), _config.GamePort, "OPN"));
-                    GameLoop(newGame: true);
+                    //new game?
+                    if ((result == CommandResult.Accept) && (opponent != null))
+                    {
+                        _opponent = opponent;
+                        GameLoop(newGame: true);
+                    }
                 }
 
                 //quit program
@@ -316,7 +311,7 @@ namespace Bricker.Game
 
                     //debug toggle
                     else if (key == Key.D)
-                        RenderProps.Debug = !_config.Debug;
+                        RenderProps.Debug = !RenderProps.Debug;
                 }
 
                 //drop brick timer?
@@ -470,6 +465,10 @@ namespace Bricker.Game
                     {
                         return -1;
                     }
+
+                    //debug toggle
+                    else if (key == Key.D)
+                        RenderProps.Debug = !RenderProps.Debug;
                 }
             }
             finally
@@ -614,27 +613,23 @@ namespace Bricker.Game
 
                     //enter
                     else if (key == Key.Enter)
-                    {
                         return buttons <= MessageButtons.OK ? true : props.ButtonIndex > 0;
-                    }
 
                     //esc
                     else if (key == Key.Escape)
-                    {
                         return false;
-                    }
 
                     //left
                     else if ((key == Key.Left) || (key == Key.Up))
-                    {
                         props.DecrementsIndex();
-                    }
 
                     //right
                     else if ((key == Key.Right) || (key == Key.Down))
-                    {
                         props.IncrementIndex();
-                    }
+
+                    //debug toggle
+                    else if (key == Key.D)
+                        RenderProps.Debug = !RenderProps.Debug;
                 }
             }
             finally

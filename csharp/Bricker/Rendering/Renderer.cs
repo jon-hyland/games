@@ -39,6 +39,7 @@ namespace Bricker.Rendering
         private MessageProperties _messageProps;
         private LobbyProperties _lobbyProps;
         private readonly CpsCalculator _fps;
+        private readonly bool _fakeOpponent = true;
 
         //public
         public double FrameWidth => _frameWidth;
@@ -122,6 +123,10 @@ namespace Bricker.Rendering
         {
             try
             {
+                //create fake opponent for rendering
+                if ((_fakeOpponent) && (opponent == null))
+                    opponent = new Opponent(new Player(_config.GameTitle, _config.GameVersion, _config.LocalIP, _config.GamePort, "OPN"));
+
                 //vars
                 SKImageInfo info = e.Info;
                 _displayScale = GetDisplayScale();
@@ -354,6 +359,46 @@ namespace Bricker.Rendering
                 surface.DrawText_Left(Colors.White, "next", 28, 0);
                 frame.Blit(surface, _leftX, 566);
             }
+
+            width = 100;
+            height = 100;
+            titleSpacing = 30;
+            using (Surface surface = new Surface(width, height, Colors.Black))
+            {
+                surface.DrawLine(Colors.BrightWhite, 0, 0, width - 1, 0, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, 1, width - 1, 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, height - 2, width - 1, height - 2, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, height - 1, width - 1, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 0, 0, 0, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, 1, 0, 1, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, width - 2, 0, width - 2, height - 1, 1);
+                surface.DrawLine(Colors.BrightWhite, width - 1, 0, width - 1, height - 1, 1);
+
+                surface.DrawText_Centered(Colors.BrightWhite, "next", 18, 5);
+
+                if (matrix.NextBrick != null)
+                {
+                    double size = (matrix.NextBrick.Width * 17) + 1;
+                    using (Surface brick = new Surface(size, size))
+                    {
+                        for (int x = 0; x < matrix.NextBrick.Width; x++)
+                            for (int y = 0; y < matrix.NextBrick.Height; y++)
+                                if (matrix.NextBrick.Grid[x, y] > 0)
+                                    brick.DrawRect(matrix.NextBrick.Color, x * 17, y * 17, 16, 16);
+                        surface.Blit(
+                            brick,
+                            (width - size) / 2,
+                            titleSpacing - (matrix.NextBrick.TopSpace * 17));
+                    }
+                }
+
+                frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
+            }
+        }
+
+        private static byte[,] ReduceBrick(byte[,] brick)
+        {
+
         }
 
         /// <summary>
