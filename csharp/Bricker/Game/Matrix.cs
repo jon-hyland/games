@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Bricker.Game
 {
@@ -10,14 +11,13 @@ namespace Bricker.Game
     {
         //private
         private readonly Random _random;
-        private byte[,] _grid;
+        private readonly byte[,] _grid;
+        private readonly Queue<Brick> _nextBricks;
         private Brick _brick;
-        private Brick _nextBrick;
 
         //public
         public byte[,] Grid => _grid;
         public Brick Brick => _brick;
-        public Brick NextBrick => _nextBrick;
 
         /// <summary>
         /// Class constructor.
@@ -25,6 +25,9 @@ namespace Bricker.Game
         public Matrix()
         {
             _random = new Random();
+            _grid = new byte[12, 22];
+            _nextBricks = new Queue<Brick>();
+            _brick = null;
             NewGame(false);
         }
 
@@ -33,7 +36,7 @@ namespace Bricker.Game
         /// </summary>
         public void NewGame(bool spawnBrick = true)
         {
-            _grid = new byte[12, 22];
+            Buffer.BlockCopy(Enumerable.Repeat((byte)0, 12 * 22).ToArray(), 0, _grid, 0, 12 * 22);
             for (int x = 0; x < 12; x++)
             {
                 _grid[x, 0] = 8;
@@ -45,21 +48,24 @@ namespace Bricker.Game
                 _grid[12 - 1, y] = 8;
             }
             _brick = null;
-            _nextBrick = null;
             if (spawnBrick)
                 SpawnBrick();
         }
 
         /// <summary>
-        /// Spawns a random new brick.  Returns true on collision (game over).
+        /// Grabs the next brick in line, makes it the current brick.
+        /// Refills the queue with six items.
+        /// Returns true if current brick collides with matrix shape.
         /// </summary>
         public bool SpawnBrick()
         {
-            if (_nextBrick == null)
-                _nextBrick = new Brick(_random.Next(7) + 1);
-            _brick = _nextBrick;
-            _nextBrick = new Brick(_random.Next(7) + 1);
-            return _nextBrick.Collision(_grid);
+            lock (_nextBricks)
+            {
+                while (_nextBricks.Count < 7)
+                    _nextBricks.Enqueue(new Brick(_random.Next(7) + 1));
+                _brick = _nextBricks.Dequeue();
+            }
+            return _brick.Collision(_grid);
         }
 
         /// <summary>
@@ -76,6 +82,17 @@ namespace Bricker.Game
                         _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
 
             _brick = null;
+        }
+
+        /// <summary>
+        /// Returns up to six next bricks.
+        /// </summary>
+        public Brick[] GetNextBricks()
+        {
+            lock (_nextBricks)
+            {
+                return _nextBricks.Take(6).ToArray();
+            }
         }
 
         /// <summary>

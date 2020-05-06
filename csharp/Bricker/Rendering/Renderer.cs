@@ -162,7 +162,7 @@ namespace Bricker.Rendering
                 _playerMatrix_Width = 333;
                 _playerMatrix_Height = 663;
                 _next_Width = 132;
-                _next_Height = 160;
+                _next_Height = 800;
                 _hold_Width = 132;
                 _hold_Height = 160;
                 _playerMatrix_TotalWidth = _hold_Width - 2 + _playerMatrix_Width - 2 + _next_Width;
@@ -211,8 +211,8 @@ namespace Bricker.Rendering
                 ////current score
                 //DrawScore(frame, stats);
 
-                //high scores
-                DrawHighScores(frame, stats);
+                ////high scores
+                //DrawHighScores(frame, stats);
 
                 //menu
                 DrawMenu(frame);
@@ -368,7 +368,10 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawNext(Surface frame, Matrix matrix)
         {
-            double titleSpacing = 23;
+            double titleSpacing = 63;
+            double brickArea = 80;
+            double brickSpacing = 10;
+            Brick[] nextBricks = matrix.GetNextBricks();
             using (Surface surface = new Surface(_next_Width, _next_Height, Colors.Black))
             {
                 surface.DrawLine(Colors.White, 0, 0, _next_Width - 1, 0, 1);
@@ -382,19 +385,26 @@ namespace Bricker.Rendering
 
                 surface.DrawText_Centered(Colors.White, "next", 28, 20);
 
-                if (matrix.NextBrick != null)
+                for (int i = 0; i < nextBricks.Length; i++)
                 {
-                    byte[,] grid = ReduceBrick(matrix.NextBrick.Grid);
-                    double swidth = (grid.GetLength(0) * 25) + 1;
-                    double sheight = (grid.GetLength(1) * 25) + 1;
-                    using (Surface brick = new Surface(swidth, sheight))
+                    using (Surface container = new Surface(brickArea, brickArea, Colors.DebugBlack1))
                     {
-                        for (int x = 0; x < grid.GetLength(0); x++)
-                            for (int y = 0; y < grid.GetLength(1); y++)
-                                if (grid[x, y] > 0)
-                                    brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
-                        surface.Blit(brick,  (_next_Width - swidth) / 2, ((_next_Height - sheight) / 2) + titleSpacing);
+
+                        byte[,] grid = ReduceBrick(nextBricks[i].Grid);
+                        double swidth = (grid.GetLength(0) * 25) + 1;
+                        double sheight = (grid.GetLength(1) * 25) + 1;
+                        using (Surface brick = new Surface(swidth, sheight))
+                        {
+                            for (int x = 0; x < grid.GetLength(0); x++)
+                                for (int y = 0; y < grid.GetLength(1); y++)
+                                    if (grid[x, y] > 0)
+                                        brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
+                            container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
+                        }
+
+                        surface.Blit(container, (_next_Width - brickArea) / 2, titleSpacing + ((brickArea + brickSpacing) * i));
                     }
+
                 }
 
                 frame.Blit(surface, _playerMatrix_XCenter + (333 / 2) - 2, _playerMatrix_YCenter - (663 / 2));
@@ -406,8 +416,6 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawHold(Surface frame, Matrix matrix)
         {
-            double width = 132;
-            double height = 160;
             double titleSpacing = 23;
             using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.Black))
             {
@@ -422,9 +430,9 @@ namespace Bricker.Rendering
 
                 surface.DrawText_Centered(Colors.White, "hold", 28, 20);
 
-                if (matrix.NextBrick != null)
+                if (matrix.Brick != null)
                 {
-                    byte[,] grid = ReduceBrick(matrix.NextBrick.Grid);
+                    byte[,] grid = ReduceBrick(matrix.Brick.Grid);
                     double swidth = (grid.GetLength(0) * 25) + 1;
                     double sheight = (grid.GetLength(1) * 25) + 1;
                     using (Surface brick = new Surface(swidth, sheight))
@@ -441,6 +449,9 @@ namespace Bricker.Rendering
             }
         }
 
+        /// <summary>
+        /// Removes empty rows and columns from specified brick, returning a smaller grid.
+        /// </summary>
         private static byte[,] ReduceBrick(byte[,] brick)
         {
             int left = Int32.MaxValue, right = Int32.MinValue, top = Int32.MaxValue, bottom = Int32.MinValue;
