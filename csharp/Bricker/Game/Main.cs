@@ -12,6 +12,7 @@ using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -25,6 +26,7 @@ namespace Bricker.Game
     public class Main
     {
         //private
+        private readonly MainWindow _window;
         private readonly Dispatcher _dispatcher;
         private readonly Queue<Key> _keyQueue;
         private Thread _programLoop;
@@ -48,9 +50,10 @@ namespace Bricker.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Main(Window window)
+        public Main(MainWindow window)
         {
             //vars
+            _window = window;
             _dispatcher = window.Dispatcher;
             _keyQueue = new Queue<Key>();
             _config = new Config();
@@ -177,31 +180,35 @@ namespace Bricker.Game
                 //two player mode
                 else if (selection == MenuSelection.TwoPlayer)
                 {
-                    //get player initials
-                    if (String.IsNullOrWhiteSpace(_config.Initials))
-                    {
-                        string initials = InitialsLoop(new string[] { "enter your initials", "" });
-                        if (!String.IsNullOrWhiteSpace(_config.Initials))
-                        {
-                            _config.SaveInitials(initials);
-                            _communications.ChangePlayerName(initials);
-                        }
-                    }
+                    ////get player initials
+                    //if (String.IsNullOrWhiteSpace(_config.Initials))
+                    //{
+                    //    string initials = InitialsLoop(new string[] { "enter your initials", "" });
+                    //    if (!String.IsNullOrWhiteSpace(_config.Initials))
+                    //    {
+                    //        _config.SaveInitials(initials);
+                    //        _communications.ChangePlayerName(initials);
+                    //    }
+                    //}
 
-                    //select discovered player from lobby
-                    Player player = PlayerLobbyLoop();
-                    if (player == null)
-                        continue;
+                    ////select discovered player from lobby
+                    //Player player = PlayerLobbyLoop();
+                    //if (player == null)
+                    //    continue;
 
-                    //request match, get response
-                    CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
+                    ////request match, get response
+                    //CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
-                    //new game?
-                    if ((result == CommandResult.Accept) && (opponent != null))
-                    {
-                        _opponent = opponent;
-                        GameLoop(newGame: true);
-                    }
+                    ////new game?
+                    //if ((result == CommandResult.Accept) && (opponent != null))
+                    //{
+                    //    _opponent = opponent;
+                    //    GameLoop(newGame: true);
+                    //}
+
+                    //TODO: REMOVE THIS!!
+                    _opponent = new Opponent(new Player(_config.GameTitle, _config.GameVersion, IPAddress.Parse("10.0.1.55"), _config.GamePort, "OPN"));
+                    GameLoop(newGame: true);
                 }
 
                 //quit program
