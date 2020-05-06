@@ -136,7 +136,6 @@ namespace Bricker.Game
             //start game communications
             _communications.Start();
 
-
             //program loop
             while (true)
             {
@@ -233,6 +232,13 @@ namespace Bricker.Game
             //event loop
             while (!gameOver)
             {
+                //return if opponent invite
+                if (_pendingOpponent != null)
+                {
+                    _inGame = true;
+                    return;
+                }
+
                 //reset hit flag
                 hit = false;
 
