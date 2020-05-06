@@ -11,7 +11,6 @@ namespace Bricker.Game
     {
         //private
         private readonly Player _player;
-        private DateTime _lastPacketTime;
         private readonly byte[,] _matrix;
         private int _level;
         private int _lines;
@@ -21,8 +20,6 @@ namespace Bricker.Game
 
         //public
         public Player Player => _player;
-        public DateTime LastPacketTime => _lastPacketTime;
-        public TimeSpan TimeSinceLastPacket => DateTime.Now - _lastPacketTime;
         public int Level => _level;
         public int Lines => _lines;
         public int Score => _score;
@@ -35,7 +32,6 @@ namespace Bricker.Game
         public Opponent(Player player)
         {
             _player = player;
-            _lastPacketTime = DateTime.MinValue;
             _matrix = new byte[12, 22];
             _level = 1;
             _lines = 0;
