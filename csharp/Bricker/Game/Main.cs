@@ -747,6 +747,7 @@ namespace Bricker.Game
             {
                 //connect, send rejection, disconnect
                 _communications.RejectInvite(pendingOpponent);
+                _opponent = null;
                 _pendingOpponent = null;
                 return;
             }
@@ -755,12 +756,14 @@ namespace Bricker.Game
             bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
             if (!success)
             {
+                _opponent = null;
                 _pendingOpponent = null;
                 return;
             }
 
             //set opponent
             _opponent = new Opponent(pendingOpponent);
+            _pendingOpponent = null;
 
             //run new game loop
             GameLoop(newGame: true);
