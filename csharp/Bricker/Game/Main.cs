@@ -362,6 +362,9 @@ namespace Bricker.Game
             //two-player mode?
             if (opponent != null)
             {
+                //send game status (one last time)
+                SendGameStatus();
+
                 //send game-over command, if local player finished
                 if (_gameState == GameState.GameOver)
                     _communications.SendCommandRequest(
