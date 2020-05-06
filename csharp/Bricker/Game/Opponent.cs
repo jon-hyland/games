@@ -35,6 +35,24 @@ namespace Bricker.Game
             _player = player;
             _lastPacketTime = DateTime.MinValue;
             _matrix = new byte[12, 22];
+            _level = 1;
+            _lines = 0;
+            _score = 0;
+            _linesSent = 0;
+        }
+
+        /// <summary>
+        /// Resets opponents values to start new game.
+        /// </summary>
+        public void Reset()
+        {
+            for (int x = 0; x < 12; x++)
+                for (int y = 0; y < 22; y++)
+                    _matrix[x, y] = 0;
+            _level = 1;
+            _lines = 0;
+            _score = 0;
+            _linesSent = 0;
         }
 
         /// <summary>
@@ -66,13 +84,6 @@ namespace Bricker.Game
                 _linesSent = linesSent;
             }
         }
-
-
-
-
-
-
-
 
     }
 }

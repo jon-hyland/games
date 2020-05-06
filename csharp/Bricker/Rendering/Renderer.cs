@@ -685,6 +685,7 @@ namespace Bricker.Rendering
                 lines.Add($"cmd_requests:   s={communications.CommandRequestsSent}, r={communications.CommandRequestsReceived}");
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
+                lines.Add($"com_state:   {communications.ConnectionState}");
             }
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))

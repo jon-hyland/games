@@ -224,6 +224,7 @@ namespace Bricker.Game
             {
                 _stats = new GameStats(_config);
                 _matrix.NewGame();
+                _opponent?.Reset();
             }
 
             //set flag
@@ -1058,7 +1059,7 @@ namespace Bricker.Game
         private bool AddSentLines()
         {
             //vars
-            int newLines = _stats.LastLinesSent - _stats.LinesSent;
+            int newLines = _stats.LinesSent - _stats.LastLinesSent;
             int gapIndex = _random.Next(10) + 1;
 
             //move lines up
