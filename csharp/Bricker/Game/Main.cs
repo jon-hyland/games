@@ -896,6 +896,7 @@ namespace Bricker.Game
                 {
                     case CommandType.GameOver:
                         _opponent?.SetGameOver();
+                        _communications.SendCommandResponse(packet.CommandType, packet.Sequence, CommandResult.Accept, null);
                         break;
                 }
             }
