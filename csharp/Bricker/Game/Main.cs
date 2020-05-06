@@ -1,5 +1,6 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
+using Bricker.Networking;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
 using Common.Networking;
@@ -73,7 +74,8 @@ namespace Bricker.Game
                 if (_pendingOpponent == null)
                     _pendingOpponent = o;
             };
-            _communications.DataPacketReceived += (p) => ReceiveGameStatus(p);
+            _communications.DataPacketReceived += (p) => ReceivedGameStatus(p);
+            _communications.CommandRequestPacketReceived += (p) => ReceivedCommandPacket(p);
 
             //run tests (usually does nothing)
             RunTests();
@@ -216,7 +218,7 @@ namespace Bricker.Game
         private void GameLoop(bool newGame)
         {
             //vars
-            Opponent opponent = null;
+            Opponent opponent;
 
             //new game?
             if (newGame)
@@ -357,9 +359,17 @@ namespace Bricker.Game
             //game over
             ExplodeSpaces();
 
-            //message
+            //two-player mode?
             if (opponent != null)
             {
+                //send game-over command, if local player finished
+                if (_gameState == GameState.GameOver)
+                    _communications.SendCommandRequest(
+                        type: (ushort)CommandType.GameOver,
+                        data: null,
+                        timeout: TimeSpan.FromSeconds(2));
+
+                //message
                 MessageBoxLoop(new string[]
                 {
                     "Game Over!",
@@ -541,16 +551,16 @@ namespace Bricker.Game
         /// <summary>
         /// The message box loop.
         /// </summary>
-        private bool MessageBoxLoop(string message, MessageButtons buttons, double size = 24, double width = 500)
+        private bool MessageBoxLoop(string message, MessageButtons buttons, double size = 24, double maxWidth = 500)
         {
-            string[] lines = Surface.WrapText(message, size, width);
-            return MessageBoxLoop(lines, buttons, size, width);
+            string[] lines = Surface.WrapText(message, size, maxWidth);
+            return MessageBoxLoop(lines, buttons, size);
         }
 
         /// <summary>
         /// The message box loop.
         /// </summary>
-        private bool MessageBoxLoop(IList<string> message, MessageButtons buttons, double size = 24, double width = 500)
+        private bool MessageBoxLoop(IList<string> message, MessageButtons buttons, double size = 24)
         {
             try
             {
@@ -848,7 +858,7 @@ namespace Bricker.Game
         /// <summary>
         /// Fired when game status packet received.
         /// </summary>
-        private void ReceiveGameStatus(DataPacket packet)
+        private void ReceivedGameStatus(DataPacket packet)
         {
             try
             {
@@ -868,6 +878,26 @@ namespace Bricker.Game
 
                 //update opponent
                 opponent.UpdateOpponent(matrix, level, lines, score, linesSent, gameOver);
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Fired when command packet received.
+        /// </summary>
+        private void ReceivedCommandPacket(CommandRequestPacket packet)
+        {
+            try
+            {
+                switch ((CommandType)packet.CommandType)
+                {
+                    case CommandType.GameOver:
+                        _opponent?.SetGameOver();
+                        break;
+                }
             }
             catch (Exception ex)
             {

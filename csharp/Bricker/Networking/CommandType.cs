@@ -6,12 +6,14 @@
     ///   0 = Unspecified
     ///   1 = ConnectRequest
     ///   2 = DisconnectRequest
+    ///   3 = GameOver
     /// </summary>
     public enum CommandType : ushort
     {
         Unspecified = 0,
         ConnectRequest = 1,
-        DisconnectRequest = 2
+        DisconnectRequest = 2,
+        GameOver = 3
 
     }
 }

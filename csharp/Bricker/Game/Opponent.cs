@@ -1,5 +1,4 @@
 ﻿using Common.Networking.Game.Discovery;
-using System;
 
 namespace Bricker.Game
 {
@@ -69,6 +68,14 @@ namespace Bricker.Game
         }
 
         /// <summary>
+        /// Sets game over flag (opponent has finished).
+        /// </summary>
+        public void SetGameOver()
+        {
+            _gameOver = true;
+        }
+
+        /// <summary>
         /// Updates opponent after status packet received.
         /// </summary>
         public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent, bool gameOver)
@@ -82,7 +89,7 @@ namespace Bricker.Game
                 _lines = lines;
                 _score = score;
                 _linesSent = linesSent;
-                _gameOver = gameOver;
+                _gameOver = _gameOver || gameOver;
             }
         }
 
