@@ -20,6 +20,7 @@ namespace Bricker.Game
         private int _level;
         private int _linesSent;
         private int _lastLinesSent;
+        private bool _gameOver;
 
         //public
         public IReadOnlyList<HighScore> HighScores => _highScores.AsReadOnly();
@@ -28,6 +29,7 @@ namespace Bricker.Game
         public int Level => _level;
         public int LinesSent => _linesSent;
         public int LastLinesSent => _lastLinesSent;
+        public bool GameOver => _gameOver;
 
         /// <summary>
         /// Class constructor.
@@ -41,6 +43,7 @@ namespace Bricker.Game
             _level = 1;
             _linesSent = 0;
             _lastLinesSent = 0;
+            _gameOver = false;
         }
 
         /// <summary>
@@ -54,6 +57,7 @@ namespace Bricker.Game
             _level = 1;
             _linesSent = 0;
             _lastLinesSent = 0;
+            _gameOver = false;
         }
 
         /// <summary>
@@ -99,6 +103,14 @@ namespace Bricker.Game
         public void SetLastLinesSent(int value)
         {
             _lastLinesSent = value;
+        }
+
+        /// <summary>
+        /// Sets game-over flag to true (means local player lost).
+        /// </summary>
+        public void SetGameOver()
+        {
+            _gameOver = true;
         }
 
         /// <summary>

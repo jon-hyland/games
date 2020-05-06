@@ -10,6 +10,7 @@ using Common.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -36,7 +37,7 @@ namespace Bricker.Game
         private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
         private Opponent _opponent;
-        private bool _inGame;
+        private GameState _gameState;
 
         //public
         public Config Config => _config;
@@ -61,7 +62,7 @@ namespace Bricker.Game
             _levelDropIntervals = new double[10];
             _pendingOpponent = null;
             _opponent = null;
-            _inGame = false;
+            _gameState = GameState.NotPlaying;
 
             //initialize
             RenderProps.Initialize(_config);
@@ -131,7 +132,7 @@ namespace Bricker.Game
         private void ProgramLoop()
         {
             //set flag
-            _inGame = false;
+            _gameState = GameState.NotPlaying;
 
             //start game communications
             _communications.Start();
@@ -146,7 +147,7 @@ namespace Bricker.Game
                 //main menu loop
                 MenuSelection selection = (MenuSelection)MenuLoop(new MenuProperties(
                     options: new string[] { "resume", "new game", "two player", "quit" },
-                    enabledOptions: new bool[] { _inGame == true, true, true, true },
+                    enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, true, true },
                     allowEsc: false,
                     allowPlayerInvite: true,
                     width: 400));
@@ -215,8 +216,7 @@ namespace Bricker.Game
         private void GameLoop(bool newGame)
         {
             //vars
-            bool gameOver = false;
-            bool hit;
+            Opponent opponent = null;
 
             //new game?
             if (newGame)
@@ -227,20 +227,23 @@ namespace Bricker.Game
             }
 
             //set flag
-            _inGame = true;
+            _gameState = GameState.GameLive;
 
             //event loop
-            while (!gameOver)
+            while (true)
             {
+                //set opponent reference (thread safety)
+                opponent = _opponent;
+
                 //return if opponent invite
                 if (_pendingOpponent != null)
                 {
-                    _inGame = true;
+                    _gameState = GameState.GamePaused;
                     return;
                 }
 
-                //reset hit flag
-                hit = false;
+                //vars
+                bool hit = false;
 
                 //sleep
                 Thread.Sleep(15);
@@ -252,8 +255,6 @@ namespace Bricker.Game
                     if (_keyQueue.Count > 0)
                         key = _keyQueue.Dequeue();
                 }
-
-                bool foo = false;
 
                 //have key?
                 if (key != Key.None)
@@ -284,7 +285,7 @@ namespace Bricker.Game
                     //menu
                     else if ((key == Key.Escape) || (key == Key.Q))
                     {
-                        _inGame = true;
+                        _gameState = GameState.GamePaused;
                         return;
                     }
 
@@ -299,10 +300,6 @@ namespace Bricker.Game
                     //debug toggle
                     else if (key == Key.D)
                         RenderProps.Debug = !_config.Debug;
-
-                    //remove this!!
-                    else if (key == Key.S)
-                        foo = true;
                 }
 
                 //drop brick timer?
@@ -311,10 +308,18 @@ namespace Bricker.Game
 
                 //brick hit bottom?
                 if (hit)
-                    gameOver = BrickHit();
+                {
+                    bool gameOver = BrickHit();
+                    if (gameOver)
+                    {
+                        _stats.SetGameOver();
+                        _gameState = GameState.GameOver;
+                        break;
+                    }
+                }
 
                 //two-player mode?
-                if (_opponent != null)
+                if (opponent != null)
                 {
                     //disconnected?
                     if (_communications.ConnectionState == ConnectionState.NotConnected)
@@ -328,20 +333,44 @@ namespace Bricker.Game
                     //send game status
                     SendGameStatus();
 
-                    //todo: remove this!!
-                    if (foo)
-                        _stats.IncrementLinesSent(_random.Next(3) + 1);
-
                     //have new sent lines?
                     if (_stats.LinesSent > _stats.LastLinesSent)
-                        gameOver = AddSentLines();
+                    {
+                        bool gameOver = AddSentLines();
+                        if (gameOver)
+                        {
+                            _stats.SetGameOver();
+                            _gameState = GameState.GameOver;
+                            break;
+                        }
+                    }
 
-                    //two-player game over logic
+                    //opponent game over logic
+                    if (opponent.GameOver)
+                    {
+                        _gameState = GameState.GameOver_OpponentLoss;
+                        break;
+                    }
                 }
             }
 
             //game over
             ExplodeSpaces();
+
+            //message
+            if (opponent != null)
+            {
+                MessageBoxLoop(new string[]
+                {
+                    "Game Over!",
+                    "",
+                    $"Your score:   {_stats.Score.ToString("N0")}",
+                    $"Opponent score:   {opponent.Score.ToString("N0")}"
+                },
+                MessageButtons.OK);
+            }
+
+            //high score?
             if (_stats.IsHighScore())
             {
                 string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
@@ -349,12 +378,7 @@ namespace Bricker.Game
                     _stats.AddHighScore(initials);
 
             }
-
-            //set flag
-            _inGame = false;
         }
-
-
 
         #endregion
 
@@ -517,18 +541,25 @@ namespace Bricker.Game
         /// <summary>
         /// The message box loop.
         /// </summary>
-        private bool MessageBoxLoop(string message, MessageButtons buttons)
+        private bool MessageBoxLoop(string message, MessageButtons buttons, double size = 24, double width = 500)
+        {
+            string[] lines = Surface.WrapText(message, size, width);
+            return MessageBoxLoop(lines, buttons, size, width);
+        }
+
+        /// <summary>
+        /// The message box loop.
+        /// </summary>
+        private bool MessageBoxLoop(IList<string> message, MessageButtons buttons, double size = 24, double width = 500)
         {
             try
             {
                 //vars
-                double size = 24;
-                double width = 500;
                 MessageProperties props = new MessageProperties(
-                    Surface.WrapText(message, size, width),
-                    size,
-                    buttons,
-                    buttons >= MessageButtons.CancelOK ? 1 : 0);
+                    text: message.ToArray(),
+                    size: size,
+                    buttons: buttons,
+                    buttonIndex: buttons >= MessageButtons.CancelOK ? 1 : 0);
 
                 //push properties to renderer
                 _renderer.MessageProps = props;
@@ -686,7 +717,7 @@ namespace Bricker.Game
                 _renderer.MessageProps = props;
 
                 //connect to opponent
-                Thread.Sleep(1200);
+                Thread.Sleep(750);
                 bool success = _communications.SetOpponentAndConnect(player);
                 if (!success)
                     return result = CommandResult.Error;
@@ -802,6 +833,7 @@ namespace Bricker.Game
                 builder.AddUInt16((ushort)_stats.Lines);
                 builder.AddUInt16((ushort)_stats.Score);
                 builder.AddUInt16((ushort)_stats.LinesSent);
+                builder.AddBoolean(_stats.GameOver);
                 byte[] bytes = builder.ToBytes();
 
                 //send data packet
@@ -832,9 +864,10 @@ namespace Bricker.Game
                 int lines = parser.GetUInt16();
                 int score = parser.GetUInt16();
                 int linesSent = parser.GetUInt16();
+                bool gameOver = parser.GetBoolean();
 
                 //update opponent
-                opponent.UpdateOpponent(matrix, level, lines, score, linesSent);
+                opponent.UpdateOpponent(matrix, level, lines, score, linesSent, gameOver);
             }
             catch (Exception ex)
             {

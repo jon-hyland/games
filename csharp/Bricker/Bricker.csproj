@@ -85,6 +85,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Game\GameState.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
     <Compile Include="Networking\CommandType.cs" />

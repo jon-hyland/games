@@ -17,6 +17,7 @@ namespace Bricker.Game
         private int _lines;
         private int _score;
         private int _linesSent;
+        private bool _gameOver;
 
         //public
         public Player Player => _player;
@@ -26,6 +27,7 @@ namespace Bricker.Game
         public int Lines => _lines;
         public int Score => _score;
         public int LinesSent => _linesSent;
+        public bool GameOver => _gameOver;
 
         /// <summary>
         /// Class constructor.
@@ -39,6 +41,7 @@ namespace Bricker.Game
             _lines = 0;
             _score = 0;
             _linesSent = 0;
+            _gameOver = false;
         }
 
         /// <summary>
@@ -53,6 +56,7 @@ namespace Bricker.Game
             _lines = 0;
             _score = 0;
             _linesSent = 0;
+            _gameOver = false;
         }
 
         /// <summary>
@@ -71,7 +75,7 @@ namespace Bricker.Game
         /// <summary>
         /// Updates opponent after status packet received.
         /// </summary>
-        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent)
+        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent, bool gameOver)
         {
             lock (this)
             {
@@ -82,6 +86,7 @@ namespace Bricker.Game
                 _lines = lines;
                 _score = score;
                 _linesSent = linesSent;
+                _gameOver = gameOver;
             }
         }
 
