@@ -24,8 +24,8 @@ namespace Bricker.Rendering
         //private
         private readonly Window _window;
         private readonly Config _config;
-        private double _frameWidth;
-        private double _frameHeight;
+        private double _frame_Width;
+        private double _frame_Height;
         private double _displayScale;
         private double _sideWidth;
         private double _leftX;
@@ -51,16 +51,25 @@ namespace Bricker.Rendering
         private double _hold_Width;
         private double _hold_Height;
         private double _playerMatrix_TotalWidth;
-        private double _leftCenter1;
-        private double _leftCenter2;
+        private double _left_Center1;
+        private double _left_Center2;
+        private double _right_Center1;
         private double _title_XCenter;
         private double _title_YCenter;
         private double _controls_XCenter;
         private double _controls_YCenter;
+        private double _level_XCenter;
+        private double _level_YCenter;
+        private double _lines_XCenter;
+        private double _lines_YCenter;
+        private double _score_XCenter;
+        private double _score_YCenter;
+        private double _highScores_XCenter;
+        private double _highScores_YCenter;
 
         //public
-        public double FrameWidth => _frameWidth;
-        public double FrameHeight => _frameHeight;
+        public double FrameWidth => _frame_Width;
+        public double FrameHeight => _frame_Height;
         public MenuProperties MenuProps { get => _menuProps; set => _menuProps = value; }
         public InitialsEntryProperties InitialProps { get => _initialProps; set => _initialProps = value; }
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
@@ -149,31 +158,41 @@ namespace Bricker.Rendering
                 _displayScale = GetDisplayScale();
                 if (RenderProps.DisplayScale != _displayScale)
                     RenderProps.DisplayScale = _displayScale;
-                _frameWidth = info.Width / _displayScale;
-                _frameHeight = info.Height / _displayScale;
-                _sideWidth = (_frameWidth - 333d) / 2d;
+                _frame_Width = info.Width / _displayScale;
+                _frame_Height = info.Height / _displayScale;
+                _sideWidth = (_frame_Width - 333d) / 2d;
                 _leftX = ((_sideWidth - 250d) / 2d) + 5d;
-                _rightX = _sideWidth + 333 + _leftX;
+                _rightX = _sideWidth + 333d + _leftX;
 
-                _frame_XCenter = _frameWidth / 2;
-                _frame_YCenter = _frameHeight / 2;
+                _frame_XCenter = _frame_Width / 2d;
+                _frame_YCenter = _frame_Height / 2d;
                 _playerMatrix_XCenter = _frame_XCenter;
                 _playerMatrix_YCenter = _frame_YCenter;
-                _playerMatrix_Width = 333;
-                _playerMatrix_Height = 663;
-                _next_Width = 132;
-                _next_Height = 800;
-                _hold_Width = 132;
-                _hold_Height = 160;
-                _playerMatrix_TotalWidth = _hold_Width - 2 + _playerMatrix_Width - 2 + _next_Width;
-                _leftCenter1 = (_frameWidth - _playerMatrix_TotalWidth) / 4;
-                _title_XCenter = _leftCenter1;
-                _title_YCenter = 100;
-                _controls_XCenter = _leftCenter1;
-                _controls_YCenter = 500;
+                _playerMatrix_Width = 333d;
+                _playerMatrix_Height = 663d;
+                _next_Width = 132d;
+                _next_Height = _playerMatrix_Height;
+                _hold_Width = 132d;
+                _hold_Height = 160d;
+                _playerMatrix_TotalWidth = _hold_Width - 2 + _playerMatrix_Width - 2d + _next_Width;
+                _left_Center1 = (_frame_Width - _playerMatrix_TotalWidth) / 4d;
+                _left_Center2 = (_frame_Width - _playerMatrix_Width) / 4d;
+                _right_Center1 = _frame_Width - ((_frame_Width - _playerMatrix_TotalWidth) / 4d);
+                _title_XCenter = _left_Center1;
+                _title_YCenter = 62d;
+                _controls_XCenter = _left_Center2;
+                _controls_YCenter = 450d;
+                _level_XCenter = _right_Center1;
+                _level_YCenter = 75;
+                _lines_XCenter = _right_Center1;
+                _lines_YCenter = 193;
+                _score_XCenter = _right_Center1;
+                _score_YCenter = 311;
+                _highScores_XCenter = _right_Center1;
+                _highScores_YCenter = 532;
 
 
-                Surface frame = new Surface(e.Surface.Canvas, _frameWidth, _frameHeight);
+                Surface frame = new Surface(e.Surface.Canvas, _frame_Width, _frame_Height);
 
                 //fps
                 _fps.Increment();
@@ -183,6 +202,12 @@ namespace Bricker.Rendering
 
                 //game matrix
                 DrawMatrix(frame, matrix);
+
+                //hold
+                DrawHold(frame, matrix);
+
+                //next
+                DrawNext(frame, matrix);
 
                 //opponent matrix
                 DrawOpponentMatrix(frame, opponent);
@@ -196,23 +221,17 @@ namespace Bricker.Rendering
                 //controls
                 DrawControls(frame, opponent);
 
-                //next
-                DrawNext(frame, matrix);
+                //level
+                DrawLevel(frame, stats);
 
-                //hold
-                DrawHold(frame, matrix);
+                //lines
+                DrawLines(frame, stats);
 
-                ////level
-                //DrawLevel(frame, stats);
+                //current score
+                DrawScore(frame, stats);
 
-                ////lines
-                //DrawLines(frame, stats);
-
-                ////current score
-                //DrawScore(frame, stats);
-
-                ////high scores
-                //DrawHighScores(frame, stats);
+                //high scores
+                DrawHighScores(frame, stats);
 
                 //menu
                 DrawMenu(frame);
@@ -271,6 +290,92 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.White, 331, 0, 331, 662, 1);
 
                 frame.Blit(surface, _playerMatrix_XCenter - (_playerMatrix_Width / 2), _playerMatrix_YCenter - (_playerMatrix_Height / 2));
+            }
+        }
+
+        /// <summary>
+        /// Draws next brick readout.
+        /// </summary>
+        private void DrawHold(Surface frame, Matrix matrix)
+        {
+            double titleSpacing = 23;
+            using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.Black))
+            {
+                surface.DrawLine(Colors.White, 0, 0, _hold_Width - 1, 0, 1);
+                surface.DrawLine(Colors.White, 0, 1, _hold_Width - 1, 1, 1);
+                surface.DrawLine(Colors.White, 0, _hold_Height - 2, _hold_Width - 1, _hold_Height - 2, 1);
+                surface.DrawLine(Colors.White, 0, _hold_Height - 1, _hold_Width - 1, _hold_Height - 1, 1);
+                surface.DrawLine(Colors.White, 0, 0, 0, _hold_Height - 1, 1);
+                surface.DrawLine(Colors.White, 1, 0, 1, _hold_Height - 1, 1);
+                surface.DrawLine(Colors.White, _hold_Width - 2, 0, _hold_Width - 2, _hold_Height - 1, 1);
+                surface.DrawLine(Colors.White, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height - 1, 1);
+
+                surface.DrawText_Centered(Colors.White, "hold", 28, 20);
+
+                if (matrix.Brick != null)
+                {
+                    byte[,] grid = ReduceBrick(matrix.Brick.Grid);
+                    double swidth = (grid.GetLength(0) * 25) + 1;
+                    double sheight = (grid.GetLength(1) * 25) + 1;
+                    using (Surface brick = new Surface(swidth, sheight))
+                    {
+                        for (int x = 0; x < grid.GetLength(0); x++)
+                            for (int y = 0; y < grid.GetLength(1); y++)
+                                if (grid[x, y] > 0)
+                                    brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
+                        surface.Blit(brick, (_hold_Width - swidth) / 2, ((_hold_Height - sheight) / 2) + titleSpacing);
+                    }
+                }
+
+                frame.Blit(surface, _playerMatrix_XCenter - (_playerMatrix_Width / 2) - _hold_Width + 2, _playerMatrix_YCenter - (_playerMatrix_Height / 2));
+            }
+        }
+
+        /// <summary>
+        /// Draws next brick readout.
+        /// </summary>
+        private void DrawNext(Surface frame, Matrix matrix)
+        {
+            double titleSpacing = 63;
+            double brickArea = 80;
+            double brickSpacing = 10;
+            Brick[] nextBricks = matrix.GetNextBricks();
+            using (Surface surface = new Surface(_next_Width, _next_Height, Colors.Black))
+            {
+                surface.DrawLine(Colors.White, 0, 0, _next_Width - 1, 0, 1);
+                surface.DrawLine(Colors.White, 0, 1, _next_Width - 1, 1, 1);
+                surface.DrawLine(Colors.White, 0, _next_Height - 2, _next_Width - 1, _next_Height - 2, 1);
+                surface.DrawLine(Colors.White, 0, _next_Height - 1, _next_Width - 1, _next_Height - 1, 1);
+                surface.DrawLine(Colors.White, 0, 0, 0, _next_Height - 1, 1);
+                surface.DrawLine(Colors.White, 1, 0, 1, _next_Height - 1, 1);
+                surface.DrawLine(Colors.White, _next_Width - 2, 0, _next_Width - 2, _next_Height - 1, 1);
+                surface.DrawLine(Colors.White, _next_Width - 1, 0, _next_Width - 1, _next_Height - 1, 1);
+
+                surface.DrawText_Centered(Colors.White, "next", 28, 20);
+
+                for (int i = 0; i < nextBricks.Length; i++)
+                {
+                    using (Surface container = new Surface(brickArea, brickArea, Colors.DebugBlack1))
+                    {
+
+                        byte[,] grid = ReduceBrick(nextBricks[i].Grid);
+                        double swidth = (grid.GetLength(0) * 25) + 1;
+                        double sheight = (grid.GetLength(1) * 25) + 1;
+                        using (Surface brick = new Surface(swidth, sheight))
+                        {
+                            for (int x = 0; x < grid.GetLength(0); x++)
+                                for (int y = 0; y < grid.GetLength(1); y++)
+                                    if (grid[x, y] > 0)
+                                        brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
+                            container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
+                        }
+
+                        surface.Blit(container, (_next_Width - brickArea) / 2, titleSpacing + ((brickArea + brickSpacing) * i));
+                    }
+
+                }
+
+                frame.Blit(surface, _playerMatrix_XCenter + (_playerMatrix_Width / 2) - 2, _playerMatrix_YCenter - (_playerMatrix_Height / 2));
             }
         }
 
@@ -339,7 +444,7 @@ namespace Bricker.Rendering
             if (opponent != null)
                 return;
 
-            double width = 240;
+            double width = 310;
             double height = 210;
             double titleSpacing = 54;
             double lineSpacing = 23;
@@ -363,128 +468,14 @@ namespace Bricker.Rendering
             }
         }
 
-        /// <summary>
-        /// Draws next brick readout.
-        /// </summary>
-        private void DrawNext(Surface frame, Matrix matrix)
-        {
-            double titleSpacing = 63;
-            double brickArea = 80;
-            double brickSpacing = 10;
-            Brick[] nextBricks = matrix.GetNextBricks();
-            using (Surface surface = new Surface(_next_Width, _next_Height, Colors.Black))
-            {
-                surface.DrawLine(Colors.White, 0, 0, _next_Width - 1, 0, 1);
-                surface.DrawLine(Colors.White, 0, 1, _next_Width - 1, 1, 1);
-                surface.DrawLine(Colors.White, 0, _next_Height - 2, _next_Width - 1, _next_Height - 2, 1);
-                surface.DrawLine(Colors.White, 0, _next_Height - 1, _next_Width - 1, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, 0, 0, 0, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, 1, 0, 1, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, _next_Width - 2, 0, _next_Width - 2, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, _next_Width - 1, 0, _next_Width - 1, _next_Height - 1, 1);
 
-                surface.DrawText_Centered(Colors.White, "next", 28, 20);
-
-                for (int i = 0; i < nextBricks.Length; i++)
-                {
-                    using (Surface container = new Surface(brickArea, brickArea, Colors.DebugBlack1))
-                    {
-
-                        byte[,] grid = ReduceBrick(nextBricks[i].Grid);
-                        double swidth = (grid.GetLength(0) * 25) + 1;
-                        double sheight = (grid.GetLength(1) * 25) + 1;
-                        using (Surface brick = new Surface(swidth, sheight))
-                        {
-                            for (int x = 0; x < grid.GetLength(0); x++)
-                                for (int y = 0; y < grid.GetLength(1); y++)
-                                    if (grid[x, y] > 0)
-                                        brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
-                            container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
-                        }
-
-                        surface.Blit(container, (_next_Width - brickArea) / 2, titleSpacing + ((brickArea + brickSpacing) * i));
-                    }
-
-                }
-
-                frame.Blit(surface, _playerMatrix_XCenter + (333 / 2) - 2, _playerMatrix_YCenter - (663 / 2));
-            }
-        }
-
-        /// <summary>
-        /// Draws next brick readout.
-        /// </summary>
-        private void DrawHold(Surface frame, Matrix matrix)
-        {
-            double titleSpacing = 23;
-            using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.Black))
-            {
-                surface.DrawLine(Colors.White, 0, 0, _hold_Width - 1, 0, 1);
-                surface.DrawLine(Colors.White, 0, 1, _hold_Width - 1, 1, 1);
-                surface.DrawLine(Colors.White, 0, _hold_Height - 2, _hold_Width - 1, _hold_Height - 2, 1);
-                surface.DrawLine(Colors.White, 0, _hold_Height - 1, _hold_Width - 1, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, 0, 0, 0, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, 1, 0, 1, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, _hold_Width - 2, 0, _hold_Width - 2, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height - 1, 1);
-
-                surface.DrawText_Centered(Colors.White, "hold", 28, 20);
-
-                if (matrix.Brick != null)
-                {
-                    byte[,] grid = ReduceBrick(matrix.Brick.Grid);
-                    double swidth = (grid.GetLength(0) * 25) + 1;
-                    double sheight = (grid.GetLength(1) * 25) + 1;
-                    using (Surface brick = new Surface(swidth, sheight))
-                    {
-                        for (int x = 0; x < grid.GetLength(0); x++)
-                            for (int y = 0; y < grid.GetLength(1); y++)
-                                if (grid[x, y] > 0)
-                                    brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
-                        surface.Blit(brick, (_hold_Width - swidth) / 2, ((_hold_Height - sheight) / 2) + titleSpacing);
-                    }
-                }
-
-                frame.Blit(surface, _playerMatrix_XCenter - (333 / 2) - _hold_Width + 2, _playerMatrix_YCenter - (663 / 2));
-            }
-        }
-
-        /// <summary>
-        /// Removes empty rows and columns from specified brick, returning a smaller grid.
-        /// </summary>
-        private static byte[,] ReduceBrick(byte[,] brick)
-        {
-            int left = Int32.MaxValue, right = Int32.MinValue, top = Int32.MaxValue, bottom = Int32.MinValue;
-            for (int x = 0; x < brick.GetLength(0); x++)
-            {
-                for (int y = 0; y < brick.GetLength(1); y++)
-                {
-                    if (brick[x, y] > 0)
-                    {
-                        left = x < left ? x : left;
-                        right = x > right ? x : right;
-                        top = y < top ? y : top;
-                        bottom = y > bottom ? y : bottom;
-                    }
-                }
-            }
-            int width = (right - left) + 1;
-            int height = (bottom - top) + 1;
-            int xOffset = left;
-            int yOffset = top;
-            byte[,] reduced = new byte[width, height];
-            for (int x = 0; x < width; x++)
-                for (int y = 0; y < height; y++)
-                    reduced[x, y] = brick[x + xOffset, y + yOffset];
-            return reduced;
-        }
 
         /// <summary>
         /// Draws current level readout.
         /// </summary>
         private void DrawLevel(Surface frame, GameStats stats)
         {
-            double width = 240;
+            double width = 210;
             double height = 80;
             double space = 28;
 
@@ -492,7 +483,7 @@ namespace Bricker.Rendering
             {
                 surface.DrawText_Left(Colors.White, "level", 28, 0);
                 surface.DrawText_Right(Colors.White, stats.Level.ToString("N0"), 42, space);
-                frame.Blit(surface, _rightX, 35);
+                frame.Blit(surface, _level_XCenter - (width / 2), _level_YCenter - (height / 2));
             }
         }
 
@@ -501,7 +492,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawLines(Surface frame, GameStats stats)
         {
-            double width = 240;
+            double width = 210;
             double height = 80;
             double space = 28;
 
@@ -509,7 +500,7 @@ namespace Bricker.Rendering
             {
                 surface.DrawText_Left(Colors.White, "lines", 28, 0);
                 surface.DrawText_Right(Colors.White, stats.Lines.ToString("N0"), 42, space);
-                frame.Blit(surface, _rightX, 153);
+                frame.Blit(surface, _lines_XCenter - (width / 2), _lines_YCenter - (height / 2));
             }
         }
 
@@ -518,7 +509,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawScore(Surface frame, GameStats stats)
         {
-            double width = 240;
+            double width = 210;
             double height = 80;
             double space = 28;
 
@@ -526,7 +517,7 @@ namespace Bricker.Rendering
             {
                 surface.DrawText_Left(Colors.White, "score", 28, 0);
                 surface.DrawText_Right(Colors.White, stats.Score.ToString("N0"), 42, space);
-                frame.Blit(surface, _rightX, 271);
+                frame.Blit(surface, _score_XCenter - (width / 2), _score_YCenter - (height / 2));
             }
         }
 
@@ -535,7 +526,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawHighScores(Surface frame, GameStats stats)
         {
-            double width = 240;
+            double width = 210;
             double height = 286;
             double titleSpacing = 54;
             double lineSpacing = 23;
@@ -549,7 +540,7 @@ namespace Bricker.Rendering
                     surface.DrawText_Left(Colors.White, score.Initials, 18, titleSpacing + (lineSpacing * i), 10);
                     surface.DrawText_Right(Colors.White, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
                 }
-                frame.Blit(surface, _rightX, 389);
+                frame.Blit(surface, _highScores_XCenter - (width / 2), _highScores_YCenter - (height / 2));
             }
         }
 
@@ -629,7 +620,7 @@ namespace Bricker.Rendering
                     y += props.OptionLineHeight;
                 }
 
-                frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
+                frame.Blit(surface, (_frame_Width - width) / 2, (_frame_Height - height) / 2);
             }
         }
 
@@ -680,7 +671,7 @@ namespace Bricker.Rendering
                     surface.Blit(initials, (surface.Width - initials.Width) / 2, (spacing * 2) + (lineHeight * 2) + 2);
                 }
 
-                frame.Blit(surface, (_frameWidth - width) / 2, (_frameHeight - height) / 2);
+                frame.Blit(surface, (_frame_Width - width) / 2, (_frame_Height - height) / 2);
             }
         }
 
@@ -822,7 +813,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws exploding spaces.
         /// </summary>
-        private void DrawExplodingSpaces(Surface frame, List<ExplodingSpace> spaces)
+        private static void DrawExplodingSpaces(Surface frame, List<ExplodingSpace> spaces)
         {
             if ((spaces == null) || (spaces.Count == 0))
                 return;
@@ -837,6 +828,36 @@ namespace Bricker.Rendering
                 frame.DrawLine(Colors.Black, x, y, x, y + 34);
                 frame.DrawLine(Colors.Black, x + 34, y, x + 34, y + 34);
             }
+        }
+
+        /// <summary>
+        /// Removes empty rows and columns from specified brick, returning a smaller grid.
+        /// </summary>
+        private static byte[,] ReduceBrick(byte[,] brick)
+        {
+            int left = Int32.MaxValue, right = Int32.MinValue, top = Int32.MaxValue, bottom = Int32.MinValue;
+            for (int x = 0; x < brick.GetLength(0); x++)
+            {
+                for (int y = 0; y < brick.GetLength(1); y++)
+                {
+                    if (brick[x, y] > 0)
+                    {
+                        left = x < left ? x : left;
+                        right = x > right ? x : right;
+                        top = y < top ? y : top;
+                        bottom = y > bottom ? y : bottom;
+                    }
+                }
+            }
+            int width = (right - left) + 1;
+            int height = (bottom - top) + 1;
+            int xOffset = left;
+            int yOffset = top;
+            byte[,] reduced = new byte[width, height];
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    reduced[x, y] = brick[x + xOffset, y + yOffset];
+            return reduced;
         }
 
     }
