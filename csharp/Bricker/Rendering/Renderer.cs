@@ -11,6 +11,7 @@ using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 
@@ -699,62 +700,117 @@ namespace Bricker.Rendering
             }
         }
 
+        ///// <summary>
+        ///// Draws message box.
+        ///// </summary>
+        //private void DrawMessageBox(Surface frame)
+        //{
+        //    MessageProperties messageProps = _messageProps;
+        //    if (messageProps == null)
+        //        return;
+
+        //    using (Surface text = Surface.RenderText(Colors.White, messageProps.Lines, messageProps.Size))
+        //    {
+        //        double spacing = 25;
+        //        double buttonHeight = 32;
+        //        double width = text.Width + 4 + (spacing * 2);
+        //        double height = text.Height + 4 + (spacing * 2);
+        //        if (messageProps.Buttons != MessageButtons.None)
+        //            height += buttonHeight + (spacing * 1.5);
+
+        //        using (Surface surface = new Surface(width, height, Colors.Black))
+        //        {
+        //            surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
+        //            surface.DrawLine(Colors.White, 0, 1, width - 1, 1, 1);
+        //            surface.DrawLine(Colors.White, 0, height - 2, width - 1, height - 2, 1);
+        //            surface.DrawLine(Colors.White, 0, height - 1, width - 1, height - 1, 1);
+        //            surface.DrawLine(Colors.White, 0, 0, 0, height - 1, 1);
+        //            surface.DrawLine(Colors.White, 1, 0, 1, height - 1, 1);
+        //            surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
+        //            surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
+        //            surface.Blit(text, 2 + spacing, 2 + spacing);
+
+        //            if (messageProps.Buttons == MessageButtons.OK)
+        //            {
+        //                using (Surface buttonText = Surface.RenderText(Colors.FluorescentOrange, "ok", 24))
+        //                {
+        //                    surface.Blit(buttonText, (surface.Width - buttonText.Width) / 2, 2 + spacing + text.Height + (spacing * 1.5));
+        //                }
+        //            }
+        //            else if (messageProps.Buttons >= MessageButtons.CancelOK)
+        //            {
+        //                string label1 = messageProps.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
+        //                string label2 = messageProps.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
+        //                SKColor color1 = messageProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.White;
+        //                SKColor color2 = messageProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.White;
+
+        //                using (Surface buttonText1 = Surface.RenderText(color1, label1, 24))
+        //                {
+        //                    surface.Blit(buttonText1, spacing * 1, 2 + spacing + text.Height + (spacing * 1.5));
+        //                }
+        //                using (Surface buttonText2 = Surface.RenderText(color2, label2, 24))
+        //                {
+        //                    surface.Blit(buttonText2, surface.Width - buttonText2.Width - (spacing * 1), 2 + spacing + text.Height + (spacing * 1.5));
+        //                }
+        //            }
+
+        //            frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
+        //        }
+        //    }
+        //}
+
         /// <summary>
         /// Draws message box.
         /// </summary>
         private void DrawMessageBox(Surface frame)
         {
-            MessageProperties messageProps = _messageProps;
-            if (messageProps == null)
+            MessageProperties props = _messageProps;
+            if (props == null)
                 return;
 
-            using (Surface text = Surface.RenderText(Colors.White, messageProps.Text, messageProps.Size))
+            double horizontalSpacing = 34;
+            double verticalSpacing = 25;
+            double betweenSpacing = 10;
+            double buttonSize = 28;
+            double buttonHeight = 34;
+            double textWidth = props.Lines
+                .Select(l => Surface.MeasureText_Width(l.Text, l.Size))
+                .Max();
+            double[] textHeights = props.Lines
+                .Select(l => Surface.MeasureText_Height(l.Text, l.Size) + l.TopMargin + l.BottomMargin)
+                .ToArray();
+            double textHeight = textHeights.Sum();
+            double width = 2 + horizontalSpacing + textWidth + horizontalSpacing + 2;
+            double height = 2 + verticalSpacing + textHeight + (props.Buttons != MessageButtons.None ? betweenSpacing + buttonHeight : 0) + verticalSpacing + 2;
+            double y = 2d;
+
+            using (Surface surface = new Surface(width, height, Colors.Black))
             {
-                double spacing = 25;
-                double buttonHeight = 32;
-                double width = text.Width + 4 + (spacing * 2);
-                double height = text.Height + 4 + (spacing * 2);
-                if (messageProps.Buttons != MessageButtons.None)
-                    height += buttonHeight + (spacing * 1.5);
+                surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
+                surface.DrawLine(Colors.White, 0, 1, width - 1, 1, 1);
+                surface.DrawLine(Colors.White, 0, height - 2, width - 1, height - 2, 1);
+                surface.DrawLine(Colors.White, 0, height - 1, width - 1, height - 1, 1);
+                surface.DrawLine(Colors.White, 0, 0, 0, height - 1, 1);
+                surface.DrawLine(Colors.White, 1, 0, 1, height - 1, 1);
+                surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
+                surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
 
-                using (Surface surface = new Surface(width, height, Colors.Black))
+                using (Surface textSurface = new Surface(textWidth, textHeight))
                 {
-                    surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
-                    surface.DrawLine(Colors.White, 0, 1, width - 1, 1, 1);
-                    surface.DrawLine(Colors.White, 0, height - 2, width - 1, height - 2, 1);
-                    surface.DrawLine(Colors.White, 0, height - 1, width - 1, height - 1, 1);
-                    surface.DrawLine(Colors.White, 0, 0, 0, height - 1, 1);
-                    surface.DrawLine(Colors.White, 1, 0, 1, height - 1, 1);
-                    surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
-                    surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
-                    surface.Blit(text, 2 + spacing, 2 + spacing);
-
-                    if (messageProps.Buttons == MessageButtons.OK)
+                    for (int i = 0; i < props.Lines.Length; i++)
                     {
-                        using (Surface buttonText = Surface.RenderText(Colors.FluorescentOrange, "ok", 24))
-                        {
-                            surface.Blit(buttonText, (surface.Width - buttonText.Width) / 2, 2 + spacing + text.Height + (spacing * 1.5));
-                        }
+                        TextLine line = props.Lines[i];
+                        if (line.Alignment == TextAlignment.Left)
+                            textSurface.DrawText_Left(line.Color, line.Text, line.Size, y);
+                        else if (line.Alignment == TextAlignment.Right)
+                            textSurface.DrawText_Right(line.Color, line.Text, line.Size, y);
+                        else if (line.Alignment == TextAlignment.Center)
+                            textSurface.DrawText_Centered(line.Color, line.Text, line.Size, y);
+                        y += textHeights[i];
                     }
-                    else if (messageProps.Buttons >= MessageButtons.CancelOK)
-                    {
-                        string label1 = messageProps.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
-                        string label2 = messageProps.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
-                        SKColor color1 = messageProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.White;
-                        SKColor color2 = messageProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.White;
-
-                        using (Surface buttonText1 = Surface.RenderText(color1, label1, 24))
-                        {
-                            surface.Blit(buttonText1, spacing * 1, 2 + spacing + text.Height + (spacing * 1.5));
-                        }
-                        using (Surface buttonText2 = Surface.RenderText(color2, label2, 24))
-                        {
-                            surface.Blit(buttonText2, surface.Width - buttonText2.Width - (spacing * 1), 2 + spacing + text.Height + (spacing * 1.5));
-                        }
-                    }
-
-                    frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
+                    surface.Blit(textSurface, horizontalSpacing, verticalSpacing);
                 }
+                frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
             }
         }
 

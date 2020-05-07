@@ -1,4 +1,6 @@
-﻿namespace Bricker.Rendering.Properties
+﻿using System.Linq;
+
+namespace Bricker.Rendering.Properties
 {
     /// <summary>
     /// Represents buttons displayed under message.
@@ -17,20 +19,48 @@
     public class MessageProperties
     {
         //public
-        public string[] Text { get; }
-        public double Size { get; }
+        public TextLine[] Lines { get; }
         public MessageButtons Buttons { get; }
         public int ButtonIndex { get; private set; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public MessageProperties(string[] text, double size, MessageButtons buttons, int buttonIndex)
+        public MessageProperties(string line, double size = 24, MessageButtons buttons = MessageButtons.OK)
         {
-            Text = text;
-            Size = size;
+            Lines = new TextLine[] { new TextLine(line, size) };
             Buttons = buttons;
-            ButtonIndex = buttonIndex;
+            ButtonIndex = buttons >= MessageButtons.CancelOK ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Class constructor.
+        /// </summary>
+        public MessageProperties(string[] lines, double size = 24, MessageButtons buttons = MessageButtons.OK)
+        {
+            Lines = lines.Select(l => new TextLine(l, size)).ToArray();
+            Buttons = buttons;
+            ButtonIndex = buttons >= MessageButtons.CancelOK ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Class constructor.
+        /// </summary>
+        public MessageProperties(TextLine line, MessageButtons buttons = MessageButtons.OK)
+        {
+            Lines = new TextLine[] { line };
+            Buttons = buttons;
+            ButtonIndex = buttons >= MessageButtons.CancelOK ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Class constructor.
+        /// </summary>
+        public MessageProperties(TextLine[] lines, MessageButtons buttons = MessageButtons.OK)
+        {
+            Lines = lines;
+            Buttons = buttons;
+            ButtonIndex = buttons >= MessageButtons.CancelOK ? 1 : 0;
         }
 
         /// <summary>

@@ -134,6 +134,24 @@ namespace Common.Rendering
         }
 
         /// <summary>
+        /// Calculates width of text.
+        /// </summary>
+        public static double MeasureText_Width(string text, double size)
+        {
+            MeasureText(text, size, out double width, out double _);
+            return width;
+        }
+
+        /// <summary>
+        /// Calculates height of text.
+        /// </summary>
+        public static double MeasureText_Height(string text, double size)
+        {
+            MeasureText(text, size, out double _, out double height);
+            return height;
+        }
+
+        /// <summary>
         /// Creates and returns a surface with text, which must be disposed.
         /// </summary>
         public static Surface RenderText(SKColor color, string text, double size)

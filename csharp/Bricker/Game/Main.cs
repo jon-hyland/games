@@ -11,7 +11,6 @@ using Common.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -352,7 +351,8 @@ namespace Bricker.Game
                     {
                         _opponent = null;
                         _pendingOpponent = null;
-                        MessageBoxLoop("Player has disconnected.", MessageButtons.OK);
+                        //MessageBoxLoop("Player has disconnected.", MessageButtons.OK);
+                        MessageBoxLoop(new MessageProperties("Player has disconnected."));
                         continue;
                     }
 
@@ -399,14 +399,13 @@ namespace Bricker.Game
                         timeout: TimeSpan.FromSeconds(2));
 
                 //message
-                MessageBoxLoop(new string[]
-                {
-                    "Game Over!",
-                    "",
-                    $"Your score:   {_stats.Score.ToString("N0")}",
-                    $"Opponent score:   {opponent.Score.ToString("N0")}"
-                },
-                MessageButtons.OK);
+                MessageBoxLoop(new MessageProperties(
+                    new TextLine[]
+                    {
+                        new TextLine(text: "Game Over!", size: 32, bottomMargin: 36),
+                        new TextLine(text: $"Your score:   {_stats.Score.ToString("N0")}", size: 24),
+                        new TextLine(text: $"Opponent score:   {opponent.Score.ToString("N0")}", size: 24)
+                    }));
             }
 
             //high score?
@@ -584,26 +583,10 @@ namespace Bricker.Game
         /// <summary>
         /// The message box loop.
         /// </summary>
-        private bool MessageBoxLoop(string message, MessageButtons buttons, double size = 24, double maxWidth = 500)
-        {
-            string[] lines = Surface.WrapText(message, size, maxWidth);
-            return MessageBoxLoop(lines, buttons, size);
-        }
-
-        /// <summary>
-        /// The message box loop.
-        /// </summary>
-        private bool MessageBoxLoop(IList<string> message, MessageButtons buttons, double size = 24)
+        private bool MessageBoxLoop(MessageProperties props)
         {
             try
             {
-                //vars
-                MessageProperties props = new MessageProperties(
-                    text: message.ToArray(),
-                    size: size,
-                    buttons: buttons,
-                    buttonIndex: buttons >= MessageButtons.CancelOK ? 1 : 0);
-
                 //push properties to renderer
                 _renderer.MessageProps = props;
 
@@ -627,7 +610,7 @@ namespace Bricker.Game
 
                     //enter
                     else if (key == Key.Enter)
-                        return buttons <= MessageButtons.OK ? true : props.ButtonIndex > 0;
+                        return props.Buttons <= MessageButtons.OK ? true : props.ButtonIndex > 0;
 
                     //esc
                     else if (key == Key.Escape)
@@ -748,12 +731,10 @@ namespace Bricker.Game
             try
             {
                 //show message
-                MessageProperties props = new MessageProperties(
-                    text: Surface.WrapText("Connecting to opponent..", 24, 500),
+                _renderer.MessageProps = new MessageProperties(
+                    line: "Connecting to opponent..",
                     size: 24,
-                    buttons: MessageButtons.None,
-                    buttonIndex: 0);
-                _renderer.MessageProps = props;
+                    buttons: MessageButtons.None);
 
                 //connect to opponent
                 Thread.Sleep(750);
@@ -762,12 +743,10 @@ namespace Bricker.Game
                     return result = CommandResult.Error;
 
                 //show message
-                props = new MessageProperties(
-                    text: Surface.WrapText("Invite sent.  Waiting for response..", 24, 500),
+                _renderer.MessageProps = new MessageProperties(
+                    line: "Invite sent.  Waiting for response..",
                     size: 24,
-                    buttons: MessageButtons.None,
-                    buttonIndex: 0);
-                _renderer.MessageProps = props;
+                    buttons: MessageButtons.None);
 
                 //send invite and wait
                 result = _communications.InviteOpponent();
@@ -781,13 +760,13 @@ namespace Bricker.Game
 
                 //show message if no acceptance
                 if (result == CommandResult.Error)
-                    MessageBoxLoop("Unable to connect, an error occurred.", MessageButtons.OK);
+                    MessageBoxLoop(new MessageProperties("Unable to connect, an error occurred."));
                 else if (result == CommandResult.Reject)
-                    MessageBoxLoop("Player has declined your invite.", MessageButtons.OK);
+                    MessageBoxLoop(new MessageProperties("Player has declined your invite."));
                 else if (result == CommandResult.Timeout)
-                    MessageBoxLoop("Request timeout, or no player response.", MessageButtons.OK);
+                    MessageBoxLoop(new MessageProperties("Request timeout, or no player response."));
                 else if (result == CommandResult.Unspecified)
-                    MessageBoxLoop("Unable to connect, an unspecified error occurred.", MessageButtons.OK);
+                    MessageBoxLoop(new MessageProperties("Unable to connect, an unspecified error occurred."));
             }
 
             //return
@@ -810,7 +789,13 @@ namespace Bricker.Game
                 return;
 
             //prompt user to accept
-            bool accept = MessageBoxLoop($"{pendingOpponent.Name} has challenged you to a match!{Environment.NewLine}Do you accept?", MessageButtons.NoYes);
+            bool accept = MessageBoxLoop(new MessageProperties(
+                lines: new string[]
+                {
+                    $"{pendingOpponent.Name} has challenged you to a match!",
+                    $"Do you accept?"
+                },
+                buttons: MessageButtons.NoYes));
 
             //decline?
             if (!accept)
