@@ -65,6 +65,8 @@ namespace Bricker.Rendering
         private double _highScores_XCenter;
         private double _highScores_YCenter;
         private readonly bool _fakeOpponent = false;
+        private bool _menuUp => _menuProps != null || _initialProps != null || _messageProps != null || _lobbyProps != null;
+        private SKColor _primaryWhite => !_menuUp ? Colors.White : Colors.DimWhite;
 
         //public
         public double FrameWidth => _frame_Width;
@@ -281,14 +283,14 @@ namespace Bricker.Rendering
                 for (int i = 1; i <= 20; i++)
                     surface.DrawLine(Colors.Gray, 2, (i * 33) + 1, 330, (i * 33) + 1, 1);
 
-                surface.DrawLine(Colors.White, 0, 0, 332, 0, 1);
-                surface.DrawLine(Colors.White, 0, 1, 332, 1, 1);
-                surface.DrawLine(Colors.White, 0, 0, 0, 662, 1);
-                surface.DrawLine(Colors.White, 1, 0, 1, 662, 1);
-                surface.DrawLine(Colors.White, 0, 662, 332, 662, 1);
-                surface.DrawLine(Colors.White, 0, 661, 332, 661, 1);
-                surface.DrawLine(Colors.White, 332, 0, 332, 662, 1);
-                surface.DrawLine(Colors.White, 331, 0, 331, 662, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 332, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, 332, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, 662, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, 662, 1);
+                surface.DrawLine(_primaryWhite, 0, 662, 332, 662, 1);
+                surface.DrawLine(_primaryWhite, 0, 661, 332, 661, 1);
+                surface.DrawLine(_primaryWhite, 332, 0, 332, 662, 1);
+                surface.DrawLine(_primaryWhite, 331, 0, 331, 662, 1);
 
                 frame.Blit(surface, _player_XCenter - (_player_Width / 2), _player_YCenter - (_player_Height / 2));
             }
@@ -303,17 +305,17 @@ namespace Bricker.Rendering
             double brickArea = 80;
             using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.AlphaBlack192))
             {
-                surface.DrawLine(Colors.White, 0, 0, _hold_Width - 1, 0, 1);
-                surface.DrawLine(Colors.White, 0, 1, _hold_Width - 1, 1, 1);
-                surface.DrawLine(Colors.White, 0, _hold_Height - 2, _hold_Width - 1, _hold_Height - 2, 1);
-                surface.DrawLine(Colors.White, 0, _hold_Height - 1, _hold_Width - 1, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, 0, 0, 0, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, 1, 0, 1, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, _hold_Width - 2, 0, _hold_Width - 2, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height - 1, 1);
-                surface.DrawLine(Colors.White, 0, 160, _hold_Width - 1, 160, 1);
-                surface.DrawLine(Colors.White, 0, 161, _hold_Width - 1, 161, 1);
-                surface.DrawText_Centered(Colors.White, "hold", 28, 20);
+                surface.DrawLine(_primaryWhite, 0, 0, _hold_Width - 1, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, _hold_Width - 1, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, _hold_Height - 2, _hold_Width - 1, _hold_Height - 2, 1);
+                surface.DrawLine(_primaryWhite, 0, _hold_Height - 1, _hold_Width - 1, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, _hold_Width - 2, 0, _hold_Width - 2, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 160, _hold_Width - 1, 160, 1);
+                surface.DrawLine(_primaryWhite, 0, 161, _hold_Width - 1, 161, 1);
+                surface.DrawText_Centered(_primaryWhite, "hold", 28, 20);
 
                 if (matrix.Hold != null)
                 {
@@ -348,15 +350,15 @@ namespace Bricker.Rendering
             Brick[] nextBricks = matrix.GetNextBricks();
             using (Surface surface = new Surface(_next_Width, _next_Height, Colors.AlphaBlack192))
             {
-                surface.DrawLine(Colors.White, 0, 0, _next_Width - 1, 0, 1);
-                surface.DrawLine(Colors.White, 0, 1, _next_Width - 1, 1, 1);
-                surface.DrawLine(Colors.White, 0, _next_Height - 2, _next_Width - 1, _next_Height - 2, 1);
-                surface.DrawLine(Colors.White, 0, _next_Height - 1, _next_Width - 1, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, 0, 0, 0, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, 1, 0, 1, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, _next_Width - 2, 0, _next_Width - 2, _next_Height - 1, 1);
-                surface.DrawLine(Colors.White, _next_Width - 1, 0, _next_Width - 1, _next_Height - 1, 1);
-                surface.DrawText_Centered(Colors.White, "next", 28, 20);
+                surface.DrawLine(_primaryWhite, 0, 0, _next_Width - 1, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, _next_Width - 1, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, _next_Height - 2, _next_Width - 1, _next_Height - 2, 1);
+                surface.DrawLine(_primaryWhite, 0, _next_Height - 1, _next_Width - 1, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, _next_Width - 2, 0, _next_Width - 2, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, _next_Width - 1, 0, _next_Width - 1, _next_Height - 1, 1);
+                surface.DrawText_Centered(_primaryWhite, "next", 28, 20);
 
                 for (int i = 0; i < nextBricks.Length; i++)
                 {
@@ -403,15 +405,15 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, opponent.Player.Name, 32, 23);
+                surface.DrawText_Left(_primaryWhite, opponent.Player.Name, 32, 23);
                 using (Surface statsSurface = new Surface(125, headerHeight))
                 {
-                    statsSurface.DrawText_Left(Colors.White, "level", 16, (statsHeight + textSpacing) * 0);
-                    statsSurface.DrawText_Left(Colors.White, "lines", 16, (statsHeight + textSpacing) * 1);
-                    statsSurface.DrawText_Left(Colors.White, "score", 16, (statsHeight + textSpacing) * 2);
-                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Level}", 16, (statsHeight + textSpacing) * 0);
-                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Lines.ToString("N0")}", 16, (statsHeight + textSpacing) * 1);
-                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Score.ToString("N0")}", 16, (statsHeight + textSpacing) * 2);
+                    statsSurface.DrawText_Left(_primaryWhite, "level", 16, (statsHeight + textSpacing) * 0);
+                    statsSurface.DrawText_Left(_primaryWhite, "lines", 16, (statsHeight + textSpacing) * 1);
+                    statsSurface.DrawText_Left(_primaryWhite, "score", 16, (statsHeight + textSpacing) * 2);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Level}", 16, (statsHeight + textSpacing) * 0);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Lines.ToString("N0")}", 16, (statsHeight + textSpacing) * 1);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Score.ToString("N0")}", 16, (statsHeight + textSpacing) * 2);
                     surface.Blit(statsSurface, width - statsSurface.Width, 0);
                 }
                 using (Surface matrixSurface = new Surface(matrixWidth, matrixHeight, Colors.Black))
@@ -420,10 +422,10 @@ namespace Bricker.Rendering
                         for (int y = 1; y < 22; y++)
                             if (matrix[x, y] > 0)
                                 matrixSurface.DrawRect(Brick.BrickToColor(matrix[x, y]), ((x - 1d) * (brickSize + 1d)) + 1.5d, ((y - 1d) * (brickSize + 1)) + 1.5d, brickSize, brickSize);
-                    matrixSurface.DrawLine(Colors.White, 0.5d, 0.5d, matrixWidth - 1.5d, 0.5d, 2d);
-                    matrixSurface.DrawLine(Colors.White, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
-                    matrixSurface.DrawLine(Colors.White, matrixWidth - 1.5d, matrixHeight - 1.5d, 0.5d, matrixHeight - 1.5d, 2d);
-                    matrixSurface.DrawLine(Colors.White, 0.5d, matrixHeight - 1.5d, 0.5d, 0.5d, 2d);
+                    matrixSurface.DrawLine(_primaryWhite, 0.5d, 0.5d, matrixWidth - 1.5d, 0.5d, 2d);
+                    matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
+                    matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, matrixHeight - 1.5d, 0.5d, matrixHeight - 1.5d, 2d);
+                    matrixSurface.DrawLine(_primaryWhite, 0.5d, matrixHeight - 1.5d, 0.5d, 0.5d, 2d);
                     surface.Blit(matrixSurface, (width - matrixWidth) / 2d, headerHeight + betweenSpacing);
                 }
                 frame.Blit(surface, _opponent_XCenter - (width / 2), _frame_Height - ((_frame_Height - _player_Height) / 2) - height - 15);
@@ -443,8 +445,8 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Centered(Colors.White, "bricker", 52, 0);
-                surface.DrawText_Centered(Colors.White, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
+                surface.DrawText_Centered(_primaryWhite, "bricker", 52, 0);
+                surface.DrawText_Centered(_primaryWhite, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
         }
@@ -464,21 +466,21 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, "controls", 28, 0);
-                surface.DrawText_Left(Colors.White, "left", 18, titleSpacing + (lineSpacing * 0), 10);
-                surface.DrawText_Left(Colors.White, "right", 18, titleSpacing + (lineSpacing * 1), 10);
-                surface.DrawText_Left(Colors.White, "down", 18, titleSpacing + (lineSpacing * 2), 10);
-                surface.DrawText_Left(Colors.White, "rotate", 18, titleSpacing + (lineSpacing * 3), 10);
-                surface.DrawText_Left(Colors.White, "drop", 18, titleSpacing + (lineSpacing * 4), 10);
-                surface.DrawText_Left(Colors.White, "hold", 18, titleSpacing + (lineSpacing * 5), 10);
-                surface.DrawText_Left(Colors.White, "pause", 18, titleSpacing + (lineSpacing * 6), 10);
-                surface.DrawText_Right(Colors.White, "left", 18, titleSpacing + (lineSpacing * 0), 10);
-                surface.DrawText_Right(Colors.White, "right", 18, titleSpacing + (lineSpacing * 1), 10);
-                surface.DrawText_Right(Colors.White, "down", 18, titleSpacing + (lineSpacing * 2), 10);
-                surface.DrawText_Right(Colors.White, "up", 18, titleSpacing + (lineSpacing * 3), 10);
-                surface.DrawText_Right(Colors.White, "space", 18, titleSpacing + (lineSpacing * 4), 10);
-                surface.DrawText_Right(Colors.White, "c", 18, titleSpacing + (lineSpacing * 5), 10);
-                surface.DrawText_Right(Colors.White, "esc", 18, titleSpacing + (lineSpacing * 6), 10);
+                surface.DrawText_Left(_primaryWhite, "controls", 28, 0);
+                surface.DrawText_Left(_primaryWhite, "left", 18, titleSpacing + (lineSpacing * 0), 10);
+                surface.DrawText_Left(_primaryWhite, "right", 18, titleSpacing + (lineSpacing * 1), 10);
+                surface.DrawText_Left(_primaryWhite, "down", 18, titleSpacing + (lineSpacing * 2), 10);
+                surface.DrawText_Left(_primaryWhite, "rotate", 18, titleSpacing + (lineSpacing * 3), 10);
+                surface.DrawText_Left(_primaryWhite, "drop", 18, titleSpacing + (lineSpacing * 4), 10);
+                surface.DrawText_Left(_primaryWhite, "hold", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Left(_primaryWhite, "pause", 18, titleSpacing + (lineSpacing * 6), 10);
+                surface.DrawText_Right(_primaryWhite, "left", 18, titleSpacing + (lineSpacing * 0), 10);
+                surface.DrawText_Right(_primaryWhite, "right", 18, titleSpacing + (lineSpacing * 1), 10);
+                surface.DrawText_Right(_primaryWhite, "down", 18, titleSpacing + (lineSpacing * 2), 10);
+                surface.DrawText_Right(_primaryWhite, "up", 18, titleSpacing + (lineSpacing * 3), 10);
+                surface.DrawText_Right(_primaryWhite, "space", 18, titleSpacing + (lineSpacing * 4), 10);
+                surface.DrawText_Right(_primaryWhite, "c", 18, titleSpacing + (lineSpacing * 5), 10);
+                surface.DrawText_Right(_primaryWhite, "esc", 18, titleSpacing + (lineSpacing * 6), 10);
                 frame.Blit(surface, _controls_XCenter - (width / 2), _controls_YCenter - (height / 2));
             }
         }
@@ -494,8 +496,8 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, "level", 28, 0);
-                surface.DrawText_Right(Colors.White, stats.Level.ToString("N0"), 42, space);
+                surface.DrawText_Left(_primaryWhite, "level", 28, 0);
+                surface.DrawText_Right(_primaryWhite, stats.Level.ToString("N0"), 42, space);
                 frame.Blit(surface, _level_XCenter - (width / 2), _level_YCenter - (height / 2));
             }
         }
@@ -511,8 +513,8 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, "lines", 28, 0);
-                surface.DrawText_Right(Colors.White, stats.Lines.ToString("N0"), 42, space);
+                surface.DrawText_Left(_primaryWhite, "lines", 28, 0);
+                surface.DrawText_Right(_primaryWhite, stats.Lines.ToString("N0"), 42, space);
                 frame.Blit(surface, _lines_XCenter - (width / 2), _lines_YCenter - (height / 2));
             }
         }
@@ -528,8 +530,8 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, "score", 28, 0);
-                surface.DrawText_Right(Colors.White, stats.Score.ToString("N0"), 42, space);
+                surface.DrawText_Left(_primaryWhite, "score", 28, 0);
+                surface.DrawText_Right(_primaryWhite, stats.Score.ToString("N0"), 42, space);
                 frame.Blit(surface, _score_XCenter - (width / 2), _score_YCenter - (height / 2));
             }
         }
@@ -546,12 +548,12 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(Colors.White, "high scores", 28, 0);
+                surface.DrawText_Left(_primaryWhite, "high scores", 28, 0);
                 for (int i = 0; i < stats.HighScores.Count; i++)
                 {
                     HighScore score = stats.HighScores[i];
-                    surface.DrawText_Left(Colors.White, score.Initials, 18, titleSpacing + (lineSpacing * i), 10);
-                    surface.DrawText_Right(Colors.White, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
+                    surface.DrawText_Left(_primaryWhite, score.Initials, 18, titleSpacing + (lineSpacing * i), 10);
+                    surface.DrawText_Right(_primaryWhite, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
                 }
                 frame.Blit(surface, _highScores_XCenter - (width / 2), _highScores_YCenter - (height / 2));
             }
@@ -766,7 +768,7 @@ namespace Bricker.Rendering
                 return;
 
             double width = 400;
-            double height = 340;
+            double height = 380;
             double y;
 
             using (Surface surface = new Surface(width, height, Colors.Black))
@@ -799,8 +801,8 @@ namespace Bricker.Rendering
                 SKColor color2 = lobbyProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.White;
                 if ((players.Count == 0) && (lobbyProps.ButtonIndex != 1))
                     color2 = Colors.Gray;
-                surface.DrawText_Left(color1, "cancel", 24, y, 38);
-                surface.DrawText_Right(color2, "ok", 24, y, 38);
+                surface.DrawText_Left(color1, "cancel", 24, height - 58, 38);
+                surface.DrawText_Right(color2, "ok", 24, height - 58, 38);
 
                 frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
             }

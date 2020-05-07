@@ -24,8 +24,23 @@ X - Fix reject-invite bug.
 X - Add player disconnect.
 X - Add player game-over, then restart.
 X - Add lines sent (no animation).
-- Redesign layout.
+X - Redesign layout.
 X - Add hold feature, six next pieces.
+X - Add background animation.
+- UI fix:
+  X * Game lobby too small (V/H).
+  X * When popup open, dim primary borders.
+  * Game over popup too small (H).
+  * Custom message boxes.
+  * Game over bigger header.
+  * Message boxes larger button text.
+- Bugs:
+  * If one request timeout (and manual resend), IDs don't match.  New request update old seq?
+- Config:
+  * Disable background.
+- Settings Menu:
+  * Config settings.
+  * Reset high scores.
 - Refactoring (player, opponent, etc).
 - Improve game animation.
 - Add music and sound effects.

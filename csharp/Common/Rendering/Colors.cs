@@ -62,7 +62,7 @@ namespace Common.Rendering
             _errorBlack = new SKColor(50, 0, 0);
             _debugBlack1 = new SKColor(25, 0, 0);
             _debugBlack2 = new SKColor(50, 0, 0);
-            _dimWhite = new SKColor(196, 187, 175);
+            _dimWhite = new SKColor(160, 152, 145);
             _white = new SKColor(240, 230, 220);
             _gray = new SKColor(25, 25, 25);
             _pansyPurple = new SKColor(87, 24, 69);

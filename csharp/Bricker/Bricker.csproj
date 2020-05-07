@@ -96,6 +96,7 @@
     <Compile Include="Rendering\Properties\MenuProperties.cs" />
     <Compile Include="Rendering\Properties\MessageProperties.cs" />
     <Compile Include="Rendering\Renderer.cs" />
+    <Compile Include="Rendering\TextLine.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
