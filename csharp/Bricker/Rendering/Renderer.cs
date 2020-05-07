@@ -650,7 +650,6 @@ namespace Bricker.Rendering
             if (initialProps == null)
                 return;
 
-
             double vSpacing = 32;
             double line1Height = 48;
             double lineSpacing = 0;
@@ -723,6 +722,11 @@ namespace Bricker.Rendering
             double buttonHeight = Surface.MeasureText_Height("ok", buttonSize);
             double buttonIndent = 48;
             double width = 2 + horizontalSpacing + textWidth + horizontalSpacing + 2;
+            if ((width < 380) && (width > 300))
+            {
+                width = 380;
+                horizontalSpacing = (width - textWidth - 4d) / 2d;
+            }
             double height = 2 + verticalSpacing + textHeight + (props.Buttons != MessageButtons.None ? betweenSpacing + buttonHeight : 0) + verticalSpacing;
             double y = 2d + verticalSpacing;
 

@@ -70,7 +70,7 @@ namespace Bricker.Game
         public void IncrementLines(int value)
         {
             _lines += value;
-            _level = (_lines / 20) + 1;
+            _level = (_lines / 25) + 1;
         }
 
         /// <summary>

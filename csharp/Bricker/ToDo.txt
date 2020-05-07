@@ -27,13 +27,8 @@ X - Add lines sent (no animation).
 X - Redesign layout.
 X - Add hold feature, six next pieces.
 X - Add background animation.
-- UI fix:
-  X * Game lobby too small (V/H).
-  X * When popup open, dim primary borders.
-  * Game over popup too small (H).
-  * Custom message boxes.
-  * Game over bigger header.
-  * Message boxes larger button text.
+X - When popup open, dim primary borders.
+X - Improve message box rendering.
 - Bugs:
   * If one request timeout (and manual resend), IDs don't match.  New request update old seq?
 - Config:
