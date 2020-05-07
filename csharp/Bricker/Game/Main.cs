@@ -140,6 +140,27 @@ namespace Bricker.Game
             //start game communications
             _communications.Start();
 
+            ////todo: remove!!
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties("This is a test.", MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties("This is a test with much more words and different buttons.", MessageButtons.CancelOK));
+            //MessageBoxLoop(new MessageProperties("Message with no buttons", MessageButtons.None));
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties(new TextLine[] { new TextLine("Message with text line one"), new TextLine("and also text line two") }, MessageButtons.NoYes));
+            //MessageBoxLoop(new MessageProperties(new TextLine[] {
+            //    new TextLine(
+            //        text:"Message with text line one plus bottom margin",
+            //        color: Colors.Coquelicot,
+            //        size: 32,
+            //        bottomMargin: 20),
+            //    new TextLine(
+            //        text:"Message with text line one plus top margin",
+            //        color: Colors.ForestGreen,
+            //        size: 18,
+            //        topMargin: 10,
+            //        alignment: Alignment.Right) }));
+
             //program loop
             while (true)
             {

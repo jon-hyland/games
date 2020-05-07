@@ -26,7 +26,7 @@ namespace Bricker.Rendering.Properties
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public MessageProperties(string line, double size = 24, MessageButtons buttons = MessageButtons.OK)
+        public MessageProperties(string line, MessageButtons buttons = MessageButtons.OK, double size = 24)
         {
             Lines = new TextLine[] { new TextLine(line, size) };
             Buttons = buttons;
@@ -36,7 +36,7 @@ namespace Bricker.Rendering.Properties
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public MessageProperties(string[] lines, double size = 24, MessageButtons buttons = MessageButtons.OK)
+        public MessageProperties(string[] lines, MessageButtons buttons = MessageButtons.OK, double size = 24)
         {
             Lines = lines.Select(l => new TextLine(l, size)).ToArray();
             Buttons = buttons;

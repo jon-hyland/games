@@ -700,65 +700,6 @@ namespace Bricker.Rendering
             }
         }
 
-        ///// <summary>
-        ///// Draws message box.
-        ///// </summary>
-        //private void DrawMessageBox(Surface frame)
-        //{
-        //    MessageProperties messageProps = _messageProps;
-        //    if (messageProps == null)
-        //        return;
-
-        //    using (Surface text = Surface.RenderText(Colors.White, messageProps.Lines, messageProps.Size))
-        //    {
-        //        double spacing = 25;
-        //        double buttonHeight = 32;
-        //        double width = text.Width + 4 + (spacing * 2);
-        //        double height = text.Height + 4 + (spacing * 2);
-        //        if (messageProps.Buttons != MessageButtons.None)
-        //            height += buttonHeight + (spacing * 1.5);
-
-        //        using (Surface surface = new Surface(width, height, Colors.Black))
-        //        {
-        //            surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
-        //            surface.DrawLine(Colors.White, 0, 1, width - 1, 1, 1);
-        //            surface.DrawLine(Colors.White, 0, height - 2, width - 1, height - 2, 1);
-        //            surface.DrawLine(Colors.White, 0, height - 1, width - 1, height - 1, 1);
-        //            surface.DrawLine(Colors.White, 0, 0, 0, height - 1, 1);
-        //            surface.DrawLine(Colors.White, 1, 0, 1, height - 1, 1);
-        //            surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
-        //            surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
-        //            surface.Blit(text, 2 + spacing, 2 + spacing);
-
-        //            if (messageProps.Buttons == MessageButtons.OK)
-        //            {
-        //                using (Surface buttonText = Surface.RenderText(Colors.FluorescentOrange, "ok", 24))
-        //                {
-        //                    surface.Blit(buttonText, (surface.Width - buttonText.Width) / 2, 2 + spacing + text.Height + (spacing * 1.5));
-        //                }
-        //            }
-        //            else if (messageProps.Buttons >= MessageButtons.CancelOK)
-        //            {
-        //                string label1 = messageProps.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
-        //                string label2 = messageProps.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
-        //                SKColor color1 = messageProps.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.White;
-        //                SKColor color2 = messageProps.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.White;
-
-        //                using (Surface buttonText1 = Surface.RenderText(color1, label1, 24))
-        //                {
-        //                    surface.Blit(buttonText1, spacing * 1, 2 + spacing + text.Height + (spacing * 1.5));
-        //                }
-        //                using (Surface buttonText2 = Surface.RenderText(color2, label2, 24))
-        //                {
-        //                    surface.Blit(buttonText2, surface.Width - buttonText2.Width - (spacing * 1), 2 + spacing + text.Height + (spacing * 1.5));
-        //                }
-        //            }
-
-        //            frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
-        //        }
-        //    }
-        //}
-
         /// <summary>
         /// Draws message box.
         /// </summary>
@@ -768,11 +709,8 @@ namespace Bricker.Rendering
             if (props == null)
                 return;
 
-            double horizontalSpacing = 34;
-            double verticalSpacing = 25;
-            double betweenSpacing = 10;
-            double buttonSize = 28;
-            double buttonHeight = 34;
+            double horizontalSpacing = 32;
+            double verticalSpacing = 26;
             double textWidth = props.Lines
                 .Select(l => Surface.MeasureText_Width(l.Text, l.Size))
                 .Max();
@@ -780,9 +718,13 @@ namespace Bricker.Rendering
                 .Select(l => Surface.MeasureText_Height(l.Text, l.Size) + l.TopMargin + l.BottomMargin)
                 .ToArray();
             double textHeight = textHeights.Sum();
+            double betweenSpacing = 24;
+            double buttonSize = 28;
+            double buttonHeight = Surface.MeasureText_Height("ok", buttonSize);
+            double buttonIndent = 48;
             double width = 2 + horizontalSpacing + textWidth + horizontalSpacing + 2;
-            double height = 2 + verticalSpacing + textHeight + (props.Buttons != MessageButtons.None ? betweenSpacing + buttonHeight : 0) + verticalSpacing + 2;
-            double y = 2d;
+            double height = 2 + verticalSpacing + textHeight + (props.Buttons != MessageButtons.None ? betweenSpacing + buttonHeight : 0) + verticalSpacing;
+            double y = 2d + verticalSpacing;
 
             using (Surface surface = new Surface(width, height, Colors.Black))
             {
@@ -797,18 +739,40 @@ namespace Bricker.Rendering
 
                 using (Surface textSurface = new Surface(textWidth, textHeight))
                 {
+                    double ty = 0d;
                     for (int i = 0; i < props.Lines.Length; i++)
                     {
                         TextLine line = props.Lines[i];
-                        if (line.Alignment == TextAlignment.Left)
-                            textSurface.DrawText_Left(line.Color, line.Text, line.Size, y);
-                        else if (line.Alignment == TextAlignment.Right)
-                            textSurface.DrawText_Right(line.Color, line.Text, line.Size, y);
-                        else if (line.Alignment == TextAlignment.Center)
-                            textSurface.DrawText_Centered(line.Color, line.Text, line.Size, y);
-                        y += textHeights[i];
+                        if (line.Alignment == Alignment.Left)
+                            textSurface.DrawText_Left(line.Color, line.Text, line.Size, ty);
+                        else if (line.Alignment == Alignment.Right)
+                            textSurface.DrawText_Right(line.Color, line.Text, line.Size, ty);
+                        else if (line.Alignment == Alignment.Center)
+                            textSurface.DrawText_Centered(line.Color, line.Text, line.Size, ty);
+                        ty += textHeights[i];
                     }
-                    surface.Blit(textSurface, horizontalSpacing, verticalSpacing);
+                    surface.Blit(textSurface, horizontalSpacing + 2, y);
+                    y += textHeight + betweenSpacing;
+                }
+                if (props.Buttons != MessageButtons.None)
+                {
+                    using (Surface buttonSurface = new Surface(width, buttonHeight))
+                    {
+                        if (props.Buttons == MessageButtons.OK)
+                        {
+                            buttonSurface.DrawText_Centered(Colors.FluorescentOrange, "ok", buttonSize, 0);
+                        }
+                        else if (props.Buttons >= MessageButtons.CancelOK)
+                        {
+                            string button1 = props.Buttons == MessageButtons.CancelOK ? "cancel" : "no";
+                            string button2 = props.Buttons == MessageButtons.CancelOK ? "ok" : "yes";
+                            SKColor color1 = props.ButtonIndex == 0 ? Colors.FluorescentOrange : Colors.White;
+                            SKColor color2 = props.ButtonIndex != 0 ? Colors.FluorescentOrange : Colors.White;
+                            buttonSurface.DrawText_Left(color1, button1, buttonSize, 0, buttonIndent);
+                            buttonSurface.DrawText_Right(color2, button2, buttonSize, 0, buttonIndent);
+                        }
+                        surface.Blit(buttonSurface, 0, y);
+                    }
                 }
                 frame.Blit(surface, (frame.Width - surface.Width) / 2, (frame.Height - surface.Height) / 2);
             }
@@ -959,6 +923,16 @@ namespace Bricker.Rendering
                     reduced[x, y] = brick[x + xOffset, y + yOffset];
             return reduced;
         }
-
     }
+
+    /// <summary>
+    /// Represents alignment of text or graphics.
+    /// </summary>
+    public enum Alignment
+    {
+        Left,
+        Right,
+        Center
+    }
+
 }
