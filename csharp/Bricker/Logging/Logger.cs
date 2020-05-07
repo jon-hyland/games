@@ -41,7 +41,7 @@ namespace Bricker.Logging
             {
                 if (!RenderProps.Debug)
                     return;
-                string line = $"{DateTime.Now}\t{Clean(level.ToString())}\t{Clean(header)}\t{Clean(message)}";
+                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(level.ToString())}\t{Clean(header)}\t{Clean(message)}";
                 lock (_writer)
                 {
                     _writer.WriteLine(line);
@@ -61,7 +61,7 @@ namespace Bricker.Logging
             {
                 if (!RenderProps.Debug)
                     return;
-                string line = $"{DateTime.Now}\t{LogLevel.Error}\t{"Error"}\t{Clean(ex?.ToString())}";
+                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{LogLevel.Error}\t{"Error"}\t{Clean(ex?.ToString())}";
                 lock (_writer)
                 {
                     _writer.WriteLine(line);
