@@ -936,6 +936,7 @@ namespace Common.Networking.Game
                     //calculate wait
                     TimeSpan elapsed = DateTime.Now - lastSend;
                     int sleepMs = Math.Max(100 - (int)elapsed.TotalMilliseconds, 0);
+                    lastSend = DateTime.Now;
 
                     //sleep 100ms
                     Thread.Sleep(sleepMs);
