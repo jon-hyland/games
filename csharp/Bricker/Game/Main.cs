@@ -161,6 +161,17 @@ namespace Bricker.Game
             //        topMargin: 10,
             //        alignment: Alignment.Right) }));
 
+            //get player initials
+            if (String.IsNullOrWhiteSpace(_config.Initials))
+            {
+                string initials = InitialsLoop(new string[] { "who are you?", "enter your initials" });
+                if (!String.IsNullOrWhiteSpace(_config.Initials))
+                {
+                    _config.SaveInitials(initials);
+                    _communications.ChangePlayerName(initials);
+                }
+            }
+
             //program loop
             while (true)
             {
@@ -200,17 +211,6 @@ namespace Bricker.Game
                 //two player mode
                 else if (selection == MenuSelection.TwoPlayer)
                 {
-                    //get player initials
-                    if (String.IsNullOrWhiteSpace(_config.Initials))
-                    {
-                        string initials = InitialsLoop(new string[] { "two player mode", "enter your initials" });
-                        if (!String.IsNullOrWhiteSpace(_config.Initials))
-                        {
-                            _config.SaveInitials(initials);
-                            _communications.ChangePlayerName(initials);
-                        }
-                    }
-
                     //select discovered player from lobby
                     Player player = PlayerLobbyLoop();
                     if (player == null)

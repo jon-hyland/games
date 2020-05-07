@@ -503,40 +503,40 @@ namespace Common.Networking.Game
                 ////loop
                 //while (true)
                 //{
-                    //create packet
-                    CommandRequestPacket packet = new CommandRequestPacket(
-                        gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                        destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
-                        sequence: sequence, retryAttempt: 0, data: data);
+                //create packet
+                CommandRequestPacket packet = new CommandRequestPacket(
+                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
+                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, commandType: type,
+                    sequence: sequence, retryAttempt: 0, data: data);
 
-                    //send packet
-                    byte[] bytes = packet.ToBytes();
-                    _dataClient.Write(bytes);
-                    _commandRequestsSent++;
+                //send packet
+                byte[] bytes = packet.ToBytes();
+                _dataClient.Write(bytes);
+                _commandRequestsSent++;
 
-                    //record command request has been sent
-                    _commandManager.RequestSent(packet, timeout);
+                //record command request has been sent
+                _commandManager.RequestSent(packet, timeout);
 
-                    //loop
-                    while (true)
-                    {
-                        //vars
-                        DateTime start = DateTime.Now;
+                //loop
+                while (true)
+                {
+                    //vars
+                    DateTime start = DateTime.Now;
 
-                        //get current status
-                        CommandResult result = _commandManager.GetCommandStatus(sequence);
+                    //get current status
+                    CommandResult result = _commandManager.GetCommandStatus(sequence);
 
-                        //have answer or timeout?  return!
-                        if (result != CommandResult.Unspecified)
-                            return result;
+                    //have answer or timeout?  return!
+                    if (result != CommandResult.Unspecified)
+                        return result;
 
-                        //sleep
-                        Thread.Sleep(2);
+                    //sleep
+                    Thread.Sleep(2);
 
-                        ////break if time to retry packet
-                        //if ((DateTime.Now - start).TotalMilliseconds >= 250)
-                        //    break;
-                    }
+                    ////break if time to retry packet
+                    //if ((DateTime.Now - start).TotalMilliseconds >= 250)
+                    //    break;
+                }
                 //}
             }
             catch (Exception ex)
@@ -863,7 +863,7 @@ namespace Common.Networking.Game
             try
             {
                 //too long since heartbeat received?
-                if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 2))
+                if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 5))
                 {
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;

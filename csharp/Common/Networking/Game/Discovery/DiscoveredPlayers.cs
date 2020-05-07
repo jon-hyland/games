@@ -66,7 +66,9 @@ namespace Common.Networking.Game.Discovery
                 {
                     if (existing.Name != player.Name)
                         existing.Name = player.Name;
-                    existing.LastDiscovery = DateTime.Now;
+                    TimeSpan sinceLastDiscovery = DateTime.Now - existing.LastDiscovery;
+                    if (sinceLastDiscovery.TotalHours > 24)
+                        existing.LastDiscovery = DateTime.Now;
                 }
                 else
                 {

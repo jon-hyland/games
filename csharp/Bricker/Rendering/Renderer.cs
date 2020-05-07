@@ -438,6 +438,9 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawTitle(Surface frame)
         {
+            if (RenderProps.Debug)
+                return;
+
             double titleHeight = 86;
             double space = -28;
             double copyrightHeight = 16;
@@ -850,6 +853,7 @@ namespace Bricker.Rendering
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
                 lines.Add($"com_state:   {communications.ConnectionState}");
+                lines.Add($"heartbeat_ms:   {communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
             }
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
