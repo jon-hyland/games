@@ -73,6 +73,7 @@ namespace Bricker.Game
             //initialize
             RenderProps.Initialize(_config);
             Log.Initiallize(_logger);
+            _window.Title = $"Bricker v{_config.DisplayVersion}";
 
             //events
             _communications.OpponentInviteReceived += (o) =>
