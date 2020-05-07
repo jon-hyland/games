@@ -308,11 +308,11 @@ namespace Bricker.Game
                     }
 
                     //level up
-                    else if ((key == Key.PageUp) && (_config.Debug))
+                    else if ((key == Key.PageUp) && (RenderProps.Debug))
                         _stats.SetLevel(_stats.Level + 1);
 
                     //level down
-                    else if ((key == Key.PageDown) && (_config.Debug))
+                    else if ((key == Key.PageDown) && (RenderProps.Debug))
                         _stats.SetLevel(_stats.Level - 1);
 
                     //debug toggle

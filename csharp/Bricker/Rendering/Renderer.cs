@@ -27,9 +27,6 @@ namespace Bricker.Rendering
         private double _frame_Width;
         private double _frame_Height;
         private double _displayScale;
-        private double _sideWidth;
-        private double _leftX;
-        private double _rightX;
         private readonly SKTypeface _typeface;
         private readonly SKPaint _linePaint;
         private readonly SKPaint _rectPaint;
@@ -39,6 +36,7 @@ namespace Bricker.Rendering
         private MessageProperties _messageProps;
         private LobbyProperties _lobbyProps;
         private readonly CpsCalculator _fps;
+        private readonly List<BackgroundTile> _tiles;
         private double _frame_XCenter;
         private double _frame_YCenter;
         private double _player_XCenter;
@@ -58,7 +56,6 @@ namespace Bricker.Rendering
         private double _controls_XCenter;
         private double _controls_YCenter;
         private double _opponent_XCenter;
-        private double _opponent_YCenter;
         private double _level_XCenter;
         private double _level_YCenter;
         private double _lines_XCenter;
@@ -67,7 +64,7 @@ namespace Bricker.Rendering
         private double _score_YCenter;
         private double _highScores_XCenter;
         private double _highScores_YCenter;
-        private readonly bool _fakeOpponent = true;
+        private readonly bool _fakeOpponent = false;
 
         //public
         public double FrameWidth => _frame_Width;
@@ -115,6 +112,7 @@ namespace Bricker.Rendering
             _initialProps = null;
             _messageProps = null;
             _fps = new CpsCalculator(1);
+            _tiles = new List<BackgroundTile>();
         }
 
         /// <summary>
@@ -166,10 +164,6 @@ namespace Bricker.Rendering
                     RenderProps.DisplayScale = _displayScale;
                 _frame_Width = info.Width / _displayScale;
                 _frame_Height = info.Height / _displayScale;
-                _sideWidth = (_frame_Width - 333) / 2;
-                _leftX = ((_sideWidth - 250) / 2) + 5;
-                _rightX = _sideWidth + 333 + _leftX;
-
                 _frame_XCenter = _frame_Width / 2;
                 _frame_YCenter = _frame_Height / 2;
                 _player_XCenter = _frame_XCenter;
@@ -185,11 +179,10 @@ namespace Bricker.Rendering
                 _left_Center2 = (_frame_Width - _player_Width) / 4;
                 _right_Center1 = _frame_Width - ((_frame_Width - _player_TotalWidth) / 4);
                 _title_XCenter = _left_Center1;
-                _title_YCenter = 93;
+                _title_YCenter = 88;
                 _controls_XCenter = _left_Center1;
-                _controls_YCenter = 460;
+                _controls_YCenter = 465;
                 _opponent_XCenter = _left_Center1;
-                _opponent_YCenter = 404;    //441;
                 _level_XCenter = _right_Center1;
                 _level_YCenter = 75;
                 _lines_XCenter = _right_Center1;
@@ -199,14 +192,14 @@ namespace Bricker.Rendering
                 _highScores_XCenter = _right_Center1;
                 _highScores_YCenter = 532;
 
-
-                Surface frame = new Surface(e.Surface.Canvas, _frame_Width, _frame_Height);
+                //create surface
+                Surface frame = new Surface(e.Surface.Canvas, _frame_Width, _frame_Height, Colors.Black);
 
                 //fps
                 _fps.Increment();
 
-                //clear surface
-                frame.Clear(Colors.Black);
+                //background
+                DrawBackground(frame, stats);
 
                 //game matrix
                 DrawMatrix(frame, matrix);
@@ -267,7 +260,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawMatrix(Surface frame, Matrix matrix)
         {
-            using (Surface surface = new Surface(_player_Width, _player_Height))
+            using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
                 for (int x = 1; x < 12; x++)
                     for (int y = 1; y < 22; y++)
@@ -308,7 +301,7 @@ namespace Bricker.Rendering
         {
             double titleSpacing = 63;
             double brickArea = 80;
-            using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.Black))
+            using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.AlphaBlack192))
             {
                 surface.DrawLine(Colors.White, 0, 0, _hold_Width - 1, 0, 1);
                 surface.DrawLine(Colors.White, 0, 1, _hold_Width - 1, 1, 1);
@@ -353,7 +346,7 @@ namespace Bricker.Rendering
             double brickArea = 80;
             double brickSpacing = 10;
             Brick[] nextBricks = matrix.GetNextBricks();
-            using (Surface surface = new Surface(_next_Width, _next_Height, Colors.Black))
+            using (Surface surface = new Surface(_next_Width, _next_Height, Colors.AlphaBlack192))
             {
                 surface.DrawLine(Colors.White, 0, 0, _next_Width - 1, 0, 1);
                 surface.DrawLine(Colors.White, 0, 1, _next_Width - 1, 1, 1);
@@ -399,19 +392,29 @@ namespace Bricker.Rendering
             double brickSize = 20d;
             double matrixWidth = 2d + (brickSize * 10d) + 9d + 2d;
             double matrixHeight = 2d + (brickSize * 20d) + 19d + 2d;
-            double titleHeight = 38;
+
+            double statsHeight = 21;
             double textSpacing = -2;
-            double statsHeight = 16;
-            double betweenSpacing = 5;
-            double headerHeight = titleHeight + textSpacing + statsHeight + betweenSpacing;
-            double width = matrixWidth + 40;
-            double height = headerHeight + matrixHeight;
+            double betweenSpacing = 10;
+            double headerHeight = (statsHeight * 3) + (textSpacing * 2);
+
+            double width = matrixWidth;
+            double height = headerHeight + betweenSpacing + matrixHeight;
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Centered(Colors.White, opponent.Player.Name, 28, 0);
-                surface.DrawText_Centered(Colors.White, $"Level: {opponent.Level}    Lines: {opponent.Lines.ToString("N0")}    Score: {opponent.Score.ToString("N0")}", 12, titleHeight + textSpacing);
-                using (Surface matrixSurface = new Surface(matrixWidth, matrixHeight))
+                surface.DrawText_Left(Colors.White, opponent.Player.Name, 32, 23);
+                using (Surface statsSurface = new Surface(125, headerHeight))
+                {
+                    statsSurface.DrawText_Left(Colors.White, "level", 16, (statsHeight + textSpacing) * 0);
+                    statsSurface.DrawText_Left(Colors.White, "lines", 16, (statsHeight + textSpacing) * 1);
+                    statsSurface.DrawText_Left(Colors.White, "score", 16, (statsHeight + textSpacing) * 2);
+                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Level}", 16, (statsHeight + textSpacing) * 0);
+                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Lines.ToString("N0")}", 16, (statsHeight + textSpacing) * 1);
+                    statsSurface.DrawText_Right(Colors.White, $"{opponent.Score.ToString("N0")}", 16, (statsHeight + textSpacing) * 2);
+                    surface.Blit(statsSurface, width - statsSurface.Width, 0);
+                }
+                using (Surface matrixSurface = new Surface(matrixWidth, matrixHeight, Colors.Black))
                 {
                     for (int x = 1; x < 12; x++)
                         for (int y = 1; y < 22; y++)
@@ -421,9 +424,9 @@ namespace Bricker.Rendering
                     matrixSurface.DrawLine(Colors.White, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
                     matrixSurface.DrawLine(Colors.White, matrixWidth - 1.5d, matrixHeight - 1.5d, 0.5d, matrixHeight - 1.5d, 2d);
                     matrixSurface.DrawLine(Colors.White, 0.5d, matrixHeight - 1.5d, 0.5d, 0.5d, 2d);
-                    surface.Blit(matrixSurface, (width - matrixWidth) / 2d, headerHeight);
+                    surface.Blit(matrixSurface, (width - matrixWidth) / 2d, headerHeight + betweenSpacing);
                 }
-                frame.Blit(surface, _opponent_XCenter - (width / 2), _opponent_YCenter - (height / 2));
+                frame.Blit(surface, _opponent_XCenter - (width / 2), _frame_Height - ((_frame_Height - _player_Height) / 2) - height - 15);
             }
         }
 
@@ -441,7 +444,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Centered(Colors.White, "bricker", 52, 0);
-                surface.DrawText_Centered(Colors.White, $"v{_config.GameVersion}  (c) 2017-2020  john hyland", 10, titleHeight + space);
+                surface.DrawText_Centered(Colors.White, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
         }
@@ -826,6 +829,26 @@ namespace Bricker.Rendering
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {
                 frame.Blit(surface, 35, 25);
+            }
+        }
+
+        /// <summary>
+        /// Draws the background.
+        /// </summary>
+        private void DrawBackground(Surface frame, GameStats stats)
+        {
+            if (_tiles.Count == 0)
+                for (int i = 0; i < 50; i++)
+                    _tiles.Add(new BackgroundTile());
+
+            DateTime now = DateTime.Now;
+            foreach (BackgroundTile tile in _tiles)
+            {
+                tile.Move(now, stats.Level);
+                using (Surface surface = new Surface(tile.Size, tile.Size, tile.Color))
+                {
+                    frame.Blit(surface, tile.X - (tile.Size / 2d), tile.Y - (tile.Size / 2d));
+                }
             }
         }
 

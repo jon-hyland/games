@@ -38,12 +38,13 @@ namespace Common.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Surface(SKCanvas canvas, double width, double height)
+        public Surface(SKCanvas canvas, double width, double height, SKColor? color = null)
         {
             _width = width;
             _height = height;
             _canvas = canvas;
             _bitmap = null;
+            _canvas.Clear(color ?? Colors.Transparent);
         }
 
         /// <summary>

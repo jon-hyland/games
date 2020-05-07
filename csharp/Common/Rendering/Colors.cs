@@ -27,6 +27,9 @@ namespace Common.Rendering
         private static readonly SKColor _byzantine;
         private static readonly SKColor _forestGreen;
         private static readonly SKColor _tuftsBlue;
+        private static readonly SKColor _alphaBlack64;
+        private static readonly SKColor _alphaBlack128;
+        private static readonly SKColor _alphaBlack192;
 
         public static SKColor Transparent => _transparent;
         public static SKColor Black => _black;
@@ -48,6 +51,9 @@ namespace Common.Rendering
         public static SKColor Byzantine => _byzantine;
         public static SKColor ForestGreen => _forestGreen;
         public static SKColor TuftsBlue => _tuftsBlue;
+        public static SKColor AlphaBlack64 => _alphaBlack64;
+        public static SKColor AlphaBlack128 => _alphaBlack128;
+        public static SKColor AlphaBlack192 => _alphaBlack192;
 
         static Colors()
         {
@@ -71,6 +77,9 @@ namespace Common.Rendering
             _byzantine = new SKColor(170, 56, 168);
             _forestGreen = new SKColor(54, 137, 38);
             _tuftsBlue = new SKColor(74, 125, 219);
+            _alphaBlack64 = new SKColor(0, 0, 0, 64);
+            _alphaBlack128 = new SKColor(0, 0, 0, 128);
+            _alphaBlack192 = new SKColor(0, 0, 0, 192);
         }
 
     }
