@@ -1,8 +1,10 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
+using Bricker.Logging;
 using Bricker.Networking;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
+using Common.Logging;
 using Common.Networking;
 using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
@@ -29,6 +31,7 @@ namespace Bricker.Game
         private readonly Queue<Key> _keyQueue;
         private Thread _programLoop;
         private readonly Config _config;
+        private readonly Logger _logger;
         private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
@@ -55,6 +58,7 @@ namespace Bricker.Game
             _dispatcher = window.Dispatcher;
             _keyQueue = new Queue<Key>();
             _config = new Config();
+            _logger = new Logger(_config.LogFile);
             _communications = new GameCommunications(_config, _config.Initials, ErrorHandler.Instance);
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
@@ -68,6 +72,7 @@ namespace Bricker.Game
 
             //initialize
             RenderProps.Initialize(_config);
+            Log.Initiallize(_logger);
 
             //events
             _communications.OpponentInviteReceived += (o) =>
@@ -88,6 +93,14 @@ namespace Bricker.Game
                 interval *= 0.8;
                 _levelDropIntervals[i] = interval;
             }
+        }
+
+        /// <summary>
+        /// Fired when main window is closing.
+        /// </summary>
+        public void WindowClosing()
+        {
+            _logger?.Dispose();
         }
 
         #endregion

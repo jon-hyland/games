@@ -88,6 +88,7 @@
     <Compile Include="Game\GameState.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Networking\CommandType.cs" />
     <Compile Include="Rendering\BackgroundTile.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />

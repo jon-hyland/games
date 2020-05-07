@@ -29,6 +29,7 @@ namespace Bricker
             //events
             _skia.PaintSurface += (s, e) => _main.DrawFrame(e);
             Loaded += (s, e) => _main.StartProgramLoop();
+            Closed += (s, e) => _main.WindowClosing();
             PreviewKeyDown += (s, e) =>
             {
                 e.Handled = true;

@@ -1,4 +1,5 @@
 ﻿using Common.Error;
+using Common.Logging;
 using System;
 
 namespace Bricker.Error
@@ -15,6 +16,7 @@ namespace Bricker.Error
 
         public static void LogError(Exception ex)
         {
+            Log.Error(ex);
         }
     }
 

@@ -2,6 +2,7 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering.Properties;
+using Common.Logging;
 using Common.Networking.Game;
 using Common.Networking.Game.Discovery;
 using Common.Rendering;
@@ -853,13 +854,17 @@ namespace Bricker.Rendering
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
                 lines.Add($"com_state:   {communications.ConnectionState}");
-                lines.Add($"heartbeat_ms:   {communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
+                lines.Add($"heartbeat_ms:   {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
             }
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {
                 frame.Blit(surface, 35, 25);
             }
+
+            //TODO: REMOVE THIS!!
+            if (RenderProps.Debug)
+                Log.Write(LogLevel.Medium, "Renderer", $"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
         }
 
         /// <summary>

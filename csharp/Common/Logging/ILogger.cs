@@ -1,4 +1,6 @@
-﻿namespace Common.Logging
+﻿using System;
+
+namespace Common.Logging
 {
     /// <summary>
     /// Defines common logging abilities.
@@ -6,5 +8,6 @@
     public interface ILogger
     {
         void Write(LogLevel level, string header, string message);
+        void Error(Exception ex);
     }
 }

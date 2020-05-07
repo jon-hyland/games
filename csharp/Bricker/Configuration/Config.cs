@@ -21,6 +21,7 @@ namespace Bricker.Configuration
         public ushort GamePort { get; }
         public string ApplicationFolder { get; }
         public string ConfigFile { get; }
+        public string LogFile { get; }
         public string FontFile { get; }
         public string HighScoreFile { get; }
         public string InitialsFile { get; }
@@ -40,6 +41,7 @@ namespace Bricker.Configuration
             GamePort = 8714;
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
+            LogFile = Path.Combine(ApplicationFolder, "LogFile.txt");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
             HighScoreFile = Path.Combine(ApplicationFolder, "HighScores.txt");
             InitialsFile = Path.Combine(ApplicationFolder, "Initials.txt");

@@ -1,6 +1,7 @@
 ﻿using Common.Configuration;
 using Common.Error;
 using Common.Extensions;
+using Common.Logging;
 using Common.Networking.Game.Discovery;
 using Common.Networking.Game.Packets;
 using Common.Threading;
@@ -275,6 +276,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("SetOpponentAndConnect: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -349,6 +351,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("InviteOpponent: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return CommandResult.Error;
@@ -388,6 +391,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("AcceptInviteAndConnect: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -426,6 +430,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("RejectInvite: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -439,6 +444,7 @@ namespace Common.Networking.Game
                 }
                 catch (Exception ex)
                 {
+                    WriteToLog("RejectInvite: Disconnect error");
                     _errorHandler.LogError(ex);
                 }
             }
@@ -469,6 +475,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("CloseConnection: Unknown error");
                 _errorHandler.LogError(ex);
                 return false;
             }
@@ -498,11 +505,7 @@ namespace Common.Networking.Game
                         _commandSequence = 1;
                     sequence = _commandSequence;
                 }
-                //ushort retyAttempt = 0;
 
-                ////loop
-                //while (true)
-                //{
                 //create packet
                 CommandRequestPacket packet = new CommandRequestPacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
@@ -532,15 +535,11 @@ namespace Common.Networking.Game
 
                     //sleep
                     Thread.Sleep(2);
-
-                    ////break if time to retry packet
-                    //if ((DateTime.Now - start).TotalMilliseconds >= 250)
-                    //    break;
                 }
-                //}
             }
             catch (Exception ex)
             {
+                WriteToLog("SendCommandRequest: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return CommandResult.Error;
@@ -575,6 +574,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("SendCommandResponse: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -607,6 +607,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("SendData: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -639,6 +640,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("SendHeartbeat: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -686,7 +688,10 @@ namespace Common.Networking.Game
 
                         //break if no footer
                         if (firstIndex == -1)
+                        {
+                            WriteToLog($"IncomingData: Incomplete data ({_incomingBuffer.Count} bytes) left in buffer");
                             break;
+                        }
 
                         //dequeue bytes
                         int count = firstIndex + 4;
@@ -697,6 +702,10 @@ namespace Common.Networking.Game
                     }
                 }
 
+                //message
+                if (packets.Count > 1)
+                    WriteToLog($"IncomingData: {packets.Count} packets read in one pass");
+
                 //loop through packet (candidates)
                 bool added = false;
                 foreach (byte[] bytes in packets)
@@ -704,7 +713,10 @@ namespace Common.Networking.Game
                     //reject if invalid
                     PacketBase packet = PacketBase.FromBytes(bytes);
                     if (packet == null)
+                    {
+                        WriteToLog("IncomingData: Invalid packet was discarded");
                         continue;
+                    }
 
                     //reject if wrong game or version
                     if ((packet.GameTitle != _config.GameTitle) || (packet.GameVersion != _config.GameVersion))
@@ -739,6 +751,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("IncomingData: Error processing data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
             }
@@ -846,6 +859,7 @@ namespace Common.Networking.Game
                 }
                 catch (Exception ex)
                 {
+                    WriteToLog("IncomingPacket_Thread: Error processing packet");
                     _errorHandler?.LogError(ex);
                 }
             }
@@ -865,6 +879,7 @@ namespace Common.Networking.Game
                 //too long since heartbeat received?
                 if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 5))
                 {
+                    WriteToLog("Disconnect: Heatbeat timeout");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -876,6 +891,7 @@ namespace Common.Networking.Game
                 //connection broken?
                 if ((_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
                 {
+                    WriteToLog("Disconnect: Connection broken");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -887,6 +903,7 @@ namespace Common.Networking.Game
                 //error state?
                 if (_connectionState == ConnectionState.Error)
                 {
+                    WriteToLog("Disconnect: Transmission error");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -897,6 +914,7 @@ namespace Common.Networking.Game
             }
             catch (Exception ex)
             {
+                WriteToLog("MaintenanceTimer_Callback: Unknown error");
                 _errorHandler?.LogError(ex);
             }
         }
@@ -906,6 +924,7 @@ namespace Common.Networking.Game
         /// </summary>
         private void Heartbeat_Thread()
         {
+            DateTime lastSend = DateTime.MinValue;
             while (true)
             {
                 try
@@ -914,8 +933,12 @@ namespace Common.Networking.Game
                     if (_isStopped)
                         return;
 
+                    //calculate wait
+                    TimeSpan elapsed = DateTime.Now - lastSend;
+                    int sleepMs = Math.Max(100 - (int)elapsed.TotalMilliseconds, 0);
+
                     //sleep 100ms
-                    Thread.Sleep(100);
+                    Thread.Sleep(sleepMs);
 
                     //continue if no opponent
                     if (_opponent == null)
@@ -926,9 +949,22 @@ namespace Common.Networking.Game
                 }
                 catch (Exception ex)
                 {
+                    WriteToLog("Heartbeat_Thread: Unknown error");
                     _errorHandler?.LogError(ex);
                 }
             }
+        }
+
+        #endregion
+
+        #region Logging
+
+        /// <summary>
+        /// Writes message to log.
+        /// </summary>
+        private void WriteToLog(string message)
+        {
+            Log.Write(LogLevel.Medium, "GameComs", message);
         }
 
         #endregion
