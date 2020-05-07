@@ -25,6 +25,7 @@ X - Add player disconnect.
 X - Add player game-over, then restart.
 X - Add lines sent (no animation).
 - Redesign layout.
-- Add hold feature, six next pieces.
+X - Add hold feature, six next pieces.
+- Refactoring (player, opponent, etc).
 - Improve game animation.
 - Add music and sound effects.
