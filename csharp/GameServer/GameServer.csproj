@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Standard\Common.Standard.csproj" />
-    <ProjectReference Include="..\Common.Windows\Common.Windows.csproj" />
   </ItemGroup>
 
 </Project>
