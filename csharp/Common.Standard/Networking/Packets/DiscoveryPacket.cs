@@ -11,12 +11,12 @@ namespace Common.Standard.Networking.Packets
         //private
         private readonly IPAddress _playerIP;
         private readonly ushort _playerPort;
-        private readonly string _playerName;
+        //private readonly string _playerName;
 
         //public
         public IPAddress PlayerIP => _playerIP;
         public ushort PlayerPort => _playerPort;
-        public string PlayerName => _playerName;
+        //public string PlayerName => _playerName;
 
         /// <summary>
         /// Class constructor.
@@ -27,7 +27,7 @@ namespace Common.Standard.Networking.Packets
         {
             _playerIP = playerIP;
             _playerPort = playerPort;
-            _playerName = playerName;
+            //_playerName = playerName;
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace Common.Standard.Networking.Packets
         {
             _playerIP = parser.GetIPAddress();
             _playerPort = parser.GetUInt16();
-            _playerName = parser.GetString();
+            //_playerName = parser.GetString();
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Common.Standard.Networking.Packets
         {
             builder.AddIPAddress(_playerIP);
             builder.AddUInt16(_playerPort);
-            builder.AddString(_playerName);
+            //builder.AddString(_playerName);
         }
     }
 }
