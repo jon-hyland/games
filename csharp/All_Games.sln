@@ -5,7 +5,11 @@ VisualStudioVersion = 16.0.29926.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bricker", "Bricker\Bricker.csproj", "{8C4A7461-090B-44DE-AC80-93B681BCC7CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{3674C938-D6C5-4DEC-B723-A3330A826C4C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Windows", "Common.Windows\Common.Windows.csproj", "{3674C938-D6C5-4DEC-B723-A3330A826C4C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameServer", "GameServer\GameServer.csproj", "{D31C2417-47BF-40FF-AFE5-46925E7079D5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Standard", "Common.Standard\Common.Standard.csproj", "{D137E352-5ED3-4537-AA92-6D917D417C2E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3674C938-D6C5-4DEC-B723-A3330A826C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D31C2417-47BF-40FF-AFE5-46925E7079D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D31C2417-47BF-40FF-AFE5-46925E7079D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D31C2417-47BF-40FF-AFE5-46925E7079D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D31C2417-47BF-40FF-AFE5-46925E7079D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D137E352-5ED3-4537-AA92-6D917D417C2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D137E352-5ED3-4537-AA92-6D917D417C2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D137E352-5ED3-4537-AA92-6D917D417C2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D137E352-5ED3-4537-AA92-6D917D417C2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

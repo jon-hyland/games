@@ -1,6 +1,6 @@
-﻿using Common.Configuration;
-using Common.Json;
-using Common.Networking;
+﻿using Common.Standard.Json;
+using Common.Standard.Networking;
+using Common.Windows.Configuration;
 using SkiaSharp;
 using System;
 using System.IO;
@@ -37,7 +37,7 @@ namespace Bricker.Configuration
             GameTitle = "Bricker";
             GameVersion = GetVersion();
             DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
-            LocalIP = NetworkDiscovery.GetLocalIP();
+            LocalIP = InterfaceDiscovery.GetLocalIP();
             GamePort = 8714;
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");

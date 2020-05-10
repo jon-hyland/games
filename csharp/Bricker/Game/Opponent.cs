@@ -1,4 +1,4 @@
-﻿using Common.Networking.Game.Discovery;
+﻿using Common.Standard.Game;
 
 namespace Bricker.Game
 {

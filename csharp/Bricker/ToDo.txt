@@ -29,8 +29,22 @@ X - Add hold feature, six next pieces.
 X - Add background animation.
 X - When popup open, dim primary borders.
 X - Improve message box rendering.
-- Bugs:
-  * If one request timeout (and manual resend), IDs don't match.  New request update old seq?
+
+
+=============
+ GAME SERVER
+=============
+- Create main class, initialize logger.
+- Create server class.
+- Start server, maintain list of clients.
+- Receive packets.
+- Create config file and classes.
+
+
+
+=======
+ LATER
+=======
 - Config:
   * Disable background.
 - Settings Menu:

@@ -2,11 +2,12 @@
 using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering.Properties;
-using Common.Logging;
-using Common.Networking.Game;
-using Common.Networking.Game.Discovery;
-using Common.Rendering;
-using Common.Utilities;
+using Common.Standard.Game;
+using Common.Standard.Logging;
+using Common.Standard.Utilities;
+using Common.Windows.Networking.Game;
+using Common.Windows.Networking.Game.Discovery;
+using Common.Windows.Rendering;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using System;
@@ -156,7 +157,7 @@ namespace Bricker.Rendering
                 //create fake opponent for rendering
                 if ((_fakeOpponent) && (opponent == null))
                 {
-                    opponent = new Opponent(new Player(_config.GameTitle, _config.GameVersion, _config.LocalIP, _config.GamePort, "OPN"));
+                    opponent = new Opponent(new Player(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
                     byte[,] m = (byte[,])matrix.Grid.Clone();
                     opponent.UpdateOpponent(m, 3, 144, 12434, 7, false);
                 }

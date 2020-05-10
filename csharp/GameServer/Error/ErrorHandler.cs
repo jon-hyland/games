@@ -2,7 +2,7 @@
 using Common.Standard.Logging;
 using System;
 
-namespace Bricker.Error
+namespace GameServer.Error
 {
     public static class ErrorHandler
     {
