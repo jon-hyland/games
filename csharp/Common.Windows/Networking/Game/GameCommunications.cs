@@ -207,7 +207,6 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         public void ChangePlayerName(string name)
         {
-            //_discoveryClient.PlayerName = name;
             _localPlayer.Name = name;
         }
 
@@ -226,8 +225,14 @@ namespace Common.Windows.Networking.Game
                     ushort count = parser.GetUInt16();
                     for (int i = 0; i < count; i++)
                     {
-                        ushort size = parser.GetUInt16();
-
+                        byte[] bytes = parser.GetBytes();
+                        Player player = Player.FromBytes(bytes);
+                        if (player != null)
+                        {
+                            players.Add(player);
+                            if (players.Count >= top)
+                                break;
+                        }
                     }
                     return players;
                 }
