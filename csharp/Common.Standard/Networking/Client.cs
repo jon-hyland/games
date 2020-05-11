@@ -167,17 +167,26 @@ namespace Common.Standard.Networking
                     //}
                     //while (stream.DataAvailable);
 
-                    if (!stream.CanRead)
-                        return;
+                    //byte[] buffer = new byte[8192];
+                    //int bytesRead = 0;
+                    //do
+                    //{
+                    //    bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
+                    //    for (int i = 0; i < bytesRead; i++)
+                    //        _incomingQueue.Add(buffer[i]);
+                    //}
+                    //while (bytesRead > 0);
+
                     byte[] buffer = new byte[8192];
-                    int bytesRead = 0;
-                    do
+                    void callback(IAsyncResult ar)
                     {
-                        bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
+                        int bytesRead = stream.EndRead(ar);
                         for (int i = 0; i < bytesRead; i++)
                             _incomingQueue.Add(buffer[i]);
+                        stream.BeginRead(buffer, 0, buffer.Length, callback, null);
                     }
-                    while (bytesRead > 0);
+                    stream.BeginRead(buffer, 0, buffer.Length, callback, null);
+
 
                     //loop
                     while (true)
