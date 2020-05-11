@@ -167,6 +167,8 @@ namespace Common.Standard.Networking
                     //}
                     //while (stream.DataAvailable);
 
+                    if (!stream.CanRead)
+                        return;
                     byte[] buffer = new byte[8192];
                     int bytesRead = 0;
                     do
