@@ -852,13 +852,14 @@ namespace Common.Windows.Networking.Game
                         return;
 
                     //calculate wait
-                    TimeSpan elapsed = DateTime.Now - lastSend;
+                    DateTime now = DateTime.Now;
+                    TimeSpan elapsed = now - lastSend;
                     int sleepMs = Math.Max(250 - (int)elapsed.TotalMilliseconds, 0);
-                    lastSend = DateTime.Now;
+                    lastSend = now;
 
-                    //sleep 100ms
+                    //sleep
                     Log.Write("Sleeping for " + sleepMs + " ms");
-                    Thread.Sleep(sleepMs);
+                    Thread.Sleep(sleepMs + 5);
 
                     //send heartbeat to opponent
                     SendHeartbeat();

@@ -5,6 +5,7 @@ using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -158,6 +159,14 @@ namespace Common.Standard.Networking
 
                         //begin next read
                         stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
+                    }
+                    catch (IOException ioex)
+                    {
+                        _stop = true;
+                        if ((ioex.InnerException != null) && (ioex.InnerException is SocketException sex))
+                            Log.Write($"Connection to '{_remoteIP}' closed: {sex.SocketErrorCode}");
+                        else
+                            ErrorHandler.LogError(ioex);
                     }
                     catch (Exception ex)
                     {
