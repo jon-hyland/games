@@ -18,7 +18,9 @@ namespace Common.Standard.Networking
         private readonly IPEndPoint _endpoint;
         private readonly List<byte> _incomingQueue;
         private readonly List<byte> _outgoingQueue;
-        private readonly Thread _thread;
+        private readonly Thread _readThread;
+        private readonly Thread _writeThread;
+        private readonly ManualResetEventSlim _writeSignal;
         private bool _stop;
 
         //public
@@ -37,10 +39,11 @@ namespace Common.Standard.Networking
             _endpoint = new IPEndPoint(ip, port);
             _incomingQueue = new List<byte>();
             _outgoingQueue = new List<byte>();
-            _thread = new Thread(IO_Thread)
-            {
-                IsBackground = true
-            };
+            _readThread = new Thread(Read_Thread);
+            _readThread.IsBackground = true;
+            _writeThread = new Thread(Write_Thread);
+            _writeThread.IsBackground = true;
+            _writeSignal = new ManualResetEventSlim();
         }
 
         /// <summary>
@@ -52,11 +55,13 @@ namespace Common.Standard.Networking
             _endpoint = null;
             _incomingQueue = new List<byte>();
             _outgoingQueue = new List<byte>();
-            _thread = new Thread(IO_Thread)
-            {
-                IsBackground = true
-            };
-            _thread.Start();
+            _readThread = new Thread(Read_Thread);
+            _readThread.IsBackground = true;
+            _writeThread = new Thread(Write_Thread);
+            _writeThread.IsBackground = true;
+            _writeSignal = new ManualResetEventSlim();
+            _readThread.Start();
+            _writeThread.Start();
         }
 
         /// <summary>
@@ -76,7 +81,8 @@ namespace Common.Standard.Networking
             try
             {
                 _client.Connect(_endpoint.Address, _endpoint.Port, TimeSpan.FromMilliseconds(timeoutMs));
-                _thread.Start();
+                _readThread.Start();
+                _writeThread.Start();
                 return true;
             }
             catch (Exception ex)
@@ -94,21 +100,36 @@ namespace Common.Standard.Networking
             lock (_outgoingQueue)
             {
                 _outgoingQueue.AddRange(packet.ToBytes());
+                _writeSignal.Set();
             }
         }
 
         /// <summary>
-        /// Loops forever, reading and writing data to client.
+        /// Loops forever, reading data from client.
         /// Fires event for each complete game packet received.
         /// </summary>
-        private void IO_Thread()
+        private void Read_Thread()
         {
             NetworkStream stream = _client.GetStream();
             while (true)
             {
                 ReadData(stream);
+                if (_stop)
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Loops forever, writing data to client.
+        /// </summary>
+        private void Write_Thread()
+        {
+            NetworkStream stream = _client.GetStream();
+            while (true)
+            {
+                _writeSignal.Wait(1000);
+                _writeSignal.Reset();
                 WriteData(stream);
-                Thread.Sleep(2);
                 if (_stop)
                     break;
             }
@@ -129,17 +150,22 @@ namespace Common.Standard.Networking
                 lock (_incomingQueue)
                 {
                     //queue overflow?
-                    if (_incomingQueue.Count > 1000000)
+                    if (_incomingQueue.Count > 100000)
+                    {
+                        Log.Write($"ReadData: Incoming byte queue overflow");
                         _incomingQueue.Clear();
+                    }
 
                     //read until no more data
                     byte[] buffer = new byte[8192];
-                    while (stream.DataAvailable)
+                    int bytesRead = 0;
+                    do
                     {
-                        int read = stream.Read(buffer, 0, buffer.Length);
-                        for (int i = 0; i < read; i++)
+                        bytesRead = stream.Read(buffer, 0, buffer.Length);
+                        for (int i = 0; i < bytesRead; i++)
                             _incomingQueue.Add(buffer[i]);
                     }
+                    while (stream.DataAvailable);
 
                     //loop
                     while (true)
@@ -154,7 +180,7 @@ namespace Common.Standard.Networking
                         //break if no footer
                         if (firstIndex == -1)
                         {
-                            Log.Write($"IncomingData: Incomplete data ({_incomingQueue.Count} bytes) left in buffer");
+                            Log.Write($"ReadData: Incomplete data ({_incomingQueue.Count} bytes) left in buffer");
                             break;
                         }
 
@@ -169,7 +195,7 @@ namespace Common.Standard.Networking
 
                 //message
                 if (packets.Count > 1)
-                    Log.Write($"IncomingData: {packets.Count} packets read in one pass");
+                    Log.Write($"ReadData: {packets.Count} packets read in one pass");
 
                 //loop through packet (candidates)
                 foreach (byte[] bytes in packets)
@@ -178,7 +204,7 @@ namespace Common.Standard.Networking
                     PacketBase packet = PacketBase.FromBytes(bytes);
                     if (packet == null)
                     {
-                        Log.Write("IncomingData: Invalid packet was discarded");
+                        Log.Write("ReadData: Invalid packet was discarded");
                         continue;
                     }
 
@@ -188,7 +214,7 @@ namespace Common.Standard.Networking
             }
             catch (Exception ex)
             {
-                Log.Write("WriteData: Reading or processing data");
+                Log.Write("ReadData: Reading or processing data");
                 ErrorHandler.LogError(ex);
             }
         }

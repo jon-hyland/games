@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "<Pending>", Scope = "member", Target = "~F:Common.Standard.Utilities.CpsCalculator._timer")]
+[assembly: SuppressMessage("Style", "IDE0017:Simplify object initialization", Justification = "<Pending>")]
