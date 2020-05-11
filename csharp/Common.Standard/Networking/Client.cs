@@ -194,8 +194,8 @@ namespace Common.Standard.Networking
                 }
 
                 //message
-                if (packets.Count > 1)
-                    Log.Write($"ReadData: {packets.Count} packets read in one pass");
+                //if (packets.Count > 1)
+                Log.Write($"ReadData: {packets.Count} packets read in one pass");
 
                 //loop through packet (candidates)
                 foreach (byte[] bytes in packets)
