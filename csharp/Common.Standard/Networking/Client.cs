@@ -181,11 +181,12 @@ namespace Common.Standard.Networking
                     void callback(IAsyncResult ar)
                     {
                         int bytesRead = stream.EndRead(ar);
+                        Log.Write($"ReadData: {bytesRead} bytes read");
                         for (int i = 0; i < bytesRead; i++)
                             _incomingQueue.Add(buffer[i]);
                         stream.BeginRead(buffer, 0, buffer.Length, callback, null);
                     }
-                    stream.BeginRead(buffer, 0, buffer.Length, callback, null);
+                    stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
 
 
                     //loop
