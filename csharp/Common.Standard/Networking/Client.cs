@@ -122,6 +122,8 @@ namespace Common.Standard.Networking
                 Log.Write($"ReadData: {bytesRead} bytes read");
                 for (int i = 0; i < bytesRead; i++)
                     _incomingQueue.Add(buffer[i]);
+                if (bytesRead > 0)
+                    _readSignal.Set();
                 if (_stop)
                     return;
                 stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
