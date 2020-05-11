@@ -1,9 +1,8 @@
 ﻿using Bricker.Configuration;
-using Bricker.Error;
 using Bricker.Game;
 using Bricker.Rendering.Properties;
+using Common.Standard.Error;
 using Common.Standard.Game;
-using Common.Standard.Logging;
 using Common.Standard.Utilities;
 using Common.Windows.Networking.Game;
 using Common.Windows.Rendering;
@@ -854,7 +853,7 @@ namespace Bricker.Rendering
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
                 lines.Add($"com_state:   {communications.ConnectionState}");
-                lines.Add($"heartbeat_ms:   {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
+                //lines.Add($"heartbeat_ms:   {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
             }
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
@@ -862,9 +861,9 @@ namespace Bricker.Rendering
                 frame.Blit(surface, 35, 25);
             }
 
-            //TODO: REMOVE THIS!!
-            if (RenderProps.Debug)
-                Log.Write($"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
+            ////TODO: REMOVE THIS!!
+            //if (RenderProps.Debug)
+            //    Log.Write($"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
         }
 
         /// <summary>

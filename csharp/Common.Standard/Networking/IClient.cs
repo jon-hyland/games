@@ -4,7 +4,7 @@ namespace Common.Standard.Networking
 {
     public interface IClient
     {
-        IPAddress ClientIP { get; }
+        IPAddress RemoteIP { get; }
         bool IsConnected { get; }
     }
 }

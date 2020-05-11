@@ -1,5 +1,9 @@
 ﻿{
-  "antiAlias": 1,
-  "highFrameRate": 1,
-  "debug": 0
+    "antiAlias": 1,
+    "highFrameRate": 1,
+    "debug": 0,
+    "multiplayer": {
+        "server": "10.0.1.2",
+        "port": 8780
+    }
 }

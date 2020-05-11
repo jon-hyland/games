@@ -10,7 +10,6 @@ namespace Common.Windows.Configuration
         Version GameVersion { get; }
         string DisplayVersion { get; }
         IPAddress LocalIP { get; }
-        ushort GamePort { get; }
         string ApplicationFolder { get; }
         string ConfigFile { get; }
         string FontFile { get; }
@@ -18,5 +17,7 @@ namespace Common.Windows.Configuration
         bool AntiAlias { get; }
         bool HighFrameRate { get; }
         bool Debug { get; }
+        IPAddress ServerIP { get; }
+        ushort ServerPort { get; }
     }
 }

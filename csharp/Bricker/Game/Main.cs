@@ -1,8 +1,8 @@
 ﻿using Bricker.Configuration;
-using Bricker.Error;
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
+using Common.Standard.Error;
 using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
@@ -58,7 +58,7 @@ namespace Bricker.Game
             _keyQueue = new Queue<Key>();
             _config = new Config();
             _logger = new Logger(_config.LogFile);
-            _communications = new GameCommunications(_config, _config.Initials, ErrorHandler.Instance);
+            _communications = new GameCommunications(_config, _config.Initials);
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
             _random = new Random();
@@ -72,6 +72,7 @@ namespace Bricker.Game
             //initialize
             RenderProps.Initialize(_config);
             Log.Initiallize(_logger);
+            ErrorHandler.Initialize(_logger);
             _window.Title = $"Bricker v{_config.DisplayVersion}";
 
             //events

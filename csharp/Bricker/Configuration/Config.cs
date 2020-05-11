@@ -18,7 +18,6 @@ namespace Bricker.Configuration
         public Version GameVersion { get; }
         public string DisplayVersion { get; }
         public IPAddress LocalIP { get; }
-        public ushort GamePort { get; }
         public string ApplicationFolder { get; }
         public string ConfigFile { get; }
         public string LogFile { get; }
@@ -30,6 +29,8 @@ namespace Bricker.Configuration
         public bool AntiAlias { get; }
         public bool HighFrameRate { get; }
         public bool Debug { get; }
+        public IPAddress ServerIP { get; }
+        public ushort ServerPort { get; }
         public string Initials { get; private set; }
 
         public Config()
@@ -38,7 +39,6 @@ namespace Bricker.Configuration
             GameVersion = GetVersion();
             DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
             LocalIP = InterfaceDiscovery.GetLocalIP();
-            GamePort = 8714;
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             LogFile = Path.Combine(ApplicationFolder, "LogFile.txt");
@@ -52,6 +52,8 @@ namespace Bricker.Configuration
             AntiAlias = data.antiAlias == 1;
             HighFrameRate = data.highFrameRate == 1;
             Debug = data.debug == 1;
+            ServerIP = IPAddress.Parse((string)data.multiplayer.server);
+            ServerPort = (ushort)data.multiplayer.port;
             Initials = LoadInitials();
         }
 

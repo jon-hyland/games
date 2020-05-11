@@ -6,14 +6,10 @@ using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
 using Common.Windows.Configuration;
-using Common.Windows.Networking.Game.Discovery;
-using SimpleTCP;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Common.Windows.Networking.Game
 {
@@ -31,14 +27,14 @@ namespace Common.Windows.Networking.Game
 
         //private
         private readonly IConfig _config;
-        private readonly IErrorHandler _errorHandler;
         private readonly Player _localPlayer;
-        private readonly DiscoveryClient _discoveryClient;
-        private readonly DiscoveryServer _discoveryServer;
+        //private readonly DiscoveryClient _discoveryClient;
+        //private readonly DiscoveryServer _discoveryServer;
         //private readonly DiscoveredPlayers _discoveredPlayers;
-        private readonly SimpleTcpClient _dataClient;
-        private readonly SimpleTcpServer _dataServer;
-        private readonly List<byte> _incomingBuffer;
+        //private readonly SimpleTcpClient _dataClient;
+        //private readonly SimpleTcpServer _dataServer;
+        private readonly Client _client;
+        //private readonly List<byte> _incomingBuffer;
         private readonly CommandManager _commandManager;
         private readonly SimpleTimer _maintenanceTimer;
         private readonly List<PacketBase> _incomingPackets;
@@ -47,7 +43,7 @@ namespace Common.Windows.Networking.Game
         private readonly Thread _heartbeatThread;
         private readonly object _inviteLock = new object();
         private ushort _commandSequence;
-        private ConnectionState _connectionState;
+        //private ConnectionState _connectionState;
         private Player _opponent;
         private Player _pendingOpponent;
         private long _heartbeatsSent;
@@ -58,18 +54,19 @@ namespace Common.Windows.Networking.Game
         private long _commandRequestsReceived;
         private long _commandResponsesSent;
         private long _commandResponsesReceived;
-        private DateTime _lastHeartbeatReceived;
-        private bool _isStarted = false;
-        private bool _isStopped = false;
+        //private DateTime _lastHeartbeatReceived => DateTime.Now;    //fix
+        private bool _isStarted;
+        private bool _isStopped;
+        private bool _isDisabled;
+
 
         //public
         public string GameTitle => _config.GameTitle;
         public Version GameVersion => _config.GameVersion;
         public IPAddress LocalIP => _config.LocalIP;
-        public ushort GamePort => _config.GamePort;
         public Player LocalPlayer => _localPlayer;
         public Player Opponent => _opponent;
-        public ConnectionState ConnectionState => _connectionState;
+        public ConnectionState ConnectionState => ConnectionState.Connected;    //fix
         public long HeartbeatsSent => _heartbeatsSent;
         public long HeartbeatsReceived => _heartbeatsReceived;
         public long DataSent => _dataSent;
@@ -78,8 +75,9 @@ namespace Common.Windows.Networking.Game
         public long CommandRequestsReceived => _commandRequestsReceived;
         public long CommandResponsesSent => _commandResponsesSent;
         public long CommandResponsesReceived => _commandResponsesReceived;
-        public DateTime LastHeartbeatReceived => _lastHeartbeatReceived;
-        public TimeSpan TimeSinceLastHeartbeatReceived => DateTime.Now - _lastHeartbeatReceived;
+        //public DateTime LastHeartbeatReceived => _lastHeartbeatReceived;
+        //public TimeSpan TimeSinceLastHeartbeatReceived => DateTime.Now - _lastHeartbeatReceived;
+        public bool IsDisabled => _isDisabled;
 
         //events
         public event Action<Player> OpponentConnected;
@@ -87,46 +85,54 @@ namespace Common.Windows.Networking.Game
         public event Action<CommandRequestPacket> CommandRequestPacketReceived;
         public event Action<CommandResponsePacket> CommandResponsePacketReceived;
         public event Action<DataPacket> DataPacketReceived;
-        public event Action Disconnected;
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public GameCommunications(IConfig config, string playerName, IErrorHandler errorHandler = null)
+        public GameCommunications(IConfig config, string playerName)
         {
-            //vars
-            _errorHandler = errorHandler;
-            _config = config;
-            _localPlayer = new Player(config.LocalIP, config.GameTitle, config.GameVersion, playerName);
-            _discoveryClient = new DiscoveryClient(config.GameTitle, config.GameVersion, config.LocalIP, config.GamePort, playerName, errorHandler);
-            _discoveryServer = new DiscoveryServer(config.GamePort, errorHandler);
-            //_discoveredPlayers = new DiscoveredPlayers();
-            _dataClient = new SimpleTcpClient();
-            _dataServer = new SimpleTcpServer();
-            _incomingBuffer = new List<byte>();
-            _commandManager = new CommandManager();
-            _maintenanceTimer = new SimpleTimer(MaintenanceTimer_Callback, 15, false);
-            _incomingPackets = new List<PacketBase>();
-            _incomingPacketSignal = new ManualResetEventSlim();
-            _incomingPacketThread = new Thread(IncomingPacket_Thread)
+            try
             {
-                IsBackground = true
-            };
-            _heartbeatThread = new Thread(Heartbeat_Thread)
-            {
-                IsBackground = true
-            };
-            _commandSequence = 0;
-            _connectionState = ConnectionState.NotConnected;
-            _opponent = null;
-            _pendingOpponent = null;
-            _heartbeatsSent = 0;
-            _heartbeatsReceived = 0;
-            _lastHeartbeatReceived = DateTime.MinValue;
+                //vars
+                _config = config;
+                _localPlayer = new Player(config.LocalIP, config.GameTitle, config.GameVersion, playerName);
+                //_discoveryClient = new DiscoveryClient(config.GameTitle, config.GameVersion, config.LocalIP, config.GamePort, playerName, errorHandler);
+                //_discoveryServer = new DiscoveryServer(config.GamePort, errorHandler);
+                //_discoveredPlayers = new DiscoveredPlayers();
+                //_dataClient = new SimpleTcpClient();
+                //_dataServer = new SimpleTcpServer();
+                _client = new Client(config.ServerIP, config.ServerPort);
+                //_incomingBuffer = new List<byte>();
+                _commandManager = new CommandManager();
+                _maintenanceTimer = new SimpleTimer(MaintenanceTimer_Callback, 15, false);
+                _incomingPackets = new List<PacketBase>();
+                _incomingPacketSignal = new ManualResetEventSlim();
+                _incomingPacketThread = new Thread(IncomingPacket_Thread)
+                {
+                    IsBackground = true
+                };
+                _heartbeatThread = new Thread(Heartbeat_Thread)
+                {
+                    IsBackground = true
+                };
+                _commandSequence = 0;
+                //_connectionState = ConnectionState.NotConnected;
+                _opponent = null;
+                _pendingOpponent = null;
+                _heartbeatsSent = 0;
+                _heartbeatsReceived = 0;
+                //_lastHeartbeatReceived = DateTime.MinValue;
 
-            //events
-            //_discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
-            _dataServer.DataReceived += (s, m) => IncomingData(m?.Data);
+                //events
+                //_discoveryServer.PlayerAnnounced += (p) => _discoveredPlayers.AddOrUpdatePlayer(p);
+                //_dataServer.DataReceived += (s, m) => IncomingData(m?.Data);
+                _client.PacketReceived += (c, p) => PacketReceived(p);
+            }
+            catch (Exception ex)
+            {
+                _isDisabled = true;
+                ErrorHandler.LogError(ex);
+            }
         }
 
         /// <summary>
@@ -134,72 +140,62 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         public void Dispose()
         {
-            Stop();
-            _discoveryServer.Dispose();
-            _discoveryClient.Dispose();
-            _dataClient.Dispose();
-            _commandManager.Dispose();
-            _maintenanceTimer.Dispose();
+            _isStopped = true;
+            _client?.Dispose();
+            _commandManager?.Dispose();
+            _maintenanceTimer?.Dispose();
         }
 
         #region Start / Stop
 
         /// <summary>
-        /// Starts discovery server (UDP), discovery client (UDP broadbast), and data server (TCP).
+        /// Starts game communications with server, heartbeat and processing threads, etc.
+        /// Returns false if unable to establish connection or other error.
         /// </summary>
-        public void Start()
+        public bool Start()
         {
-            //prevent restart
-            if (_isStarted)
-                throw new Exception("Cannot restart communications");
-            _isStarted = true;
+            try
+            {
+                //return if disabled
+                if (_isDisabled)
+                    return false;
 
-            //start discovery server
-            _discoveryServer.Start();
+                //prevent restart
+                if (_isStarted)
+                    throw new Exception("Cannot restart communications");
+                _isStarted = true;
 
-            //start discovery broadcast client
-            _discoveryClient.Start();
+                ////start discovery server
+                //_discoveryServer.Start();
 
-            //start incoming packet thread
-            _incomingPacketThread.Start();
+                ////start discovery broadcast client
+                //_discoveryClient.Start();
 
-            //start data server
-            _dataServer.Start(_config.GamePort);
+                //open client connection to server
+                if (!_client.Connect(timeoutMs: 2500))
+                    throw new Exception("Unable to connect to game server");
 
-            //start maintenance timer
-            _maintenanceTimer.Start();
+                //start incoming packet thread
+                _incomingPacketThread.Start();
 
-            //start heartbeat thread
-            _heartbeatThread.Start();
-        }
+                ////start data server
+                //_dataServer.Start(_config.GamePort);
 
-        /// <summary>
-        /// Stops everything.
-        /// </summary>
-        public void Stop()
-        {
-            //prevent restop
-            if (_isStopped)
-                return;
-            _isStopped = true;
+                //start maintenance timer
+                _maintenanceTimer.Start();
 
-            //stop maintenance timer
-            _maintenanceTimer.Stop();
+                //start heartbeat thread
+                _heartbeatThread.Start();
 
-            //client disconnect from server
-            _dataClient.Disconnect();
-
-            //server stop receiving
-            _dataServer.Stop();
-
-            //stop discovery client
-            _discoveryClient.Stop();
-
-            //stop discovery server
-            _discoveryServer.Stop();
-
-            //fire event
-            Disconnected?.InvokeFromTask();
+                //success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _isDisabled = true;
+                ErrorHandler.LogError(ex);
+                return false;
+            }
         }
 
         #endregion
@@ -211,7 +207,7 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         public void ChangePlayerName(string name)
         {
-            _discoveryClient.PlayerName = name;
+            //_discoveryClient.PlayerName = name;
             _localPlayer.Name = name;
         }
 
@@ -251,15 +247,15 @@ namespace Common.Windows.Networking.Game
                 {
                     lock (_inviteLock)
                     {
-                        //close any existing connection
-                        _dataClient.Disconnect();
-                        _connectionState = ConnectionState.NotConnected;
+                        ////close any existing connection
+                        //_dataClient.Disconnect();
+                        //_connectionState = ConnectionState.NotConnected;
 
-                        //connect to opponent
-                        _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-                        _dataClient.TcpClient.SendTimeout = 2000;
-                        _dataClient.TcpClient.ReceiveTimeout = 2000;
-                        _connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
+                        ////connect to opponent
+                        //_dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
+                        //_dataClient.TcpClient.SendTimeout = 2000;
+                        //_dataClient.TcpClient.ReceiveTimeout = 2000;
+                        //_connectionState = pending ? ConnectionState.Connected_PendingInviteAcceptance : ConnectionState.Connected;
 
                         //set opponent
                         _opponent = opponent;
@@ -280,9 +276,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("SetOpponentAndConnect: Unknown error");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -311,8 +307,8 @@ namespace Common.Windows.Networking.Game
                         if (result == CommandResult.Accept)
                         {
                             _pendingOpponent = null;
-                            _lastHeartbeatReceived = DateTime.Now;
-                            _connectionState = ConnectionState.Connected;
+                            //_lastHeartbeatReceived = DateTime.Now;
+                            //_connectionState = ConnectionState.Connected;
                             fireEvent = true;
                         }
 
@@ -321,8 +317,8 @@ namespace Common.Windows.Networking.Game
                         {
                             _opponent = null;
                             _pendingOpponent = null;
-                            _connectionState = ConnectionState.NotConnected;
-                            _dataClient.Disconnect();
+                            //_connectionState = ConnectionState.NotConnected;
+                            //_dataClient.Disconnect();
                         }
 
                         //timeout
@@ -330,8 +326,8 @@ namespace Common.Windows.Networking.Game
                         {
                             _opponent = null;
                             _pendingOpponent = null;
-                            _connectionState = ConnectionState.NotConnected;
-                            _dataClient.Disconnect();
+                            //_connectionState = ConnectionState.NotConnected;
+                            //_dataClient.Disconnect();
                         }
 
                         //error
@@ -339,8 +335,8 @@ namespace Common.Windows.Networking.Game
                         {
                             _opponent = null;
                             _pendingOpponent = null;
-                            _connectionState = ConnectionState.Error;
-                            _dataClient.Disconnect();
+                            //_connectionState = ConnectionState.Error;
+                            //_dataClient.Disconnect();
                         }
 
                         //return
@@ -355,9 +351,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("InviteOpponent: Unknown error");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return CommandResult.Error;
             }
         }
@@ -376,7 +372,7 @@ namespace Common.Windows.Networking.Game
                         return false;
 
                     //set opponent and connect
-                    _lastHeartbeatReceived = DateTime.Now;
+                    //_lastHeartbeatReceived = DateTime.Now;
                     bool success = SetOpponentAndConnect(opponent, false);
                     if (!success)
                     {
@@ -395,9 +391,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("AcceptInviteAndConnect: Unknown error");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -415,14 +411,14 @@ namespace Common.Windows.Networking.Game
                     if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
                         return false;
 
-                    //close any existing connection
-                    _dataClient.Disconnect();
-                    _connectionState = ConnectionState.NotConnected;
+                    ////close any existing connection
+                    //_dataClient.Disconnect();
+                    //_connectionState = ConnectionState.NotConnected;
 
-                    //connect to opponent
-                    _dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-                    _dataClient.TcpClient.SendTimeout = 2000;
-                    _dataClient.TcpClient.ReceiveTimeout = 2000;
+                    ////connect to opponent
+                    //_dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
+                    //_dataClient.TcpClient.SendTimeout = 2000;
+                    //_dataClient.TcpClient.ReceiveTimeout = 2000;
 
                     //send rejection
                     return SendCommandResponse(
@@ -434,22 +430,22 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("RejectInvite: Unknown error");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
             finally
             {
                 try
                 {
-                    _dataClient.Disconnect();
-                    _connectionState = ConnectionState.NotConnected;
+                    //_dataClient.Disconnect();
+                    //_connectionState = ConnectionState.NotConnected;
                 }
                 catch (Exception ex)
                 {
                     Log.Write("RejectInvite: Disconnect error");
-                    _errorHandler.LogError(ex);
+                    ErrorHandler.LogError(ex);
                 }
             }
         }
@@ -463,15 +459,15 @@ namespace Common.Windows.Networking.Game
             {
                 lock (_inviteLock)
                 {
-                    //set flag
-                    _connectionState = ConnectionState.NotConnected;
+                    ////set flag
+                    //_connectionState = ConnectionState.NotConnected;
 
                     //remove opponent reference
                     _opponent = null;
                     _pendingOpponent = null;
 
-                    //close connection
-                    _dataClient.Disconnect();
+                    ////close connection
+                    //_dataClient.Disconnect();
 
                     //success
                     return true;
@@ -480,7 +476,7 @@ namespace Common.Windows.Networking.Game
             catch (Exception ex)
             {
                 Log.Write("CloseConnection: Unknown error");
-                _errorHandler.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -513,12 +509,12 @@ namespace Common.Windows.Networking.Game
                 //create packet
                 CommandRequestPacket packet = new CommandRequestPacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, playerName: _localPlayer.Name,
+                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
                     commandType: type, sequence: sequence, retryAttempt: 0, data: data);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
-                _dataClient.Write(bytes);
+                //_dataClient.Write(bytes);
                 _commandRequestsSent++;
 
                 //record command request has been sent
@@ -543,9 +539,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("SendCommandRequest: Error sending data");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return CommandResult.Error;
             }
         }
@@ -565,12 +561,12 @@ namespace Common.Windows.Networking.Game
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: opponent.IP, destinationPort: _config.GamePort, playerName: _localPlayer.Name,
+                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
                     commandType: type, sequence: sequence, result: result, data: data);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
-                _dataClient.Write(bytes);
+                //_dataClient.Write(bytes);
                 _commandResponsesSent++;
 
                 //success
@@ -578,9 +574,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("SendCommandResponse: Error sending data");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -599,12 +595,12 @@ namespace Common.Windows.Networking.Game
                 //create packet
                 DataPacket packet = new DataPacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, playerName: _localPlayer.Name,
+                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
                     data: data);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();
-                _dataClient.Write(bytes);
+                //_dataClient.Write(bytes);
                 _dataSent++;
 
                 //success
@@ -612,9 +608,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("SendData: Error sending data");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -626,19 +622,18 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                //no opponent?
-                if (_opponent == null)
-                    throw new Exception("No opponent set");
+                ////no opponent?
+                //if (_opponent == null)
+                //    throw new Exception("No opponent set");
 
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _opponent.IP, destinationPort: _config.GamePort, playerName: _localPlayer.Name,
+                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
                     count: _heartbeatsSent + 1);
 
                 //send packet
-                byte[] bytes = packet.ToBytes();
-                _dataClient.Write(bytes);
+                _client.SendPacket(packet);
                 _heartbeatsSent++;
 
                 //success
@@ -646,9 +641,9 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
+                //_connectionState = ConnectionState.Error;
                 Log.Write("SendHeartbeat: Error sending data");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
                 return false;
             }
         }
@@ -658,129 +653,46 @@ namespace Common.Windows.Networking.Game
         #region Incomming
 
         /// <summary>
-        /// Fired when server object receives data from any client.  No restrictions
-        /// on who can connect, but packets that don't match are discarded.
+        /// Fired when packet received.
         /// </summary>
-        private void IncomingData(byte[] buffer)
+        private void PacketReceived(PacketBase packet)
         {
             try
             {
-                //reject if no data
-                if (buffer == null)
+                //reject if wrong game or version
+                if ((packet.GameTitle != _config.GameTitle) || (packet.GameVersion != _config.GameVersion))
                     return;
 
-                //vars
-                List<byte[]> packets = new List<byte[]>();
-
-                //lock buffer
-                lock (_incomingBuffer)
+                //special logic for invite requests
+                if ((packet is CommandRequestPacket p1) && (p1.CommandType == CommandType.ConnectToPlayer))
                 {
-                    //buffer overflow?
-                    if (_incomingBuffer.Count > 1000000)
-                        _incomingBuffer.Clear();
-
-                    //add to buffer
-                    _incomingBuffer.AddRange(buffer);
-
-                    //loop
-                    while (true)
-                    {
-                        //break if zero bytes
-                        if (_incomingBuffer.Count == 0)
-                            break;
-
-                        //find first four matching footer bytes (terminator)
-                        int firstIndex = FindToken(_incomingBuffer, PacketBase.PACKET_FOOTER);
-
-                        //break if no footer
-                        if (firstIndex == -1)
-                        {
-                            Log.Write($"IncomingData: Incomplete data ({_incomingBuffer.Count} bytes) left in buffer");
-                            break;
-                        }
-
-                        //dequeue bytes
-                        int count = firstIndex + 4;
-                        byte[] bytes = _incomingBuffer.Dequeue(count).ToArray();
-
-                        //add to list
-                        packets.Add(bytes);
-                    }
+                    _commandRequestsReceived++;
+                    PacketParser parser = new PacketParser(p1.Data);
+                    string playerName = parser.GetString();
+                    _pendingOpponent = new Player(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
+                    OpponentInviteReceived?.InvokeFromTask(_pendingOpponent);
+                    return;
                 }
 
-                //message
-                if (packets.Count > 1)
-                    Log.Write($"IncomingData: {packets.Count} packets read in one pass");
+                //reject if wrong opponent
+                if ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP)))
+                    return;
 
-                //loop through packet (candidates)
-                bool added = false;
-                foreach (byte[] bytes in packets)
+                //queue packet for processing
+                lock (_incomingPackets)
                 {
-                    //reject if invalid
-                    PacketBase packet = PacketBase.FromBytes(bytes);
-                    if (packet == null)
-                    {
-                        Log.Write("IncomingData: Invalid packet was discarded");
-                        continue;
-                    }
-
-                    //reject if wrong game or version
-                    if ((packet.GameTitle != _config.GameTitle) || (packet.GameVersion != _config.GameVersion))
-                        continue;
-
-                    //special logic for invite requests
-                    if ((packet is CommandRequestPacket p1) && (p1.CommandType == CommandType.ConnectToPlayer))
-                    {
-                        _commandRequestsReceived++;
-                        PacketParser parser = new PacketParser(p1.Data);
-                        string playerName = parser.GetString();
-                        _pendingOpponent = new Player(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
-                        Task.Run(() => OpponentInviteReceived?.InvokeFromTask(_pendingOpponent));
-                        continue;
-                    }
-
-                    //reject if wrong opponent
-                    if ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP)))
-                        continue;
-
-                    //queue packet for processing
-                    lock (_incomingPackets)
-                    {
-                        _incomingPackets.Add(packet);
-                        added = true;
-                    }
+                    _incomingPackets.Add(packet);
                 }
 
                 //signal
-                if (added)
-                    _incomingPacketSignal.Set();
+                _incomingPacketSignal.Set();
             }
             catch (Exception ex)
             {
-                Log.Write("IncomingData: Error processing data");
-                _connectionState = ConnectionState.Error;
-                _errorHandler?.LogError(ex);
+                //_connectionState = ConnectionState.Error;
+                Log.Write("PacketReceived: Error processing packet");
+                ErrorHandler.LogError(ex);
             }
-        }
-
-        /// <summary>
-        /// Finds and returns first index of matching four-byte pattern defined by specified token.
-        /// Returns -1 if not found.
-        /// </summary>
-        private static int FindToken(IList<byte> buffer, int token)
-        {
-            byte[] tokenBytes = BitConverter.GetBytes(token);
-            for (int i = 0; i < buffer.Count - 3; i++)
-            {
-                if ((buffer[i] == tokenBytes[0])
-                    && (buffer[i + 1] == tokenBytes[1])
-                    && (buffer[i + 2] == tokenBytes[2])
-                    && (buffer[i + 3] == tokenBytes[3]))
-                {
-                    return i;
-                }
-            }
-            return -1;
         }
 
         /// <summary>
@@ -858,15 +770,15 @@ namespace Common.Windows.Networking.Game
                             //increment counter
                             _heartbeatsReceived++;
 
-                            //record time
-                            _lastHeartbeatReceived = DateTime.Now;
+                            ////record time
+                            //_lastHeartbeatReceived = DateTime.Now;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     Log.Write("IncomingPacket_Thread: Error processing packet");
-                    _errorHandler?.LogError(ex);
+                    ErrorHandler.LogError(ex);
                 }
             }
         }
@@ -882,46 +794,46 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                //too long since heartbeat received?
-                if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 5))
-                {
-                    Log.Write("Disconnect: Heatbeat timeout");
-                    _connectionState = ConnectionState.NotConnected;
-                    _opponent = null;
-                    _pendingOpponent = null;
-                    _dataClient.Disconnect();
-                    Disconnected?.InvokeFromTask();
-                    return;
-                }
+                ////too long since heartbeat received?
+                //if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 5))
+                //{
+                //    Log.Write("Disconnect: Heatbeat timeout");
+                //    _connectionState = ConnectionState.NotConnected;
+                //    _opponent = null;
+                //    _pendingOpponent = null;
+                //    _dataClient.Disconnect();
+                //    Disconnected?.InvokeFromTask();
+                //    return;
+                //}
 
-                //connection broken?
-                if ((_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
-                {
-                    Log.Write("Disconnect: Connection broken");
-                    _connectionState = ConnectionState.NotConnected;
-                    _opponent = null;
-                    _pendingOpponent = null;
-                    _dataClient.Disconnect();
-                    Disconnected?.InvokeFromTask();
-                    return;
-                }
+                ////connection broken?
+                //if ((_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
+                //{
+                //    Log.Write("Disconnect: Connection broken");
+                //    _connectionState = ConnectionState.NotConnected;
+                //    _opponent = null;
+                //    _pendingOpponent = null;
+                //    _dataClient.Disconnect();
+                //    Disconnected?.InvokeFromTask();
+                //    return;
+                //}
 
-                //error state?
-                if (_connectionState == ConnectionState.Error)
-                {
-                    Log.Write("Disconnect: Transmission error");
-                    _connectionState = ConnectionState.NotConnected;
-                    _opponent = null;
-                    _pendingOpponent = null;
-                    _dataClient.Disconnect();
-                    Disconnected?.InvokeFromTask();
-                    return;
-                }
+                ////error state?
+                //if (_connectionState == ConnectionState.Error)
+                //{
+                //    Log.Write("Disconnect: Transmission error");
+                //    _connectionState = ConnectionState.NotConnected;
+                //    _opponent = null;
+                //    _pendingOpponent = null;
+                //    _dataClient.Disconnect();
+                //    Disconnected?.InvokeFromTask();
+                //    return;
+                //}
             }
             catch (Exception ex)
             {
                 Log.Write("MaintenanceTimer_Callback: Unknown error");
-                _errorHandler?.LogError(ex);
+                ErrorHandler.LogError(ex);
             }
         }
 
@@ -941,15 +853,11 @@ namespace Common.Windows.Networking.Game
 
                     //calculate wait
                     TimeSpan elapsed = DateTime.Now - lastSend;
-                    int sleepMs = Math.Max(100 - (int)elapsed.TotalMilliseconds, 0);
+                    int sleepMs = Math.Max(250 - (int)elapsed.TotalMilliseconds, 0);
                     lastSend = DateTime.Now;
 
                     //sleep 100ms
                     Thread.Sleep(sleepMs);
-
-                    //continue if no opponent
-                    if (_opponent == null)
-                        continue;
 
                     //send heartbeat to opponent
                     SendHeartbeat();
@@ -957,7 +865,7 @@ namespace Common.Windows.Networking.Game
                 catch (Exception ex)
                 {
                     Log.Write("Heartbeat_Thread: Unknown error");
-                    _errorHandler?.LogError(ex);
+                    ErrorHandler.LogError(ex);
                 }
             }
         }

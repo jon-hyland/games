@@ -106,7 +106,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Configuration\Config.cs" />
-    <Compile Include="Error\ErrorHandler.cs" />
     <Compile Include="Game\Brick.cs" />
     <Compile Include="Game\GameStats.cs" />
     <Compile Include="Game\Matrix.cs" />

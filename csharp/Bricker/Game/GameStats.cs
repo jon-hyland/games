@@ -1,5 +1,5 @@
 ﻿using Bricker.Configuration;
-using Bricker.Error;
+using Common.Standard.Error;
 using System;
 using System.Collections.Generic;
 using System.IO;

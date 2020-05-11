@@ -1,4 +1,5 @@
-﻿using Common.Standard.Logging;
+﻿using Common.Standard.Error;
+using Common.Standard.Logging;
 using GameServer.Configuration;
 using GameServer.Logging;
 using GameServer.Networking;
@@ -27,6 +28,7 @@ namespace GameServer
 
                 //initialize
                 Log.Initiallize(_logger);
+                ErrorHandler.Initialize(_logger);
 
                 //message
                 Log.Write($"Game Server v{_config.DisplayVersion}  (c) 2020 John Hyland");

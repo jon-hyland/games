@@ -1,9 +1,9 @@
-﻿using Common.Standard.Game;
+﻿using Common.Standard.Error;
+using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
-using GameServer.Error;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +38,7 @@ namespace GameServer.Networking
             _sessions = new List<Session>();
             _listenThread = new Thread(ListenThread);
             _listenThread.IsBackground = true;
-            _timer = new SimpleTimer(Timer_Callback, 250);
+            _timer = new SimpleTimer(Timer_Callback, 1000);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace GameServer.Networking
                     Client client = new Client(_listener.AcceptTcpClient());
 
                     //message
-                    Log.Write($"Accepted TCP connection from '{client.ClientIP}'..");
+                    Log.Write($"Accepted TCP connection from '{client.RemoteIP}'..");
 
                     //add to list
                     lock (_clients)
@@ -246,7 +246,7 @@ namespace GameServer.Networking
                     data: builder.ToBytes());
 
                 //send response
-                client.WritePacket(response);
+                client.SendPacket(response);
             }
             catch (Exception ex)
             {

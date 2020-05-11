@@ -1,8 +1,7 @@
-﻿using Common.Standard.Extensions;
+﻿using Common.Standard.Error;
+using Common.Standard.Extensions;
 using Common.Standard.Logging;
-using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
-using GameServer.Error;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,40 +9,87 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace GameServer.Networking
+namespace Common.Standard.Networking
 {
-    public class Client : IClient
+    public class Client : IClient, IDisposable
     {
         //private
         private readonly TcpClient _client;
+        private readonly IPEndPoint _endpoint;
         private readonly List<byte> _incomingQueue;
         private readonly List<byte> _outgoingQueue;
-        private readonly Thread _ioThread;
+        private readonly Thread _thread;
+        private bool _stop;
 
         //public
-        public IPAddress ClientIP => ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
+        public IPAddress RemoteIP => ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
         public bool IsConnected => _client.Connected;
 
         //events
         public event Action<Client, PacketBase> PacketReceived;
 
         /// <summary>
-        /// Class constructor.
+        /// Class constructor (standalone / client side).
+        /// </summary>
+        public Client(IPAddress ip, int port)
+        {
+            _client = new TcpClient();
+            _endpoint = new IPEndPoint(ip, port);
+            _incomingQueue = new List<byte>();
+            _outgoingQueue = new List<byte>();
+            _thread = new Thread(IO_Thread)
+            {
+                IsBackground = true
+            };
+        }
+
+        /// <summary>
+        /// Class constructor (server side, from listener).
         /// </summary>
         public Client(TcpClient client)
         {
             _client = client;
+            _endpoint = null;
             _incomingQueue = new List<byte>();
             _outgoingQueue = new List<byte>();
-            _ioThread = new Thread(IO_Thread);
-            _ioThread.IsBackground = true;
-            _ioThread.Start();
+            _thread = new Thread(IO_Thread)
+            {
+                IsBackground = true
+            };
+            _thread.Start();
+        }
+
+        /// <summary>
+        /// Disposes of resources.
+        /// </summary>
+        public void Dispose()
+        {
+            _stop = true;
+            _client?.Dispose();
+        }
+
+        /// <summary>
+        /// Connects to configured endpoint (standalone / client side).
+        /// </summary>
+        public bool Connect(int timeoutMs = 2500)
+        {
+            try
+            {
+                _client.Connect(_endpoint.Address, _endpoint.Port, TimeSpan.FromMilliseconds(timeoutMs));
+                _thread.Start();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+                return false;
+            }
         }
 
         /// <summary>
         /// Serializes packet and adds to outgoing queue.
         /// </summary>
-        public void WritePacket(PacketBase packet)
+        public void SendPacket(PacketBase packet)
         {
             lock (_outgoingQueue)
             {
@@ -63,11 +109,13 @@ namespace GameServer.Networking
                 ReadData(stream);
                 WriteData(stream);
                 Thread.Sleep(2);
+                if (_stop)
+                    break;
             }
         }
 
         /// <summary>
-        /// Reads data from client stream (if bytes exist in buffer).  Tries to construct 
+        /// Reads data from incoming stream (if bytes exist in buffer).  Tries to construct 
         /// one or more game packets. Fires event for each valid game packet.
         /// </summary>
         private void ReadData(NetworkStream stream)
@@ -146,7 +194,7 @@ namespace GameServer.Networking
         }
 
         /// <summary>
-        /// Writes any pending outgoing data to client.
+        /// Writes any pending outgoing data to network stream.
         /// </summary>
         private void WriteData(NetworkStream stream)
         {
@@ -195,5 +243,7 @@ namespace GameServer.Networking
             }
             return -1;
         }
+
+
     }
 }
