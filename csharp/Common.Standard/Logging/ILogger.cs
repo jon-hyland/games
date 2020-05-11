@@ -7,7 +7,7 @@ namespace Common.Standard.Logging
     /// </summary>
     public interface ILogger
     {
-        void Write(LogLevel level, string header, string message);
+        void Write(string message);
         void Error(Exception ex);
     }
 }

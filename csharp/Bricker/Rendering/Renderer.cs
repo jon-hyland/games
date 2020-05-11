@@ -6,7 +6,6 @@ using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Utilities;
 using Common.Windows.Networking.Game;
-using Common.Windows.Networking.Game.Discovery;
 using Common.Windows.Rendering;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
@@ -865,7 +864,7 @@ namespace Bricker.Rendering
 
             //TODO: REMOVE THIS!!
             if (RenderProps.Debug)
-                Log.Write(LogLevel.Medium, "Renderer", $"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
+                Log.Write($"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
         }
 
         /// <summary>

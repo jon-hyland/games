@@ -280,7 +280,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("SetOpponentAndConnect: Unknown error");
+                Log.Write("SetOpponentAndConnect: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -355,7 +355,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("InviteOpponent: Unknown error");
+                Log.Write("InviteOpponent: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return CommandResult.Error;
@@ -395,7 +395,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("AcceptInviteAndConnect: Unknown error");
+                Log.Write("AcceptInviteAndConnect: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -434,7 +434,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("RejectInvite: Unknown error");
+                Log.Write("RejectInvite: Unknown error");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -448,7 +448,7 @@ namespace Common.Windows.Networking.Game
                 }
                 catch (Exception ex)
                 {
-                    WriteToLog("RejectInvite: Disconnect error");
+                    Log.Write("RejectInvite: Disconnect error");
                     _errorHandler.LogError(ex);
                 }
             }
@@ -479,7 +479,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("CloseConnection: Unknown error");
+                Log.Write("CloseConnection: Unknown error");
                 _errorHandler.LogError(ex);
                 return false;
             }
@@ -543,7 +543,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("SendCommandRequest: Error sending data");
+                Log.Write("SendCommandRequest: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return CommandResult.Error;
@@ -578,7 +578,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("SendCommandResponse: Error sending data");
+                Log.Write("SendCommandResponse: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -612,7 +612,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("SendData: Error sending data");
+                Log.Write("SendData: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -646,7 +646,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("SendHeartbeat: Error sending data");
+                Log.Write("SendHeartbeat: Error sending data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
                 return false;
@@ -695,7 +695,7 @@ namespace Common.Windows.Networking.Game
                         //break if no footer
                         if (firstIndex == -1)
                         {
-                            WriteToLog($"IncomingData: Incomplete data ({_incomingBuffer.Count} bytes) left in buffer");
+                            Log.Write($"IncomingData: Incomplete data ({_incomingBuffer.Count} bytes) left in buffer");
                             break;
                         }
 
@@ -710,7 +710,7 @@ namespace Common.Windows.Networking.Game
 
                 //message
                 if (packets.Count > 1)
-                    WriteToLog($"IncomingData: {packets.Count} packets read in one pass");
+                    Log.Write($"IncomingData: {packets.Count} packets read in one pass");
 
                 //loop through packet (candidates)
                 bool added = false;
@@ -720,7 +720,7 @@ namespace Common.Windows.Networking.Game
                     PacketBase packet = PacketBase.FromBytes(bytes);
                     if (packet == null)
                     {
-                        WriteToLog("IncomingData: Invalid packet was discarded");
+                        Log.Write("IncomingData: Invalid packet was discarded");
                         continue;
                     }
 
@@ -757,7 +757,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("IncomingData: Error processing data");
+                Log.Write("IncomingData: Error processing data");
                 _connectionState = ConnectionState.Error;
                 _errorHandler?.LogError(ex);
             }
@@ -865,7 +865,7 @@ namespace Common.Windows.Networking.Game
                 }
                 catch (Exception ex)
                 {
-                    WriteToLog("IncomingPacket_Thread: Error processing packet");
+                    Log.Write("IncomingPacket_Thread: Error processing packet");
                     _errorHandler?.LogError(ex);
                 }
             }
@@ -885,7 +885,7 @@ namespace Common.Windows.Networking.Game
                 //too long since heartbeat received?
                 if ((_connectionState == ConnectionState.Connected) && (TimeSinceLastHeartbeatReceived.TotalSeconds > 5))
                 {
-                    WriteToLog("Disconnect: Heatbeat timeout");
+                    Log.Write("Disconnect: Heatbeat timeout");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -897,7 +897,7 @@ namespace Common.Windows.Networking.Game
                 //connection broken?
                 if ((_connectionState == ConnectionState.Connected) && (_dataClient.TcpClient?.Connected != true))
                 {
-                    WriteToLog("Disconnect: Connection broken");
+                    Log.Write("Disconnect: Connection broken");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -909,7 +909,7 @@ namespace Common.Windows.Networking.Game
                 //error state?
                 if (_connectionState == ConnectionState.Error)
                 {
-                    WriteToLog("Disconnect: Transmission error");
+                    Log.Write("Disconnect: Transmission error");
                     _connectionState = ConnectionState.NotConnected;
                     _opponent = null;
                     _pendingOpponent = null;
@@ -920,7 +920,7 @@ namespace Common.Windows.Networking.Game
             }
             catch (Exception ex)
             {
-                WriteToLog("MaintenanceTimer_Callback: Unknown error");
+                Log.Write("MaintenanceTimer_Callback: Unknown error");
                 _errorHandler?.LogError(ex);
             }
         }
@@ -956,26 +956,13 @@ namespace Common.Windows.Networking.Game
                 }
                 catch (Exception ex)
                 {
-                    WriteToLog("Heartbeat_Thread: Unknown error");
+                    Log.Write("Heartbeat_Thread: Unknown error");
                     _errorHandler?.LogError(ex);
                 }
             }
         }
 
         #endregion
-
-        #region Logging
-
-        /// <summary>
-        /// Writes message to log.
-        /// </summary>
-        private void WriteToLog(string message)
-        {
-            Log.Write(LogLevel.Medium, "GameComs", message);
-        }
-
-        #endregion
-
     }
 
     /// <summary>

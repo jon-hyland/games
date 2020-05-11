@@ -106,7 +106,7 @@ namespace GameServer.Networking
                         //break if no footer
                         if (firstIndex == -1)
                         {
-                            WriteToLog($"IncomingData: Incomplete data ({_incomingQueue.Count} bytes) left in buffer");
+                            Log.Write($"IncomingData: Incomplete data ({_incomingQueue.Count} bytes) left in buffer");
                             break;
                         }
 
@@ -121,7 +121,7 @@ namespace GameServer.Networking
 
                 //message
                 if (packets.Count > 1)
-                    WriteToLog($"IncomingData: {packets.Count} packets read in one pass");
+                    Log.Write($"IncomingData: {packets.Count} packets read in one pass");
 
                 //loop through packet (candidates)
                 foreach (byte[] bytes in packets)
@@ -130,7 +130,7 @@ namespace GameServer.Networking
                     PacketBase packet = PacketBase.FromBytes(bytes);
                     if (packet == null)
                     {
-                        WriteToLog("IncomingData: Invalid packet was discarded");
+                        Log.Write("IncomingData: Invalid packet was discarded");
                         continue;
                     }
 
@@ -140,7 +140,7 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                WriteToLog("WriteData: Reading or processing data");
+                Log.Write("WriteData: Reading or processing data");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -171,7 +171,7 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                WriteToLog("WriteData: Error writing outgoing data");
+                Log.Write("WriteData: Error writing outgoing data");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -195,14 +195,5 @@ namespace GameServer.Networking
             }
             return -1;
         }
-
-        /// <summary>
-        /// Writes a log entry.
-        /// </summary>
-        private void WriteToLog(string message)
-        {
-            Log.Write(LogLevel.Medium, "Client", message);
-        }
-
     }
 }

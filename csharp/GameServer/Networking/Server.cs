@@ -46,7 +46,7 @@ namespace GameServer.Networking
         /// </summary>
         public void Start()
         {
-            WriteToLog("Starting TCP server..");
+            Log.Write("Starting TCP server..");
             _listener.Start();
             _listenThread.Start();
         }
@@ -66,6 +66,9 @@ namespace GameServer.Networking
                 {
                     //create new game client (blocking call)
                     Client client = new Client(_listener.AcceptTcpClient());
+
+                    //message
+                    Log.Write($"Accepted TCP connection from '{client.ClientIP}'..");
 
                     //add to list
                     lock (_clients)
@@ -115,13 +118,17 @@ namespace GameServer.Networking
                 if (existing != null)
                 {
                     if (existing.Name != player.Name)
+                    {
+                        Log.Write($"Changing player name '{existing.Name}' to '{player.Name}'..");
                         existing.Name = player.Name;
+                    }
                     TimeSpan sinceLastDiscovery = DateTime.Now - existing.LastDiscovery;
                     if (sinceLastDiscovery.TotalSeconds > 60)
                         existing.LastDiscovery = DateTime.Now;
                 }
                 else
                 {
+                    Log.Write($"Adding new player '{player.Name}' at '{player.IP}' playing '{player.GameTitle} v{player.GameVersion}'..");
                     _players.Add(player);
                 }
 
@@ -143,7 +150,7 @@ namespace GameServer.Networking
                     .ToList();
                 foreach (Player p in expired)
                 {
-                    WriteToLog($"RemoveExpiredPlayers: Removing expired/disconnected player [ip={p.IP}, name={p.Name}]..");
+                    Log.Write($"RemoveExpiredPlayers: Removing expired/disconnected player [ip={p.IP}, name={p.Name}]..");
                     _players.Remove(p);
                 }
             }
@@ -196,7 +203,7 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                WriteToLog("PacketReceived: Error processing client packet");
+                Log.Write("PacketReceived: Error processing client packet");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -215,6 +222,9 @@ namespace GameServer.Networking
                 List<Player> otherPlayers = GetPlayers(player.GameTitle, player.GameVersion)
                     .Where(p => p.UniqueKey != player.UniqueKey)
                     .ToList();
+
+                //message
+                Log.Write($"Responsing to 'GetPlayers' request from player '{player.Name}' with {otherPlayers.Count} other player..");
 
                 //serialize list to bytes
                 PacketBuilder builder = new PacketBuilder();
@@ -240,7 +250,7 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                WriteToLog("Answer_GetPlayers: Error returning player list");
+                Log.Write("Answer_GetPlayers: Error returning player list");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -264,17 +274,9 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                WriteToLog("Timer_Callback: Unknown error");
+                Log.Write("Timer_Callback: Unknown error");
                 ErrorHandler.LogError(ex);
             }
-        }
-
-        /// <summary>
-        /// Writes a log entry.
-        /// </summary>
-        private void WriteToLog(string message)
-        {
-            Log.Write(LogLevel.Medium, "Server", message);
         }
 
         #endregion

@@ -32,11 +32,11 @@ namespace GameServer.Logging
         /// <summary>
         /// Writes line to console and file.
         /// </summary>
-        public void Write(LogLevel level, string header, string message)
+        public void Write(string message)
         {
             try
             {
-                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(level.ToString())}\t{Clean(header)}\t{Clean(message)}";
+                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(message)}";
                 lock (_writer)
                 {
                     Console.WriteLine(line);
@@ -55,7 +55,7 @@ namespace GameServer.Logging
         {
             try
             {
-                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{LogLevel.Error}\t{"Error"}\t{Clean(ex?.ToString())}";
+                string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\tError: {Clean(ex?.ToString())}";
                 lock (_writer)
                 {
                     Console.WriteLine(line);

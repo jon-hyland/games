@@ -26,7 +26,7 @@ namespace GameServer
                 _server = new Server(_config.LocalIP, _config.ListenPort);
 
                 //initialize
-                Log.Initiallize(_logger, LogLevel.Medium, "GameServer");
+                Log.Initiallize(_logger);
 
                 //message
                 Log.Write($"Game Server v{_config.DisplayVersion}  (c) 2020 John Hyland");
