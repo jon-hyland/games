@@ -17,6 +17,7 @@ namespace Common.Standard.Networking
         //private
         private readonly TcpClient _client;
         private readonly IPEndPoint _endpoint;
+        private readonly IPAddress _remoteIP;
         private readonly List<byte> _incomingQueue;
         private readonly List<byte> _outgoingQueue;
         private readonly Thread _readThread;
@@ -27,7 +28,7 @@ namespace Common.Standard.Networking
         private bool _stop;
 
         //public
-        public IPAddress RemoteIP => ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
+        public IPAddress RemoteIP => _remoteIP;
         public bool IsConnected => _client.Connected;
         public TcpClient TcpClient => _client;
 
@@ -42,6 +43,7 @@ namespace Common.Standard.Networking
         {
             _client = new TcpClient();
             _endpoint = new IPEndPoint(ip, port);
+            _remoteIP = ip;
             _incomingQueue = new List<byte>();
             _outgoingQueue = new List<byte>();
             _readThread = new Thread(Read_Thread);
@@ -60,6 +62,7 @@ namespace Common.Standard.Networking
         {
             _client = client;
             _endpoint = null;
+            _remoteIP = ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
             _incomingQueue = new List<byte>();
             _outgoingQueue = new List<byte>();
             _readThread = new Thread(Read_Thread);
