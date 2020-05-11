@@ -256,9 +256,6 @@ namespace Common.Standard.Networking
                 if (packets.Count <= 0)
                     return;
 
-                //message
-                Log.Write($"ReadData: {packets.Count} packets read in one pass");
-
                 //loop through packet (candidates)
                 foreach (byte[] bytes in packets)
                 {

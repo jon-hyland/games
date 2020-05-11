@@ -216,17 +216,8 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         public IReadOnlyList<Player> GetDiscoveredPlayers(int top = 5)
         {
-            //return _discoveredPlayers.GetPlayers(_config.GameTitle, _config.GameVersion, _config.LocalIP, top);
+            CommandResult result = SendCommandRequest(CommandType.GetPlayers, null, TimeSpan.FromMilliseconds(750));
             return new List<Player>();
-        }
-
-        /// <summary>
-        /// Returns count of discovered players, for this game version.
-        /// </summary>
-        public int GetDiscoveredPlayerCount(int top = 5)
-        {
-            //return _discoveredPlayers.GetPlayerCount(_config.GameTitle, _config.GameVersion, _config.LocalIP, top);
-            return 0;
         }
 
         #endregion
@@ -492,9 +483,13 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                //no opponent?
-                if (_opponent == null)
-                    throw new Exception("No opponent set");
+                //disabled?
+                if (_isDisabled)
+                    return CommandResult.Error;
+
+                ////no opponent?
+                //if (_opponent == null)
+                //    throw new Exception("No opponent set");
 
                 //vars
                 ushort sequence;
@@ -513,8 +508,9 @@ namespace Common.Windows.Networking.Game
                     commandType: type, sequence: sequence, retryAttempt: 0, data: data);
 
                 //send packet
-                byte[] bytes = packet.ToBytes();
+                //byte[] bytes = packet.ToBytes();
                 //_dataClient.Write(bytes);
+                _client.SendPacket(packet);
                 _commandRequestsSent++;
 
                 //record command request has been sent
@@ -561,7 +557,7 @@ namespace Common.Windows.Networking.Game
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
+                    destinationIP: opponent.IP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
                     commandType: type, sequence: sequence, result: result, data: data);
 
                 //send packet
@@ -664,18 +660,18 @@ namespace Common.Windows.Networking.Game
                     return;
 
                 //special logic for invite requests
-                if ((packet is CommandRequestPacket p1) && (p1.CommandType == CommandType.ConnectToPlayer))
+                if ((packet is CommandRequestPacket p2) && (p2.CommandType == CommandType.ConnectToPlayer))
                 {
                     _commandRequestsReceived++;
-                    PacketParser parser = new PacketParser(p1.Data);
+                    PacketParser parser = new PacketParser(p2.Data);
                     string playerName = parser.GetString();
-                    _pendingOpponent = new Player(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
+                    _pendingOpponent = new Player(p2.SourceIP, p2.GameTitle, p2.GameVersion, playerName, p2.Sequence);
                     OpponentInviteReceived?.InvokeFromTask(_pendingOpponent);
                     return;
                 }
 
                 //reject if wrong opponent
-                if ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP)))
+                if ((!packet.SourceIP.Equals(_config.ServerIP)) && ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP))))
                     return;
 
                 //queue packet for processing
@@ -852,17 +848,15 @@ namespace Common.Windows.Networking.Game
                         return;
 
                     //calculate wait
-                    DateTime now = DateTime.Now;
-                    TimeSpan elapsed = now - lastSend;
+                    TimeSpan elapsed = DateTime.Now - lastSend;
                     int sleepMs = Math.Max(250 - (int)elapsed.TotalMilliseconds, 0);
 
                     //sleep
-                    Log.Write("Sleeping for " + sleepMs + " ms");
-                    Thread.Sleep(sleepMs + 5);
+                    Thread.Sleep(sleepMs);
 
                     //send heartbeat to opponent
+                    lastSend = DateTime.Now;
                     SendHeartbeat();
-                    lastSend = now;
                 }
                 catch (Exception ex)
                 {

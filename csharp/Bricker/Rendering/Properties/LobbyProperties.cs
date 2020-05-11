@@ -1,4 +1,5 @@
 ﻿using Common.Standard.Game;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,10 +14,13 @@ namespace Bricker.Rendering.Properties
         private readonly List<Player> _players = new List<Player>();
         private int _playerIndex = -1;
         private int _buttonIndex = 0;
+        private DateTime _lastPlayerUpdate = DateTime.MinValue;
 
         //public
         public int PlayerIndex => _playerIndex;
         public int ButtonIndex => _buttonIndex;
+        public DateTime LastPlayerUpdate => _lastPlayerUpdate;
+        public TimeSpan TimeSinceLastPlayerUpdate => DateTime.Now - _lastPlayerUpdate;
 
         /// <summary>
         /// Class constructor.
@@ -32,6 +36,7 @@ namespace Bricker.Rendering.Properties
         {
             lock (this)
             {
+                _lastPlayerUpdate = DateTime.Now;
                 int prevCount = _players.Count;
                 _players.Clear();
                 _players.AddRange(players);

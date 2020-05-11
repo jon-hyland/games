@@ -685,6 +685,7 @@ namespace Bricker.Game
             {
                 //vars
                 LobbyProperties props = new LobbyProperties();
+                IReadOnlyList<Player> players = new List<Player>();
 
                 //push properties to renderer
                 _renderer.LobbyProps = props;
@@ -693,8 +694,11 @@ namespace Bricker.Game
                 while (true)
                 {
                     //get discovered players
-                    IReadOnlyList<Player> players = _communications.GetDiscoveredPlayers(top: 5);
-                    props.UpdatePlayers(players);
+                    if (props.TimeSinceLastPlayerUpdate.TotalMilliseconds > 1000)
+                    {
+                        players = _communications.GetDiscoveredPlayers(top: 5);
+                        props.UpdatePlayers(players);
+                    }
 
                     //get next key press, or continue
                     Key key = Key.None;
