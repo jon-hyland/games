@@ -696,7 +696,7 @@ namespace Bricker.Game
                     //get discovered players
                     if (props.TimeSinceLastPlayerUpdate.TotalMilliseconds > 1000)
                     {
-                        players = _communications.GetDiscoveredPlayers(top: 5);
+                        players = _communications.GetPlayers(top: 5);
                         props.UpdatePlayers(players);
                     }
 

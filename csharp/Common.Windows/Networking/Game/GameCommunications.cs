@@ -214,9 +214,28 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Returns list of most recent discovered players, for this game version.
         /// </summary>
-        public IReadOnlyList<Player> GetDiscoveredPlayers(int top = 5)
+        public IReadOnlyList<Player> GetPlayers(int top = 5)
         {
-            CommandResult result = SendCommandRequest(CommandType.GetPlayers, null, TimeSpan.FromMilliseconds(750));
+            try
+            {
+                CommandResult result = SendCommandRequest(CommandType.GetPlayers, null, TimeSpan.FromMilliseconds(750));
+                if ((result.Code == ResultCode.Accept) && (result.Data.Length > 0))
+                {
+                    List<Player> players = new List<Player>();
+                    PacketParser parser = new PacketParser(result.Data);
+                    ushort count = parser.GetUInt16();
+                    for (int i = 0; i < count; i++)
+                    {
+
+                    }
+                    return players;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write("GetPlayers: Unknown error");
+                ErrorHandler.LogError(ex);
+            }
             return new List<Player>();
         }
 
