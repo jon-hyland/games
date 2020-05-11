@@ -122,7 +122,7 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         private class Command
         {
-            public ushort CommandType { get; }
+            public CommandType CommandType { get; }
             public ushort Sequence { get; }
             public CommandResult Result { get; set; }
             public ushort RetryAttempt { get; set; }
@@ -132,7 +132,7 @@ namespace Common.Windows.Networking.Game
             public bool IsTimedOut => Elapsed > Timeout;
             public bool IsExpired => Elapsed > Timeout.Add(TimeSpan.FromSeconds(60));
 
-            public Command(ushort commandType, ushort sequence, TimeSpan timeout)
+            public Command(CommandType commandType, ushort sequence, TimeSpan timeout)
             {
                 CommandType = commandType;
                 Sequence = sequence;

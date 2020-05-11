@@ -1,7 +1,6 @@
 ﻿using Bricker.Configuration;
 using Bricker.Error;
 using Bricker.Logging;
-using Bricker.Networking;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
 using Common.Standard.Game;
@@ -426,12 +425,13 @@ namespace Bricker.Game
                 //send game status (one last time)
                 SendGameStatus();
 
-                //send game-over command, if local player finished
-                if (_gameState == GameState.GameOver)
-                    _communications.SendCommandRequest(
-                        type: (ushort)CommandType.GameOver,
-                        data: null,
-                        timeout: TimeSpan.FromSeconds(2));
+                ////TODO: PASS GAME OVER VIA DATA PARAMETER
+                ////send game-over command, if local player finished
+                //if (_gameState == GameState.GameOver)
+                //    _communications.SendCommandRequest(
+                //        type: CommandType.Passthrough,
+                //        data: null,
+                //        timeout: TimeSpan.FromSeconds(2));
 
                 //message
                 MessageBoxLoop(new MessageProperties(
@@ -941,13 +941,14 @@ namespace Bricker.Game
         {
             try
             {
-                switch ((CommandType)packet.CommandType)
-                {
-                    case CommandType.GameOver:
-                        _opponent?.SetGameOver();
-                        _communications.SendCommandResponse(packet.CommandType, packet.Sequence, CommandResult.Accept, null);
-                        break;
-                }
+                //switch ((CommandType)packet.CommandType)
+                //{
+                //    //TODO: DETERMINE GAVE-OVER FROM DATA
+                //    case CommandType.Passthrough:
+                //        _opponent?.SetGameOver();
+                //        _communications.SendCommandResponse(packet.CommandType, packet.Sequence, CommandResult.Accept, null);
+                //        break;
+                //}
             }
             catch (Exception ex)
             {

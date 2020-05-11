@@ -9,13 +9,13 @@ namespace Common.Standard.Networking.Packets
     public class CommandResponsePacket : PacketBase
     {
         //private
-        private readonly ushort _commandType;
+        private readonly CommandType _commandType;
         private readonly ushort _sequence;
         private readonly CommandResult _result;
         private readonly byte[] _data;
 
         //public
-        public ushort CommandType => _commandType;
+        public CommandType CommandType => _commandType;
         public ushort Sequence => _sequence;
         public CommandResult Result => _result;
         public byte[] Data => _data;
@@ -24,7 +24,7 @@ namespace Common.Standard.Networking.Packets
         /// Class constructor.
         /// </summary>
         public CommandResponsePacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, ushort commandType, ushort sequence, CommandResult result, byte[] data)
+            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, CommandResult result, byte[] data)
             : base(PacketType.CommandResponse, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
         {
             _commandType = commandType;
@@ -39,7 +39,7 @@ namespace Common.Standard.Networking.Packets
         public CommandResponsePacket(PacketParser parser)
             : base(PacketType.CommandResponse, parser)
         {
-            _commandType = parser.GetUInt16();
+            _commandType = (CommandType)parser.GetUInt16();
             _sequence = parser.GetUInt16();
             _result = (CommandResult)parser.GetByte();
             _data = parser.GetBytes();
@@ -50,7 +50,7 @@ namespace Common.Standard.Networking.Packets
         /// </summary>
         protected override void AddInstanceBytes(PacketBuilder builder)
         {
-            builder.AddUInt16(_commandType);
+            builder.AddUInt16((ushort)_commandType);
             builder.AddUInt16(_sequence);
             builder.AddByte((byte)_result);
             builder.AddBytes(_data);

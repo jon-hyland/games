@@ -22,6 +22,7 @@ namespace GameServer.Networking
 
         //public
         public IPAddress ClientIP => ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
+        public bool IsConnected => _client.Connected;
 
         //events
         public event Action<Client, PacketBase> PacketReceived;
@@ -200,7 +201,7 @@ namespace GameServer.Networking
         /// </summary>
         private void WriteToLog(string message)
         {
-            Log.Write(LogLevel.Medium, "GameClient", message);
+            Log.Write(LogLevel.Medium, "Client", message);
         }
 
     }

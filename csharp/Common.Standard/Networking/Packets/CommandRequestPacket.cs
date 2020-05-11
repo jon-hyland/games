@@ -9,14 +9,14 @@ namespace Common.Standard.Networking.Packets
     public class CommandRequestPacket : PacketBase
     {
         //private
-        private readonly ushort _commandType;
+        private readonly CommandType _commandType;
         private readonly ushort _sequence;
         private readonly ushort _retryAttempt;
         private readonly byte[] _data;
 
 
         //public
-        public ushort CommandType => _commandType;
+        public CommandType CommandType => _commandType;
         public ushort Sequence => _sequence;
         public ushort RetryAttempt => _retryAttempt;
         public byte[] Data => _data;
@@ -25,7 +25,7 @@ namespace Common.Standard.Networking.Packets
         /// Class constructor.
         /// </summary>
         public CommandRequestPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, ushort commandType, ushort sequence, ushort retryAttempt, byte[] data)
+            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, ushort retryAttempt, byte[] data)
             : base(PacketType.CommandRequest, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
         {
             _commandType = commandType;
@@ -40,7 +40,7 @@ namespace Common.Standard.Networking.Packets
         public CommandRequestPacket(PacketParser parser)
             : base(PacketType.CommandRequest, parser)
         {
-            _commandType = parser.GetUInt16();
+            _commandType = (CommandType)parser.GetUInt16();
             _sequence = parser.GetUInt16();
             _retryAttempt = parser.GetUInt16();
             _data = parser.GetBytes();
@@ -51,7 +51,7 @@ namespace Common.Standard.Networking.Packets
         /// </summary>
         protected override void AddInstanceBytes(PacketBuilder builder)
         {
-            builder.AddUInt16(_commandType);
+            builder.AddUInt16((ushort)_commandType);
             builder.AddUInt16(_sequence);
             builder.AddUInt16(_retryAttempt);
             builder.AddBytes(_data);

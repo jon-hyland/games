@@ -305,7 +305,7 @@ namespace Common.Windows.Networking.Game
 
                         //send connect-request command
                         byte[] data = PacketBuilder.ToBytes(new object[] { _opponent.Name });
-                        CommandResult result = SendCommandRequest(1, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
+                        CommandResult result = SendCommandRequest(CommandType.ConnectToPlayer, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
 
                         //accept
                         if (result == CommandResult.Accept)
@@ -387,7 +387,7 @@ namespace Common.Windows.Networking.Game
 
                     //send acceptance
                     return SendCommandResponse(
-                        type: 1,
+                        type: CommandType.ConnectToPlayer,
                         sequence: opponent.InviteSequence,
                         result: CommandResult.Accept,
                         data: null);
@@ -426,7 +426,7 @@ namespace Common.Windows.Networking.Game
 
                     //send rejection
                     return SendCommandResponse(
-                        type: 1,
+                        type: CommandType.ConnectToPlayer,
                         sequence: opponent.InviteSequence,
                         result: CommandResult.Reject,
                         data: null);
@@ -492,7 +492,7 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Sends command request, blocks until response or timeout.  Data is optional.
         /// </summary>
-        public CommandResult SendCommandRequest(ushort type, byte[] data, TimeSpan timeout)
+        public CommandResult SendCommandRequest(CommandType type, byte[] data, TimeSpan timeout)
         {
             try
             {
@@ -553,12 +553,12 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Sends command response.  Data is optional.
         /// </summary>
-        public bool SendCommandResponse(ushort type, ushort sequence, CommandResult result, byte[] data)
+        public bool SendCommandResponse(CommandType type, ushort sequence, CommandResult result, byte[] data)
         {
             try
             {
                 //no opponent?
-                Player opponent = type != 1 ? _opponent : _pendingOpponent;
+                Player opponent = type != CommandType.ConnectToPlayer ? _opponent : _pendingOpponent;
                 if (opponent == null)
                     throw new Exception("No opponent set");
 
@@ -729,7 +729,7 @@ namespace Common.Windows.Networking.Game
                         continue;
 
                     //special logic for invite requests
-                    if ((packet is CommandRequestPacket p1) && (p1.CommandType == 1))
+                    if ((packet is CommandRequestPacket p1) && (p1.CommandType == CommandType.ConnectToPlayer))
                     {
                         _commandRequestsReceived++;
                         PacketParser parser = new PacketParser(p1.Data);

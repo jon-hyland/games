@@ -1,6 +1,5 @@
 ﻿using Common.Standard.Logging;
 using GameServer.Configuration;
-using GameServer.Game;
 using GameServer.Logging;
 using GameServer.Networking;
 using System;
@@ -11,7 +10,6 @@ namespace GameServer
     {
         //private
         private readonly Config _config;
-        private readonly ConnectedPlayers _players;
         private readonly Logger _logger;
         private readonly Server _server;
 
@@ -25,8 +23,7 @@ namespace GameServer
                 //vars
                 _config = new Config();
                 _logger = new Logger(_config.LogFile);
-                _players = new ConnectedPlayers();
-                _server = new Server(_config.LocalIP, _config.ListenPort, _players);
+                _server = new Server(_config.LocalIP, _config.ListenPort);
 
                 //initialize
                 Log.Initiallize(_logger, LogLevel.Medium, "GameServer");

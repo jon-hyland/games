@@ -92,7 +92,7 @@ namespace Common.Windows.Networking.Game.Discovery
                 DiscoveryPacket packet = (DiscoveryPacket)PacketBase.FromBytes(bytes);
                 if (packet != null)
                 {
-                    Player player = Player.FromPacket(packet);
+                    Player player = Player.FromPacket(packet, null);
                     PlayerAnnounced?.Invoke(player);
                 }
             }

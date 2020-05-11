@@ -89,7 +89,6 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
     <Compile Include="Logging\Logger.cs" />
-    <Compile Include="Networking\CommandType.cs" />
     <Compile Include="Rendering\BackgroundTile.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />
     <Compile Include="Rendering\Properties\InitialsEntryProperties.cs" />
@@ -169,6 +168,7 @@
       <Name>Common.Windows</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\SkiaSharp.1.68.2.1\build\net462\SkiaSharp.targets" Condition="Exists('..\packages\SkiaSharp.1.68.2.1\build\net462\SkiaSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
