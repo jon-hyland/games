@@ -1,6 +1,7 @@
 ﻿using Common.Standard.Logging;
 using Common.Windows.Rendering;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -44,6 +45,7 @@ namespace Bricker.Logging
                 string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(message)}";
                 lock (_writer)
                 {
+                    Debug.WriteLine(line);
                     _writer.WriteLine(line);
                 }
             }
@@ -64,6 +66,7 @@ namespace Bricker.Logging
                 string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\tError: {Clean(ex?.ToString())}";
                 lock (_writer)
                 {
+                    Debug.WriteLine(line);
                     _writer.WriteLine(line);
                 }
             }

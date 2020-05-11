@@ -857,6 +857,7 @@ namespace Common.Windows.Networking.Game
                     lastSend = DateTime.Now;
 
                     //sleep 100ms
+                    Log.Write("Sleeping for " + sleepMs + " ms");
                     Thread.Sleep(sleepMs);
 
                     //send heartbeat to opponent

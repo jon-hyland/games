@@ -156,16 +156,26 @@ namespace Common.Standard.Networking
                         _incomingQueue.Clear();
                     }
 
-                    //read until no more data
+                    ////read until no more data
+                    //byte[] buffer = new byte[8192];
+                    //int bytesRead = 0;
+                    //do
+                    //{
+                    //    bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    //    for (int i = 0; i < bytesRead; i++)
+                    //        _incomingQueue.Add(buffer[i]);
+                    //}
+                    //while (stream.DataAvailable);
+
                     byte[] buffer = new byte[8192];
                     int bytesRead = 0;
                     do
                     {
-                        bytesRead = stream.Read(buffer, 0, buffer.Length);
+                        bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
                         for (int i = 0; i < bytesRead; i++)
                             _incomingQueue.Add(buffer[i]);
                     }
-                    while (stream.DataAvailable);
+                    while (bytesRead > 0);
 
                     //loop
                     while (true)
