@@ -20,6 +20,7 @@ namespace Common.Standard.Networking
         private readonly List<byte> _outgoingQueue;
         private readonly Thread _readThread;
         private readonly Thread _writeThread;
+        private readonly ManualResetEventSlim _readSignal;
         private readonly ManualResetEventSlim _writeSignal;
         private bool _stop;
 
@@ -43,6 +44,7 @@ namespace Common.Standard.Networking
             _readThread.IsBackground = true;
             _writeThread = new Thread(Write_Thread);
             _writeThread.IsBackground = true;
+            _readSignal = new ManualResetEventSlim();
             _writeSignal = new ManualResetEventSlim();
         }
 
@@ -110,26 +112,32 @@ namespace Common.Standard.Networking
         /// </summary>
         private void Read_Thread()
         {
+            //async callback loop, reading data into incoming queue
+            byte[] buffer = new byte[8192];
             NetworkStream stream = _client.GetStream();
-            while (true)
+            void callback(IAsyncResult ar)
             {
-                ReadData(stream);
+                int bytesRead = stream.EndRead(ar);
+                Log.Write($"ReadData: {bytesRead} bytes read");
+                for (int i = 0; i < bytesRead; i++)
+                    _incomingQueue.Add(buffer[i]);
                 if (_stop)
-                    break;
+                    return;
+                stream.BeginRead(buffer, 0, buffer.Length, callback, null);
             }
-        }
+            stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
 
-        /// <summary>
-        /// Loops forever, writing data to client.
-        /// </summary>
-        private void Write_Thread()
-        {
-            NetworkStream stream = _client.GetStream();
+            //loop forever, pulling complete packets out of incoming queue
             while (true)
             {
-                _writeSignal.Wait(1000);
-                _writeSignal.Reset();
-                WriteData(stream);
+                //wait new data in queue, or one second
+                _readSignal.Wait(1000);
+                _readSignal.Reset();
+
+                //read data, if it exists
+                ReadData();
+
+                //end thread?
                 if (_stop)
                     break;
             }
@@ -139,7 +147,7 @@ namespace Common.Standard.Networking
         /// Reads data from incoming stream (if bytes exist in buffer).  Tries to construct 
         /// one or more game packets. Fires event for each valid game packet.
         /// </summary>
-        private void ReadData(NetworkStream stream)
+        private void ReadData()
         {
             try
             {
@@ -149,45 +157,16 @@ namespace Common.Standard.Networking
                 //lock queue
                 lock (_incomingQueue)
                 {
+                    //return if zero bytes
+                    if (_incomingQueue.Count == 0)
+                        return;
+
                     //queue overflow?
                     if (_incomingQueue.Count > 100000)
                     {
                         Log.Write($"ReadData: Incoming byte queue overflow");
                         _incomingQueue.Clear();
                     }
-
-                    ////read until no more data
-                    //byte[] buffer = new byte[8192];
-                    //int bytesRead = 0;
-                    //do
-                    //{
-                    //    bytesRead = stream.Read(buffer, 0, buffer.Length);
-                    //    for (int i = 0; i < bytesRead; i++)
-                    //        _incomingQueue.Add(buffer[i]);
-                    //}
-                    //while (stream.DataAvailable);
-
-                    //byte[] buffer = new byte[8192];
-                    //int bytesRead = 0;
-                    //do
-                    //{
-                    //    bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
-                    //    for (int i = 0; i < bytesRead; i++)
-                    //        _incomingQueue.Add(buffer[i]);
-                    //}
-                    //while (bytesRead > 0);
-
-                    byte[] buffer = new byte[8192];
-                    void callback(IAsyncResult ar)
-                    {
-                        int bytesRead = stream.EndRead(ar);
-                        Log.Write($"ReadData: {bytesRead} bytes read");
-                        for (int i = 0; i < bytesRead; i++)
-                            _incomingQueue.Add(buffer[i]);
-                        stream.BeginRead(buffer, 0, buffer.Length, callback, null);
-                    }
-                    stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
-
 
                     //loop
                     while (true)
@@ -215,8 +194,11 @@ namespace Common.Standard.Networking
                     }
                 }
 
+                //return if no new packets
+                if (packets.Count <= 0)
+                    return;
+
                 //message
-                //if (packets.Count > 1)
                 Log.Write($"ReadData: {packets.Count} packets read in one pass");
 
                 //loop through packet (candidates)
@@ -240,6 +222,32 @@ namespace Common.Standard.Networking
                 ErrorHandler.LogError(ex);
             }
         }
+
+        /// <summary>
+        /// Loops forever, writing data to client.
+        /// </summary>
+        private void Write_Thread()
+        {
+            //get stream
+            NetworkStream stream = _client.GetStream();
+
+            //loop forever
+            while (true)
+            {
+                //wait for data to send, or one second
+                _writeSignal.Wait(1000);
+                _writeSignal.Reset();
+
+                //write data, if it exists
+                WriteData(stream);
+
+                //end thread?
+                if (_stop)
+                    break;
+            }
+        }
+
+
 
         /// <summary>
         /// Writes any pending outgoing data to network stream.
