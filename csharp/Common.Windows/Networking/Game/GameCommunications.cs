@@ -855,7 +855,6 @@ namespace Common.Windows.Networking.Game
                     DateTime now = DateTime.Now;
                     TimeSpan elapsed = now - lastSend;
                     int sleepMs = Math.Max(250 - (int)elapsed.TotalMilliseconds, 0);
-                    lastSend = now;
 
                     //sleep
                     Log.Write("Sleeping for " + sleepMs + " ms");
@@ -863,6 +862,7 @@ namespace Common.Windows.Networking.Game
 
                     //send heartbeat to opponent
                     SendHeartbeat();
+                    lastSend = now;
                 }
                 catch (Exception ex)
                 {
