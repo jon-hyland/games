@@ -230,11 +230,7 @@ namespace GameServer.Networking
                 PacketBuilder builder = new PacketBuilder();
                 builder.AddUInt16((ushort)otherPlayers.Count);
                 foreach (Player p in otherPlayers)
-                {
-                    byte[] bytes = p.ToBytes();
-                    builder.AddUInt16((ushort)bytes.Length);
-                    builder.AddBytes(bytes);
-                }
+                    builder.AddBytes(p.ToBytes());
 
                 //create packet
                 CommandResponsePacket response = new CommandResponsePacket(

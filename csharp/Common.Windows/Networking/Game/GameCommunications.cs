@@ -226,6 +226,7 @@ namespace Common.Windows.Networking.Game
                     ushort count = parser.GetUInt16();
                     for (int i = 0; i < count; i++)
                     {
+                        ushort size = parser.GetUInt16();
 
                     }
                     return players;
