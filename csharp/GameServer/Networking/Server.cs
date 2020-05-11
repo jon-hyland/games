@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace GameServer.Networking
@@ -150,7 +151,7 @@ namespace GameServer.Networking
                     .ToList();
                 foreach (Player p in expired)
                 {
-                    Log.Write($"RemoveExpiredPlayers: Removing expired/disconnected player [ip={p.IP}, name={p.Name}]..");
+                    Log.Write($"Removing expired/disconnected player [ip={p.IP}, name={p.Name}]..");
                     _players.Remove(p);
                 }
             }
@@ -269,7 +270,12 @@ namespace GameServer.Networking
                 //remove disconnected clients
                 lock (_clients)
                 {
-                    _clients.RemoveAll(c => !c.IsConnected);
+                    List<Client> disconnected = _clients.Where(c => !c.IsConnected).ToList();
+                    foreach (Client client in disconnected)
+                    {
+                        Log.Write($"Removing disconnected client '{client.RemoteIP}'..");
+                        _clients.Remove(client);
+                    }
                 }
             }
             catch (Exception ex)

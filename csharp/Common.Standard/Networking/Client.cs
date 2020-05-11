@@ -2,6 +2,7 @@
 using Common.Standard.Extensions;
 using Common.Standard.Logging;
 using Common.Standard.Networking.Packets;
+using Common.Standard.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,14 +23,17 @@ namespace Common.Standard.Networking
         private readonly Thread _writeThread;
         private readonly ManualResetEventSlim _readSignal;
         private readonly ManualResetEventSlim _writeSignal;
+        private readonly SimpleTimer _timer;
         private bool _stop;
 
         //public
         public IPAddress RemoteIP => ((IPEndPoint)_client.Client.RemoteEndPoint).Address;
         public bool IsConnected => _client.Connected;
+        public TcpClient TcpClient => _client;
 
         //events
         public event Action<Client, PacketBase> PacketReceived;
+        public event Action<Client> ConnectionClosed;
 
         /// <summary>
         /// Class constructor (standalone / client side).
@@ -46,6 +50,7 @@ namespace Common.Standard.Networking
             _writeThread.IsBackground = true;
             _readSignal = new ManualResetEventSlim();
             _writeSignal = new ManualResetEventSlim();
+            _timer = new SimpleTimer(Timer_Callback, 100, false);
         }
 
         /// <summary>
@@ -65,6 +70,7 @@ namespace Common.Standard.Networking
             _writeSignal = new ManualResetEventSlim();
             _readThread.Start();
             _writeThread.Start();
+            _timer = new SimpleTimer(Timer_Callback, 100, true);
         }
 
         /// <summary>
@@ -86,6 +92,7 @@ namespace Common.Standard.Networking
                 _client.Connect(_endpoint.Address, _endpoint.Port, TimeSpan.FromMilliseconds(timeoutMs));
                 _readThread.Start();
                 _writeThread.Start();
+                _timer.Start();
                 return true;
             }
             catch (Exception ex)
@@ -100,10 +107,17 @@ namespace Common.Standard.Networking
         /// </summary>
         public void SendPacket(PacketBase packet)
         {
-            lock (_outgoingQueue)
+            try
             {
-                _outgoingQueue.AddRange(packet.ToBytes());
-                _writeSignal.Set();
+                lock (_outgoingQueue)
+                {
+                    _outgoingQueue.AddRange(packet.ToBytes());
+                    _writeSignal.Set();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
             }
         }
 
@@ -113,36 +127,65 @@ namespace Common.Standard.Networking
         /// </summary>
         private void Read_Thread()
         {
-            //async callback loop, reading data into incoming queue
-            byte[] buffer = new byte[8192];
-            NetworkStream stream = _client.GetStream();
-            void callback(IAsyncResult ar)
+            try
             {
-                int bytesRead = stream.EndRead(ar);
-                Log.Write($"ReadData: {bytesRead} bytes read");
-                for (int i = 0; i < bytesRead; i++)
-                    _incomingQueue.Add(buffer[i]);
-                if (bytesRead > 0)
-                    _readSignal.Set();
-                if (_stop)
-                    return;
+                //vars
+                byte[] buffer = new byte[8192];
+                NetworkStream stream = _client.GetStream();
+
+                //internal async callback function
+                void callback(IAsyncResult ar)
+                {
+                    try
+                    {
+                        //stop reading?
+                        if (_stop)
+                            return;
+
+                        //end read
+                        int bytesRead = stream.EndRead(ar);
+
+                        //add new bytes to queue
+                        for (int i = 0; i < bytesRead; i++)
+                            _incomingQueue.Add(buffer[i]);
+
+                        //set signal
+                        if (bytesRead > 0)
+                            _readSignal.Set();
+
+                        //begin next read
+                        stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
+                    }
+                    catch (Exception ex)
+                    {
+                        _stop = true;
+                        ErrorHandler.LogError(ex);
+                    }
+                }
+
+                //begin first read
                 stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
+
+                //loop forever, pulling complete packets out of incoming queue
+                while (true)
+                {
+                    //wait new data in queue, or one second
+                    _readSignal.Wait(1000);
+                    _readSignal.Reset();
+
+                    //read data, if it exists
+                    ReadData();
+
+                    //end thread?
+                    if (_stop)
+                        break;
+                }
             }
-            stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
-
-            //loop forever, pulling complete packets out of incoming queue
-            while (true)
+            catch (Exception ex)
             {
-                //wait new data in queue, or one second
-                _readSignal.Wait(1000);
-                _readSignal.Reset();
-
-                //read data, if it exists
-                ReadData();
-
-                //end thread?
-                if (_stop)
-                    break;
+                _stop = true;
+                Log.Write("ReadThread: Reading or processing data");
+                ErrorHandler.LogError(ex);
             }
         }
 
@@ -221,7 +264,8 @@ namespace Common.Standard.Networking
             }
             catch (Exception ex)
             {
-                Log.Write("ReadData: Reading or processing data");
+                _stop = true;
+                Log.Write("ReadData: Error reading or processing data");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -249,8 +293,6 @@ namespace Common.Standard.Networking
                     break;
             }
         }
-
-
 
         /// <summary>
         /// Writes any pending outgoing data to network stream.
@@ -301,6 +343,25 @@ namespace Common.Standard.Networking
                 }
             }
             return -1;
+        }
+
+        /// <summary>
+        /// Fired by maintenance timer.
+        /// </summary>
+        private void Timer_Callback()
+        {
+            try
+            {
+                if (_stop)
+                {
+                    _client.Close();
+                    ConnectionClosed?.Invoke(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
         }
 
 
