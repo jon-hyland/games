@@ -295,7 +295,7 @@ namespace Common.Windows.Networking.Game
                         CommandResult result = SendCommandRequest(CommandType.ConnectToPlayer, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
 
                         //accept
-                        if (result == CommandResult.Accept)
+                        if (result.Code == ResultCode.Accept)
                         {
                             _pendingOpponent = null;
                             //_lastHeartbeatReceived = DateTime.Now;
@@ -304,7 +304,7 @@ namespace Common.Windows.Networking.Game
                         }
 
                         //reject
-                        else if (result == CommandResult.Reject)
+                        else if (result.Code == ResultCode.Reject)
                         {
                             _opponent = null;
                             _pendingOpponent = null;
@@ -313,7 +313,7 @@ namespace Common.Windows.Networking.Game
                         }
 
                         //timeout
-                        else if (result == CommandResult.Timeout)
+                        else if (result.Code == ResultCode.Timeout)
                         {
                             _opponent = null;
                             _pendingOpponent = null;
@@ -322,7 +322,7 @@ namespace Common.Windows.Networking.Game
                         }
 
                         //error
-                        else if (result == CommandResult.Error)
+                        else if (result.Code == ResultCode.Error)
                         {
                             _opponent = null;
                             _pendingOpponent = null;
@@ -345,7 +345,7 @@ namespace Common.Windows.Networking.Game
                 //_connectionState = ConnectionState.Error;
                 Log.Write("InviteOpponent: Unknown error");
                 ErrorHandler.LogError(ex);
-                return CommandResult.Error;
+                return new CommandResult(ResultCode.Error);
             }
         }
 
@@ -376,8 +376,7 @@ namespace Common.Windows.Networking.Game
                     return SendCommandResponse(
                         type: CommandType.ConnectToPlayer,
                         sequence: opponent.InviteSequence,
-                        result: CommandResult.Accept,
-                        data: null);
+                        result: new CommandResult(ResultCode.Accept));
                 }
             }
             catch (Exception ex)
@@ -415,8 +414,7 @@ namespace Common.Windows.Networking.Game
                     return SendCommandResponse(
                         type: CommandType.ConnectToPlayer,
                         sequence: opponent.InviteSequence,
-                        result: CommandResult.Reject,
-                        data: null);
+                        result: new CommandResult(ResultCode.Reject));
                 }
             }
             catch (Exception ex)
@@ -485,7 +483,7 @@ namespace Common.Windows.Networking.Game
             {
                 //disabled?
                 if (_isDisabled)
-                    return CommandResult.Error;
+                    return new CommandResult(ResultCode.Error);
 
                 ////no opponent?
                 //if (_opponent == null)
@@ -526,7 +524,7 @@ namespace Common.Windows.Networking.Game
                     CommandResult result = _commandManager.GetCommandStatus(sequence);
 
                     //have answer or timeout?  return!
-                    if (result != CommandResult.Unspecified)
+                    if (result.Code != ResultCode.Unspecified)
                         return result;
 
                     //sleep
@@ -538,14 +536,14 @@ namespace Common.Windows.Networking.Game
                 //_connectionState = ConnectionState.Error;
                 Log.Write("SendCommandRequest: Error sending data");
                 ErrorHandler.LogError(ex);
-                return CommandResult.Error;
+                return new CommandResult(ResultCode.Error);
             }
         }
 
         /// <summary>
         /// Sends command response.  Data is optional.
         /// </summary>
-        public bool SendCommandResponse(CommandType type, ushort sequence, CommandResult result, byte[] data)
+        public bool SendCommandResponse(CommandType type, ushort sequence, CommandResult result)
         {
             try
             {
@@ -558,7 +556,7 @@ namespace Common.Windows.Networking.Game
                 CommandResponsePacket packet = new CommandResponsePacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
                     destinationIP: opponent.IP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
-                    commandType: type, sequence: sequence, result: result, data: data);
+                    commandType: type, sequence: sequence, result: result);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();

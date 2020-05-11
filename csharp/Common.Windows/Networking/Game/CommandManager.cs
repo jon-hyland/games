@@ -70,10 +70,10 @@ namespace Common.Windows.Networking.Game
                     .OrderBy(c => c.Elapsed)
                     .FirstOrDefault();
 
-                if ((packet.Result == CommandResult.Accept) || (packet.Result == CommandResult.Reject))
+                if ((packet.Result.Code == ResultCode.Accept) || (packet.Result.Code == ResultCode.Reject))
                     command.Result = packet.Result;
                 else
-                    command.Result = CommandResult.Error;
+                    command.Result = new CommandResult(ResultCode.Error);
             }
         }
 
@@ -92,12 +92,12 @@ namespace Common.Windows.Networking.Game
                 if (command != null)
                 {
                     if ((command.IsTimedOut) || (command.IsExpired))
-                        return CommandResult.Timeout;
+                        return new CommandResult(ResultCode.Timeout);
                     return command.Result;
                 }
                 else
                 {
-                    return CommandResult.Error;
+                    return new CommandResult(ResultCode.Error);
                 }
             }
         }
@@ -136,7 +136,7 @@ namespace Common.Windows.Networking.Game
             {
                 CommandType = commandType;
                 Sequence = sequence;
-                Result = CommandResult.Unspecified;
+                Result = new CommandResult(ResultCode.Unspecified);
                 RetryAttempt = 0;
                 Timeout = timeout;
                 StartTime = DateTime.Now;

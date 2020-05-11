@@ -234,7 +234,7 @@ namespace Bricker.Game
                     CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
                     //new game?
-                    if ((result == CommandResult.Accept) && (opponent != null))
+                    if ((result.Code == ResultCode.Accept) && (opponent != null))
                     {
                         _opponent = opponent;
                         GameLoop(newGame: true);
@@ -766,7 +766,7 @@ namespace Bricker.Game
         /// </summary>
         private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
         {
-            CommandResult result = CommandResult.Unspecified;
+            CommandResult result = new CommandResult(ResultCode.Unspecified);
             opponent = null;
             try
             {
@@ -780,7 +780,7 @@ namespace Bricker.Game
                 Thread.Sleep(750);
                 bool success = _communications.SetOpponentAndConnect(player);
                 if (!success)
-                    return result = CommandResult.Error;
+                    return result = new CommandResult(ResultCode.Error);
 
                 //show message
                 _renderer.MessageProps = new MessageProperties(
@@ -790,7 +790,7 @@ namespace Bricker.Game
 
                 //send invite and wait
                 result = _communications.InviteOpponent();
-                if (result == CommandResult.Accept)
+                if (result.Code == ResultCode.Accept)
                     opponent = new Opponent(player);
             }
             finally
@@ -799,13 +799,13 @@ namespace Bricker.Game
                 _renderer.MessageProps = null;
 
                 //show message if no acceptance
-                if (result == CommandResult.Error)
+                if (result.Code == ResultCode.Error)
                     MessageBoxLoop(new MessageProperties("Unable to connect, an error occurred."));
-                else if (result == CommandResult.Reject)
+                else if (result.Code == ResultCode.Reject)
                     MessageBoxLoop(new MessageProperties("Player has declined your invite."));
-                else if (result == CommandResult.Timeout)
+                else if (result.Code == ResultCode.Timeout)
                     MessageBoxLoop(new MessageProperties("Request timeout, or no player response."));
-                else if (result == CommandResult.Unspecified)
+                else if (result.Code == ResultCode.Unspecified)
                     MessageBoxLoop(new MessageProperties("Unable to connect, an unspecified error occurred."));
             }
 

@@ -3,7 +3,22 @@
     /// <summary>
     /// The result of a command request.
     /// </summary>
-    public enum CommandResult : byte
+    public class CommandResult
+    {
+        public ResultCode Code { get; set; }
+        public byte[] Data { get; set; }
+
+        public CommandResult(ResultCode code, byte[] data = null)
+        {
+            Code = code;
+            Data = data ?? new byte[0];
+        }
+    }
+
+    /// <summary>
+    /// The result code of a command request.
+    /// </summary>
+    public enum ResultCode : byte
     {
         Unspecified = 0,
         Error = 1,

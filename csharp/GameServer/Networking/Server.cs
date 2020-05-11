@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace GameServer.Networking
@@ -243,8 +242,9 @@ namespace GameServer.Networking
                     playerName: player.Name,
                     commandType: CommandType.GetPlayers,
                     sequence: packet.Sequence,
-                    result: CommandResult.Accept,
-                    data: builder.ToBytes());
+                    result: new CommandResult(
+                        code: ResultCode.Accept,
+                        data: builder.ToBytes()));
 
                 //send response
                 client.SendPacket(response);
