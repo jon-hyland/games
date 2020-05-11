@@ -61,6 +61,7 @@ namespace Common.Standard.Networking
             _readThread.IsBackground = true;
             _writeThread = new Thread(Write_Thread);
             _writeThread.IsBackground = true;
+            _readSignal = new ManualResetEventSlim();
             _writeSignal = new ManualResetEventSlim();
             _readThread.Start();
             _writeThread.Start();
@@ -123,7 +124,7 @@ namespace Common.Standard.Networking
                     _incomingQueue.Add(buffer[i]);
                 if (_stop)
                     return;
-                stream.BeginRead(buffer, 0, buffer.Length, callback, null);
+                stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
             }
             stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
 
