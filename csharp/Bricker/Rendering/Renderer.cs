@@ -848,7 +848,7 @@ namespace Bricker.Rendering
             lines.Add($"game_state:   {gameState}");
             if (communications != null)
             {
-                lines.Add($"heartbeats:   s={communications.HeartbeatsSent}, r={communications.HeartbeatsReceived}");
+                lines.Add($"heartbeats:   s={communications.HeartbeatsSent}");
                 lines.Add($"cmd_requests:   s={communications.CommandRequestsSent}, r={communications.CommandRequestsReceived}");
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");

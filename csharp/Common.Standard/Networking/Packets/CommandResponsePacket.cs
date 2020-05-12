@@ -12,25 +12,22 @@ namespace Common.Standard.Networking.Packets
         private readonly CommandType _commandType;
         private readonly ushort _sequence;
         private readonly CommandResult _result;
-        //private readonly byte[] _data;
 
         //public
         public CommandType CommandType => _commandType;
         public ushort Sequence => _sequence;
         public CommandResult Result => _result;
-        //public byte[] Data => _data;
 
         /// <summary>
         /// Class constructor.
         /// </summary>
         public CommandResponsePacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, CommandResult result/*, byte[] data*/)
+            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, CommandResult result)
             : base(PacketType.CommandResponse, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
         {
             _commandType = commandType;
             _sequence = sequence;
             _result = result;
-            //_data = data ?? new byte[0];
         }
 
         /// <summary>

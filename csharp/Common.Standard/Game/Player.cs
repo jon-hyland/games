@@ -18,13 +18,13 @@ namespace Common.Standard.Game
         public DateTime LastDiscovery { get; set; }
         public TimeSpan TimeSinceLastDiscovery => DateTime.Now - LastDiscovery;
         public ushort InviteSequence { get; set; }
-        public IClient Client { get; set; }
+        public Client Client { get; set; }
         public int UniqueKey { get; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, ushort inviteSequence = 0, IClient client = null)
+        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, ushort inviteSequence = 0, Client client = null)
         {
             IP = ip;
             GameTitle = gameTitle;
@@ -39,7 +39,7 @@ namespace Common.Standard.Game
         /// <summary>
         /// Creates discovered player from packet.
         /// </summary>
-        public static Player FromPacket(PacketBase packet, IClient client)
+        public static Player FromPacket(PacketBase packet, Client client)
         {
             return new Player(packet.SourceIP, packet.GameTitle, packet.GameVersion, packet.PlayerName, 0, client);
         }

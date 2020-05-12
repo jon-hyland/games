@@ -189,9 +189,9 @@ namespace Bricker.Game
             //program loop
             while (true)
             {
-                //opponent invite
-                if (_pendingOpponent != null)
-                    OpponentRespondLoop();
+                ////opponent invite
+                //if (_pendingOpponent != null)
+                //    OpponentRespondLoop();
 
                 //vars
                 MenuSelection selection = MenuSelection.None;
@@ -762,7 +762,7 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Invite opponent loop.  Connects, asks question, waits for response.
+        /// Sends invite to server, waits for opponent response, returns result.
         /// </summary>
         private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
         {
@@ -770,17 +770,17 @@ namespace Bricker.Game
             opponent = null;
             try
             {
-                //show message
-                _renderer.MessageProps = new MessageProperties(
-                    line: "Connecting to opponent..",
-                    size: 24,
-                    buttons: MessageButtons.None);
+                ////show message
+                //_renderer.MessageProps = new MessageProperties(
+                //    line: "Connecting to opponent..",
+                //    size: 24,
+                //    buttons: MessageButtons.None);
 
-                //connect to opponent
-                Thread.Sleep(750);
-                bool success = _communications.SetOpponentAndConnect(player);
-                if (!success)
-                    return result = new CommandResult(ResultCode.Error);
+                ////connect to opponent
+                //Thread.Sleep(750);
+                //bool success = _communications.SetOpponentAndConnect(player);
+                //if (!success)
+                //    return result = new CommandResult(ResultCode.Error);
 
                 //show message
                 _renderer.MessageProps = new MessageProperties(
@@ -789,7 +789,7 @@ namespace Bricker.Game
                     buttons: MessageButtons.None);
 
                 //send invite and wait
-                result = _communications.InviteOpponent();
+                result = _communications.InviteOpponent(player);
                 if (result.Code == ResultCode.Accept)
                     opponent = new Opponent(player);
             }
@@ -817,52 +817,52 @@ namespace Bricker.Game
 
         #region Two-Player Respond
 
-        /// <summary>
-        /// Prompts user with opponent request, and starts two-player game loop (or
-        /// returns to caller).
-        /// </summary>
-        private void OpponentRespondLoop()
-        {
-            //return if no pending oppponent
-            Player pendingOpponent = _pendingOpponent;
-            if (pendingOpponent == null)
-                return;
+        ///// <summary>
+        ///// Prompts user with opponent request, and starts two-player game loop (or
+        ///// returns to caller).
+        ///// </summary>
+        //private void OpponentRespondLoop()
+        //{
+        //    //return if no pending oppponent
+        //    Player pendingOpponent = _pendingOpponent;
+        //    if (pendingOpponent == null)
+        //        return;
 
-            //prompt user to accept
-            bool accept = MessageBoxLoop(new MessageProperties(
-                lines: new string[]
-                {
-                    $"{pendingOpponent.Name} has challenged you to a match!",
-                    $"Do you accept?"
-                },
-                buttons: MessageButtons.NoYes));
+        //    //prompt user to accept
+        //    bool accept = MessageBoxLoop(new MessageProperties(
+        //        lines: new string[]
+        //        {
+        //            $"{pendingOpponent.Name} has challenged you to a match!",
+        //            $"Do you accept?"
+        //        },
+        //        buttons: MessageButtons.NoYes));
 
-            //decline?
-            if (!accept)
-            {
-                //connect, send rejection, disconnect
-                _communications.RejectInvite(pendingOpponent);
-                _opponent = null;
-                _pendingOpponent = null;
-                return;
-            }
+        //    //decline?
+        //    if (!accept)
+        //    {
+        //        //connect, send rejection, disconnect
+        //        _communications.RejectInvite(pendingOpponent);
+        //        _opponent = null;
+        //        _pendingOpponent = null;
+        //        return;
+        //    }
 
-            //connect and send acceptance
-            bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
-            if (!success)
-            {
-                _opponent = null;
-                _pendingOpponent = null;
-                return;
-            }
+        //    //connect and send acceptance
+        //    bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
+        //    if (!success)
+        //    {
+        //        _opponent = null;
+        //        _pendingOpponent = null;
+        //        return;
+        //    }
 
-            //set opponent
-            _opponent = new Opponent(pendingOpponent);
-            _pendingOpponent = null;
+        //    //set opponent
+        //    _opponent = new Opponent(pendingOpponent);
+        //    _pendingOpponent = null;
 
-            //run new game loop
-            GameLoop(newGame: true);
-        }
+        //    //run new game loop
+        //    GameLoop(newGame: true);
+        //}
 
         #endregion
 
@@ -901,7 +901,7 @@ namespace Bricker.Game
                 byte[] bytes = builder.ToBytes();
 
                 //send data packet
-                _communications.SendData(bytes);
+                _communications.SendData(_opponent.Player.IP, bytes);
             }
             catch (Exception ex)
             {

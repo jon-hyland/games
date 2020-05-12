@@ -1,11 +1,10 @@
-﻿using Common.Standard.Networking;
-using Common.Standard.Networking.Packets;
+﻿using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Common.Windows.Networking.Game
+namespace Common.Standard.Networking
 {
     /// <summary>
     /// Manages commands, sent from one game instance and replied to (or timeout) from other instance.
@@ -37,7 +36,7 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Records when a command request packet was sent, to create a state that can be tied back to a response.
         /// </summary>
-        public void RequestSent(CommandRequestPacket packet, TimeSpan timeout)
+        public void RequestSent(CommandRequestPacket packet)
         {
             lock (_commands)
             {
@@ -52,7 +51,7 @@ namespace Common.Windows.Networking.Game
                 }
                 else
                 {
-                    command = new Command(packet.CommandType, packet.Sequence, timeout);
+                    command = new Command(packet.CommandType, packet.Sequence, TimeSpan.FromMilliseconds(packet.TimeoutMs));
                     _commands.Add(command);
                 }
             }
@@ -71,9 +70,14 @@ namespace Common.Windows.Networking.Game
                     .FirstOrDefault();
 
                 if ((packet.Result.Code == ResultCode.Accept) || (packet.Result.Code == ResultCode.Reject))
+                {
                     command.Result = packet.Result;
+                    command.ResponseBytes = packet.ToBytes();
+                }
                 else
+                {
                     command.Result = new CommandResult(ResultCode.Error);
+                }
             }
         }
 
@@ -93,7 +97,7 @@ namespace Common.Windows.Networking.Game
                 {
                     if ((command.IsTimedOut) || (command.IsExpired))
                         return new CommandResult(ResultCode.Timeout);
-                    return command.Result;
+                    return new CommandResult(command.Result.Code, command.ResponseBytes);
                 }
                 else
                 {
@@ -125,6 +129,7 @@ namespace Common.Windows.Networking.Game
             public CommandType CommandType { get; }
             public ushort Sequence { get; }
             public CommandResult Result { get; set; }
+            public byte[] ResponseBytes { get; set; }
             public ushort RetryAttempt { get; set; }
             public TimeSpan Timeout { get; }
             public DateTime StartTime { get; }
@@ -137,6 +142,7 @@ namespace Common.Windows.Networking.Game
                 CommandType = commandType;
                 Sequence = sequence;
                 Result = new CommandResult(ResultCode.Unspecified);
+                ResponseBytes = null;
                 RetryAttempt = 0;
                 Timeout = timeout;
                 StartTime = DateTime.Now;

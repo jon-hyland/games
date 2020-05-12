@@ -73,7 +73,6 @@
   <ItemGroup>
     <Compile Include="Configuration\IConfig.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Networking\Game\CommandManager.cs" />
     <Compile Include="Networking\Game\Discovery\DiscoveryClient.cs" />
     <Compile Include="Networking\Game\Discovery\DiscoveryServer.cs" />
     <Compile Include="Networking\Game\GameCommunications.cs" />

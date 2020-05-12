@@ -13,7 +13,7 @@ using System.Threading;
 
 namespace Common.Standard.Networking
 {
-    public class Client : IClient, IDisposable
+    public class Client : IDisposable
     {
         //private
         private readonly TcpClient _client;
