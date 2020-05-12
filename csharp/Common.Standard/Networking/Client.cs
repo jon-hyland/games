@@ -107,25 +107,6 @@ namespace Common.Standard.Networking
         }
 
         /// <summary>
-        /// Serializes packet and adds to outgoing queue.
-        /// </summary>
-        public void SendPacket(PacketBase packet)
-        {
-            try
-            {
-                lock (_outgoingQueue)
-                {
-                    _outgoingQueue.AddRange(packet.ToBytes());
-                    _writeSignal.Set();
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorHandler.LogError(ex);
-            }
-        }
-
-        /// <summary>
         /// Loops forever, reading data from client.
         /// Fires event for each complete game packet received.
         /// </summary>
@@ -280,6 +261,26 @@ namespace Common.Standard.Networking
         }
 
         /// <summary>
+        /// Serializes packet and adds to outgoing queue.
+        /// </summary>
+        public void SendPacket(PacketBase packet)
+        {
+            try
+            {
+                lock (_outgoingQueue)
+                {
+                    Log.Write($"SendPacket: Queuing {packet.Type} of size {packet.ToBytes().Length} to go to {_remoteIP}");
+                    _outgoingQueue.AddRange(packet.ToBytes());
+                    _writeSignal.Set();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
         /// Loops forever, writing data to client.
         /// </summary>
         private void Write_Thread()
@@ -323,6 +324,7 @@ namespace Common.Standard.Networking
                         _outgoingQueue.Clear();
 
                         //write array
+                        Log.Write($"Writing {buffer.Length} bytes to {_remoteIP}");
                         stream.Write(buffer, 0, buffer.Length);
                     }
                 }

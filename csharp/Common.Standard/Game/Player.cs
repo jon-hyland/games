@@ -18,13 +18,12 @@ namespace Common.Standard.Game
         public DateTime LastDiscovery { get; set; }
         public TimeSpan TimeSinceLastDiscovery => DateTime.Now - LastDiscovery;
         public ushort InviteSequence { get; set; }
-        public Client Client { get; set; }
         public int UniqueKey { get; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, ushort inviteSequence = 0, Client client = null)
+        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, ushort inviteSequence = 0)
         {
             IP = ip;
             GameTitle = gameTitle;
@@ -32,16 +31,15 @@ namespace Common.Standard.Game
             Name = name;
             LastDiscovery = DateTime.Now;
             InviteSequence = inviteSequence;
-            Client = client;
             UniqueKey = $"{IP}|{GameTitle}|{GameVersion}".GetHashCode();
         }
 
         /// <summary>
         /// Creates discovered player from packet.
         /// </summary>
-        public static Player FromPacket(PacketBase packet, Client client)
+        public static Player FromPacket(PacketBase packet)
         {
-            return new Player(packet.SourceIP, packet.GameTitle, packet.GameVersion, packet.PlayerName, 0, client);
+            return new Player(packet.SourceIP, packet.GameTitle, packet.GameVersion, packet.PlayerName, 0);
         }
 
         /// <summary>

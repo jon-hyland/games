@@ -21,6 +21,7 @@ namespace GameServer.Networking
         private readonly TcpListener _listener;
         private readonly List<Client> _clients;
         private readonly List<Player> _players;
+        private readonly Dictionary<int, Client> _clientsByPlayerKey;
         private readonly List<Session> _sessions;
         private readonly CommandManager _commandManager;
         private readonly Thread _listenThread;
@@ -37,6 +38,7 @@ namespace GameServer.Networking
             _listener = new TcpListener(ip, port);
             _clients = new List<Client>();
             _players = new List<Player>();
+            _clientsByPlayerKey = new Dictionary<int, Client>();
             _sessions = new List<Session>();
             _commandManager = new CommandManager();
             _listenThread = new Thread(ListenThread);
@@ -110,7 +112,7 @@ namespace GameServer.Networking
         /// <summary>
         /// Adds or updates a discovered player.
         /// </summary>
-        private void AddOrUpdatePlayer(Player player)
+        private void AddOrUpdatePlayer(Player player, Client client)
         {
             lock (_players)
             {
@@ -137,6 +139,14 @@ namespace GameServer.Networking
 
                 RemoveExpiredPlayers();
             }
+
+            lock (_clientsByPlayerKey)
+            {
+                if (!_clientsByPlayerKey.ContainsKey(player.UniqueKey))
+                    _clientsByPlayerKey.Add(player.UniqueKey, client);
+                else if (_clientsByPlayerKey[player.UniqueKey] != client)
+                    _clientsByPlayerKey[player.UniqueKey] = client;
+            }
         }
 
         /// <summary>
@@ -148,8 +158,7 @@ namespace GameServer.Networking
             lock (_players)
             {
                 List<Player> expired = _players
-                    .Where(p => p.TimeSinceLastDiscovery.TotalMinutes > 5)
-                    .Where(p => p.Client?.IsConnected != true)
+                    .Where(p => p.TimeSinceLastDiscovery.TotalMinutes > 1)
                     .ToList();
                 foreach (Player p in expired)
                 {
@@ -171,6 +180,20 @@ namespace GameServer.Networking
                     .Where(p => p.GameTitle.Equals(gameTitle))
                     .Where(p => p.GameVersion.Equals(gameVersion))
                     .FirstOrDefault();
+            }
+        }
+
+        /// <summary>
+        /// Gets TCP client last associated with specified player.
+        /// Client can change if the player disconnects/reconnects, etc.
+        /// </summary>
+        private Client GetClientByPlayer(Player player)
+        {
+            lock (_clientsByPlayerKey)
+            {
+                if (_clientsByPlayerKey.ContainsKey(player.UniqueKey))
+                    return _clientsByPlayerKey[player.UniqueKey];
+                return null;
             }
         }
 
@@ -201,9 +224,9 @@ namespace GameServer.Networking
                 //heartbeat
                 if (packet is HeartbeatPacket hp)
                 {
-                    Player player = Player.FromPacket(hp, client);
+                    Player player = Player.FromPacket(hp);
                     if (player != null)
-                        AddOrUpdatePlayer(player);
+                        AddOrUpdatePlayer(player, client);
                 }
 
                 //command request
@@ -240,7 +263,7 @@ namespace GameServer.Networking
             try
             {
                 //get source player
-                Player player = Player.FromPacket(packet, null);
+                Player player = Player.FromPacket(packet);
 
                 //get list of connected players (not source player)
                 List<Player> otherPlayers = GetPlayers(player.GameTitle, player.GameVersion)
@@ -291,7 +314,7 @@ namespace GameServer.Networking
             try
             {
                 //get source player
-                sourcePlayer = Player.FromPacket(requestPacket, null);
+                sourcePlayer = Player.FromPacket(requestPacket);
                 if (sourcePlayer == null)
                 {
                     Log.Write($"Passthrough_Command: Unable to parse packet");
@@ -307,7 +330,10 @@ namespace GameServer.Networking
                     result.Code = ResultCode.Error;
                     return;
                 }
-                if (destinationPlayer.Client == null)
+
+                //get destination client
+                Client destinationClient = GetClientByPlayer(destinationPlayer);
+                if (destinationClient == null)
                 {
                     Log.Write($"Passthrough_Command: Destination player does not have assigned TCP client");
                     result.Code = ResultCode.Error;
@@ -318,7 +344,7 @@ namespace GameServer.Networking
                 Log.Write($"Forwarding command '{requestPacket.CommandType}' request from [name={sourcePlayer.Name}, ip={sourcePlayer.IP}] to [name={destinationPlayer.Name}, ip={destinationPlayer.IP}]..");
 
                 //forward request to destination
-                destinationPlayer.Client.SendPacket(requestPacket);
+                destinationClient.SendPacket(requestPacket);
 
                 //record command request has been sent
                 _commandManager.RequestSent(requestPacket);
