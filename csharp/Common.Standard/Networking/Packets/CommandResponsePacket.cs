@@ -30,7 +30,7 @@ namespace Common.Standard.Networking.Packets
             _commandType = commandType;
             _sequence = sequence;
             _code = code;
-            _data = data;
+            _data = data ?? new byte[0];
         }
 
         /// <summary>
