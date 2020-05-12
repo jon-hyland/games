@@ -262,7 +262,6 @@ namespace GameServer.Networking
                     gameVersion: player.GameVersion,
                     sourceIP: _ip,
                     destinationIP: player.IP,
-                    destinationPort: 0,
                     playerName: player.Name,
                     commandType: CommandType.GetPlayers,
                     sequence: packet.Sequence,
@@ -364,9 +363,15 @@ namespace GameServer.Networking
                     {
                         //create new timeout/error packet
                         responsePacket = new CommandResponsePacket(
-                            gameTitle: requestPacket.GameTitle, gameVersion: requestPacket.GameVersion, sourceIP: requestPacket.DestinationIP,
-                            destinationIP: requestPacket.SourceIP, destinationPort: requestPacket.DestinationPort, playerName: "",
-                            commandType: requestPacket.CommandType, sequence: requestPacket.Sequence, code: result.Code, data: null);
+                            gameTitle: requestPacket.GameTitle,
+                            gameVersion: requestPacket.GameVersion,
+                            sourceIP: requestPacket.DestinationIP,
+                            destinationIP: requestPacket.SourceIP,
+                            playerName: "",
+                            commandType: requestPacket.CommandType,
+                            sequence: requestPacket.Sequence,
+                            code: result.Code,
+                            data: null);
 
                         //message
                         Log.Write($"Sending command '{requestPacket.CommandType}' result of '{result.Code}' to [name={sourcePlayer.Name}, ip={sourcePlayer.IP}]..");

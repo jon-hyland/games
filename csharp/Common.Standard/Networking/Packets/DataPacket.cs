@@ -17,9 +17,8 @@ namespace Common.Standard.Networking.Packets
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public DataPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, byte[] data)
-            : base(PacketType.Data, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
+        public DataPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP, string playerName, byte[] data)
+            : base(PacketType.Data, gameTitle, gameVersion, sourceIP, destinationIP, playerName)
         {
             _data = data ?? new byte[0];
         }

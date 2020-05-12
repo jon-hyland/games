@@ -17,9 +17,8 @@ namespace Common.Standard.Networking.Packets
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public HeartbeatPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, long count)
-            : base(PacketType.Heartbeat, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
+        public HeartbeatPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP, string playerName, long count)
+            : base(PacketType.Heartbeat, gameTitle, gameVersion, sourceIP, destinationIP, playerName)
         {
             _count = count;
         }

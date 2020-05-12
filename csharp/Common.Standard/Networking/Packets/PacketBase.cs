@@ -18,7 +18,6 @@ namespace Common.Standard.Networking.Packets
         protected readonly Version _gameVersion;
         protected readonly IPAddress _sourceIP;
         protected readonly IPAddress _destinationIP;
-        protected readonly ushort _destinationPort;
         protected readonly string _playerName;
 
         //public
@@ -27,21 +26,19 @@ namespace Common.Standard.Networking.Packets
         public Version GameVersion => _gameVersion;
         public IPAddress SourceIP => _sourceIP;
         public IPAddress DestinationIP => _destinationIP;
-        public ushort DestinationPort => _destinationPort;
         public string PlayerName => _playerName;
 
         /// <summary>
         /// Class constructor.
         /// </summary>
         public PacketBase(PacketType type, string gameTitle, Version gameVerion, IPAddress sourceIP,
-            IPAddress destinationIP, ushort destinationPort, string playerName)
+            IPAddress destinationIP, string playerName)
         {
             _type = type;
             _gameTitle = gameTitle;
             _gameVersion = gameVerion;
             _sourceIP = sourceIP;
             _destinationIP = destinationIP;
-            _destinationPort = destinationPort;
             _playerName = playerName;
         }
 
@@ -55,7 +52,6 @@ namespace Common.Standard.Networking.Packets
             _gameVersion = parser.GetVersion();
             _sourceIP = parser.GetIPAddress();
             _destinationIP = parser.GetIPAddress();
-            _destinationPort = parser.GetUInt16();
             _playerName = parser.GetString();
         }
 
@@ -68,7 +64,6 @@ namespace Common.Standard.Networking.Packets
             builder.AddVersion(_gameVersion);
             builder.AddIPAddress(_sourceIP);
             builder.AddIPAddress(_destinationIP);
-            builder.AddUInt16(_destinationPort);
             builder.AddString(_playerName);
             AddInstanceBytes(builder);
             builder.AddInt32(PACKET_FOOTER);
@@ -90,9 +85,6 @@ namespace Common.Standard.Networking.Packets
                 PacketType type = (PacketType)parser.GetByte();
                 switch (type)
                 {
-                    case PacketType.Discovery:
-                        return new DiscoveryPacket(parser);
-
                     case PacketType.CommandRequest:
                         return new CommandRequestPacket(parser);
 
@@ -145,8 +137,5 @@ namespace Common.Standard.Networking.Packets
         /// General data packet, no response required.
         /// </summary>
         Data = 5,
-
-
-        Discovery
     }
 }

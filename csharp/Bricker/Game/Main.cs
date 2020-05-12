@@ -189,9 +189,9 @@ namespace Bricker.Game
             //program loop
             while (true)
             {
-                ////opponent invite
-                //if (_pendingOpponent != null)
-                //    OpponentRespondLoop();
+                //opponent invite
+                if (_pendingOpponent != null)
+                    OpponentRespondLoop();
 
                 //vars
                 MenuSelection selection = MenuSelection.None;
@@ -817,52 +817,52 @@ namespace Bricker.Game
 
         #region Two-Player Respond
 
-        ///// <summary>
-        ///// Prompts user with opponent request, and starts two-player game loop (or
-        ///// returns to caller).
-        ///// </summary>
-        //private void OpponentRespondLoop()
-        //{
-        //    //return if no pending oppponent
-        //    Player pendingOpponent = _pendingOpponent;
-        //    if (pendingOpponent == null)
-        //        return;
+        /// <summary>
+        /// Prompts user with invite request, and starts two-player game loop (or
+        /// returns to caller).
+        /// </summary>
+        private void OpponentRespondLoop()
+        {
+            //return if no pending oppponent
+            Player pendingOpponent = _pendingOpponent;
+            if (pendingOpponent == null)
+                return;
 
-        //    //prompt user to accept
-        //    bool accept = MessageBoxLoop(new MessageProperties(
-        //        lines: new string[]
-        //        {
-        //            $"{pendingOpponent.Name} has challenged you to a match!",
-        //            $"Do you accept?"
-        //        },
-        //        buttons: MessageButtons.NoYes));
+            //prompt user to accept
+            bool accept = MessageBoxLoop(new MessageProperties(
+                lines: new string[]
+                {
+                    $"{pendingOpponent.Name} has challenged you to a match!",
+                    $"Do you accept?"
+                },
+                buttons: MessageButtons.NoYes));
 
-        //    //decline?
-        //    if (!accept)
-        //    {
-        //        //connect, send rejection, disconnect
-        //        _communications.RejectInvite(pendingOpponent);
-        //        _opponent = null;
-        //        _pendingOpponent = null;
-        //        return;
-        //    }
+            //decline?
+            if (!accept)
+            {
+                //connect, send rejection, disconnect
+                _communications.RejectInvite(pendingOpponent);
+                _opponent = null;
+                _pendingOpponent = null;
+                return;
+            }
 
-        //    //connect and send acceptance
-        //    bool success = _communications.AcceptInviteAndConnect(pendingOpponent);
-        //    if (!success)
-        //    {
-        //        _opponent = null;
-        //        _pendingOpponent = null;
-        //        return;
-        //    }
+            //connect and send acceptance
+            bool success = _communications.AcceptInvite(pendingOpponent);
+            if (!success)
+            {
+                _opponent = null;
+                _pendingOpponent = null;
+                return;
+            }
 
-        //    //set opponent
-        //    _opponent = new Opponent(pendingOpponent);
-        //    _pendingOpponent = null;
+            //set opponent
+            _opponent = new Opponent(pendingOpponent);
+            _pendingOpponent = null;
 
-        //    //run new game loop
-        //    GameLoop(newGame: true);
-        //}
+            //run new game loop
+            GameLoop(newGame: true);
+        }
 
         #endregion
 

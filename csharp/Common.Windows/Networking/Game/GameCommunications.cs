@@ -39,7 +39,7 @@ namespace Common.Windows.Networking.Game
         private ushort _commandSequence = 0;
         private ConnectionState _connectionState = ConnectionState.NotConnected;
         private Player _opponent = null;
-        private Player _pendingOpponent = null;
+        //private Player _pendingOpponent = null;
         private long _heartbeatsSent = 0;
         private long _dataSent = 0;
         private long _dataReceived = 0;
@@ -277,7 +277,7 @@ namespace Common.Windows.Networking.Game
                         //accept
                         if (result.Code == ResultCode.Accept)
                         {
-                            _pendingOpponent = null;
+                            //_pendingOpponent = null;
                             fireEvent = true;
                         }
 
@@ -285,21 +285,21 @@ namespace Common.Windows.Networking.Game
                         else if (result.Code == ResultCode.Reject)
                         {
                             _opponent = null;
-                            _pendingOpponent = null;
+                            //_pendingOpponent = null;
                         }
 
                         //timeout
                         else if (result.Code == ResultCode.Timeout)
                         {
                             _opponent = null;
-                            _pendingOpponent = null;
+                            //_pendingOpponent = null;
                         }
 
                         //error
                         else if (result.Code == ResultCode.Error)
                         {
                             _opponent = null;
-                            _pendingOpponent = null;
+                            //_pendingOpponent = null;
                         }
 
                         //return
@@ -320,95 +320,57 @@ namespace Common.Windows.Networking.Game
             }
         }
 
-        ///// <summary>
-        ///// Accepts an invite from a remote opponent.
-        ///// </summary>
-        //public bool AcceptInviteAndConnect(Player opponent)
-        //{
-        //    try
-        //    {
-        //        lock (_inviteLock)
-        //        {
-        //            //return if opponents don't match
-        //            if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
-        //                return false;
+        /// <summary>
+        /// Accepts an invite from a remote opponent.
+        /// </summary>
+        public bool AcceptInvite(Player opponent)
+        {
+            try
+            {
+                lock (_inviteLock)
+                {
+                    //send acceptance
+                    return SendCommandResponse(
+                        destinationIP: opponent.IP,
+                        type: CommandType.ConnectToPlayer,
+                        sequence: opponent.InviteSequence,
+                        code: ResultCode.Accept,
+                        data: null);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write("AcceptInvite: Unknown error");
+                ErrorHandler.LogError(ex);
+                return false;
+            }
+        }
 
-        //            //set opponent and connect
-        //            //_lastHeartbeatReceived = DateTime.Now;
-        //            bool success = SetOpponentAndConnect(opponent, false);
-        //            if (!success)
-        //            {
-        //                _opponent = null;
-        //                _pendingOpponent = null;
-        //                return false;
-        //            }
-
-        //            //send acceptance
-        //            return SendCommandResponse(
-        //                type: CommandType.ConnectToPlayer,
-        //                sequence: opponent.InviteSequence,
-        //                result: new CommandResult(ResultCode.Accept));
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        //_connectionState = ConnectionState.Error;
-        //        Log.Write("AcceptInviteAndConnect: Unknown error");
-        //        ErrorHandler.LogError(ex);
-        //        return false;
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Connects to opponent in order to respond, sends rejection, disconnects.
-        ///// </summary>
-        //public bool RejectInvite(Player opponent)
-        //{
-        //    try
-        //    {
-        //        lock (_inviteLock)
-        //        {
-        //            //return if opponents don't match
-        //            if ((_pendingOpponent == null) || (opponent.IP != _pendingOpponent.IP))
-        //                return false;
-
-        //            ////close any existing connection
-        //            //_dataClient.Disconnect();
-        //            //_connectionState = ConnectionState.NotConnected;
-
-        //            ////connect to opponent
-        //            //_dataClient.Connect(opponent.IP.ToString(), _config.GamePort);
-        //            //_dataClient.TcpClient.SendTimeout = 2000;
-        //            //_dataClient.TcpClient.ReceiveTimeout = 2000;
-
-        //            //send rejection
-        //            return SendCommandResponse(
-        //                type: CommandType.ConnectToPlayer,
-        //                sequence: opponent.InviteSequence,
-        //                result: new CommandResult(ResultCode.Reject));
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        //_connectionState = ConnectionState.Error;
-        //        Log.Write("RejectInvite: Unknown error");
-        //        ErrorHandler.LogError(ex);
-        //        return false;
-        //    }
-        //    finally
-        //    {
-        //        try
-        //        {
-        //            //_dataClient.Disconnect();
-        //            //_connectionState = ConnectionState.NotConnected;
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Log.Write("RejectInvite: Disconnect error");
-        //            ErrorHandler.LogError(ex);
-        //        }
-        //    }
-        //}
+        /// <summary>
+        /// Sends rejection response to server.
+        /// </summary>
+        public bool RejectInvite(Player opponent)
+        {
+            try
+            {
+                lock (_inviteLock)
+                {
+                    //send rejection
+                    return SendCommandResponse(
+                        destinationIP: opponent.IP,
+                        type: CommandType.ConnectToPlayer,
+                        sequence: opponent.InviteSequence,
+                        code: ResultCode.Reject,
+                        data: null);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write("RejectInvite: Unknown error");
+                ErrorHandler.LogError(ex);
+                return false;
+            }
+        }
 
         ///// <summary>
         ///// Closes connection to opponent, removes opponent reference.
@@ -456,10 +418,6 @@ namespace Common.Windows.Networking.Game
                 if (_connectionState == ConnectionState.Disabled)
                     return new CommandResult(ResultCode.Error);
 
-                ////no opponent?
-                //if (_opponent == null)
-                //    throw new Exception("No opponent set");
-
                 //vars
                 ushort sequence;
                 lock (this)
@@ -472,14 +430,18 @@ namespace Common.Windows.Networking.Game
 
                 //create packet
                 CommandRequestPacket packet = new CommandRequestPacket(
-                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: destinationIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
-                    commandType: type, sequence: sequence, retryAttempt: 0, timeoutMs: (uint)timeout.TotalMilliseconds,
+                    gameTitle: _config.GameTitle,
+                    gameVersion: _config.GameVersion,
+                    sourceIP: _config.LocalIP,
+                    destinationIP: destinationIP,
+                    playerName: _localPlayer.Name,
+                    commandType: type,
+                    sequence: sequence,
+                    retryAttempt: 0,
+                    timeoutMs: (uint)timeout.TotalMilliseconds,
                     data: data);
 
                 //send packet
-                //byte[] bytes = packet.ToBytes();
-                //_dataClient.Write(bytes);
                 _client.SendPacket(packet);
                 _commandRequestsSent++;
 
@@ -519,20 +481,24 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                //no opponent?
-                Player opponent = type != CommandType.ConnectToPlayer ? _opponent : _pendingOpponent;
-                if (opponent == null)
-                    throw new Exception("No opponent set");
+                //disabled?
+                if (_connectionState == ConnectionState.Disabled)
+                    return false;
 
                 //create packet
                 CommandResponsePacket packet = new CommandResponsePacket(
-                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: destinationIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
-                    commandType: type, sequence: sequence, code: code, data: data);
+                    gameTitle: _config.GameTitle,
+                    gameVersion: _config.GameVersion,
+                    sourceIP: _config.LocalIP,
+                    destinationIP: destinationIP,
+                    playerName: _localPlayer.Name,
+                    commandType: type,
+                    sequence: sequence,
+                    code: code,
+                    data: data);
 
                 //send packet
-                byte[] bytes = packet.ToBytes();
-                //_dataClient.Write(bytes);
+                _client.SendPacket(packet);
                 _commandResponsesSent++;
 
                 //success
@@ -554,19 +520,21 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                //no opponent?
-                if (_opponent == null)
-                    throw new Exception("No opponent set");
+                //disabled?
+                if (_connectionState == ConnectionState.Disabled)
+                    return false;
 
                 //create packet
                 DataPacket packet = new DataPacket(
-                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: destinationIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
+                    gameTitle: _config.GameTitle,
+                    gameVersion: _config.GameVersion,
+                    sourceIP: _config.LocalIP,
+                    destinationIP: destinationIP,
+                    playerName: _localPlayer.Name,
                     data: data);
 
                 //send packet
-                byte[] bytes = packet.ToBytes();
-                //_dataClient.Write(bytes);
+                _client.SendPacket(packet);
                 _dataSent++;
 
                 //success
@@ -588,14 +556,13 @@ namespace Common.Windows.Networking.Game
         {
             try
             {
-                ////no opponent?
-                //if (_opponent == null)
-                //    throw new Exception("No opponent set");
-
                 //create packet
                 HeartbeatPacket packet = new HeartbeatPacket(
-                    gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
-                    destinationIP: _config.ServerIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
+                    gameTitle: _config.GameTitle,
+                    gameVersion: _config.GameVersion,
+                    sourceIP: _config.LocalIP,
+                    destinationIP: _config.ServerIP,
+                    playerName: _localPlayer.Name,
                     count: _heartbeatsSent + 1);
 
                 //send packet
@@ -635,8 +602,8 @@ namespace Common.Windows.Networking.Game
                     _commandRequestsReceived++;
                     PacketParser parser = new PacketParser(p2.Data);
                     string playerName = parser.GetString();
-                    _pendingOpponent = new Player(p2.SourceIP, p2.GameTitle, p2.GameVersion, playerName, p2.Sequence);
-                    OpponentInviteReceived?.InvokeFromTask(_pendingOpponent);
+                    Player pendingOpponent = new Player(p2.SourceIP, p2.GameTitle, p2.GameVersion, playerName, p2.Sequence);
+                    OpponentInviteReceived?.InvokeFromTask(pendingOpponent);
                     return;
                 }
 

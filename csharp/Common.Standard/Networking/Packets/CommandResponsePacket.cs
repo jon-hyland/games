@@ -24,8 +24,8 @@ namespace Common.Standard.Networking.Packets
         /// Class constructor.
         /// </summary>
         public CommandResponsePacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, ResultCode code, byte[] data)
-            : base(PacketType.CommandResponse, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
+            string playerName, CommandType commandType, ushort sequence, ResultCode code, byte[] data)
+            : base(PacketType.CommandResponse, gameTitle, gameVersion, sourceIP, destinationIP, playerName)
         {
             _commandType = commandType;
             _sequence = sequence;

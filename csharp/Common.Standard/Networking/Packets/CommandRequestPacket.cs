@@ -27,9 +27,8 @@ namespace Common.Standard.Networking.Packets
         /// Class constructor.
         /// </summary>
         public CommandRequestPacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            ushort destinationPort, string playerName, CommandType commandType, ushort sequence, ushort retryAttempt,
-            uint timeoutMs, byte[] data)
-            : base(PacketType.CommandRequest, gameTitle, gameVersion, sourceIP, destinationIP, destinationPort, playerName)
+            string playerName, CommandType commandType, ushort sequence, ushort retryAttempt, uint timeoutMs, byte[] data)
+            : base(PacketType.CommandRequest, gameTitle, gameVersion, sourceIP, destinationIP, playerName)
         {
             _commandType = commandType;
             _sequence = sequence;
