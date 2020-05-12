@@ -69,20 +69,24 @@ namespace Common.Standard.Networking
                     .OrderBy(c => c.Elapsed)
                     .FirstOrDefault();
 
-                if ((packet.Result.Code == ResultCode.Accept) || (packet.Result.Code == ResultCode.Reject))
+                if ((packet.Code == ResultCode.Accept) || (packet.Code == ResultCode.Reject))
                 {
-                    command.Result = packet.Result;
-                    command.ResponseBytes = packet.ToBytes();
+                    command.Code = packet.Code;
+                    command.ResponsePacket = packet;
+                }
+                else if (packet.Code == ResultCode.Timeout)
+                {
+                    command.Code = ResultCode.Timeout;
                 }
                 else
                 {
-                    command.Result = new CommandResult(ResultCode.Error);
+                    command.Code = ResultCode.Error;
                 }
             }
         }
 
         /// <summary>
-        /// Returns the status (as result) of the specified command.
+        /// Returns the status of the specified command.
         /// </summary>
         public CommandResult GetCommandStatus(ushort sequence)
         {
@@ -97,7 +101,7 @@ namespace Common.Standard.Networking
                 {
                     if ((command.IsTimedOut) || (command.IsExpired))
                         return new CommandResult(ResultCode.Timeout);
-                    return new CommandResult(command.Result.Code, command.ResponseBytes);
+                    return new CommandResult(command.Code, command.ResponsePacket);
                 }
                 else
                 {
@@ -128,8 +132,8 @@ namespace Common.Standard.Networking
         {
             public CommandType CommandType { get; }
             public ushort Sequence { get; }
-            public CommandResult Result { get; set; }
-            public byte[] ResponseBytes { get; set; }
+            public ResultCode Code { get; set; }
+            public CommandResponsePacket ResponsePacket { get; set; }
             public ushort RetryAttempt { get; set; }
             public TimeSpan Timeout { get; }
             public DateTime StartTime { get; }
@@ -141,8 +145,8 @@ namespace Common.Standard.Networking
             {
                 CommandType = commandType;
                 Sequence = sequence;
-                Result = new CommandResult(ResultCode.Unspecified);
-                ResponseBytes = null;
+                Code = ResultCode.Unspecified;
+                ResponsePacket = null;
                 RetryAttempt = 0;
                 Timeout = timeout;
                 StartTime = DateTime.Now;

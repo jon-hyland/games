@@ -266,9 +266,8 @@ namespace GameServer.Networking
                     playerName: player.Name,
                     commandType: CommandType.GetPlayers,
                     sequence: packet.Sequence,
-                    result: new CommandResult(
-                        code: ResultCode.Accept,
-                        data: builder.ToBytes()));
+                    code: ResultCode.Accept,
+                    data: builder.ToBytes());
 
                 //send response back to source
                 sourceClient.SendPacket(response);
@@ -353,10 +352,10 @@ namespace GameServer.Networking
                 {
                     //create packet
                     CommandResponsePacket responsePacket;
-                    if ((result.Code.In(ResultCode.Accept, ResultCode.Reject)) && (result.Data.Length > 0))
+                    if ((result.Code.In(ResultCode.Accept, ResultCode.Reject)) && (result.ResponsePacket != null))
                     {
-                        //reconstruct original packet
-                        responsePacket = (CommandResponsePacket)PacketBase.FromBytes(result.Data);
+                        //get original packet
+                        responsePacket = result.ResponsePacket;
 
                         //message
                         Log.Write($"Forwarding command '{requestPacket.CommandType}' response from [name={destinationPlayer.Name}, ip={destinationPlayer.IP}] to [name={sourcePlayer.Name}, ip={sourcePlayer.IP}]..");
@@ -367,7 +366,7 @@ namespace GameServer.Networking
                         responsePacket = new CommandResponsePacket(
                             gameTitle: requestPacket.GameTitle, gameVersion: requestPacket.GameVersion, sourceIP: requestPacket.DestinationIP,
                             destinationIP: requestPacket.SourceIP, destinationPort: requestPacket.DestinationPort, playerName: "",
-                            commandType: requestPacket.CommandType, sequence: requestPacket.Sequence, result: result);
+                            commandType: requestPacket.CommandType, sequence: requestPacket.Sequence, code: result.Code, data: null);
 
                         //message
                         Log.Write($"Sending command '{requestPacket.CommandType}' result of '{result.Code}' to [name={sourcePlayer.Name}, ip={sourcePlayer.IP}]..");

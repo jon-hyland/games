@@ -174,10 +174,10 @@ namespace Common.Windows.Networking.Game
             try
             {
                 CommandResult result = SendCommandRequest(_config.ServerIP, CommandType.GetPlayers, null, TimeSpan.FromMilliseconds(750));
-                if ((result.Code == ResultCode.Accept) && (result.Data.Length > 0))
+                if ((result.Code == ResultCode.Accept) && (result.ResponsePacket != null))
                 {
                     List<Player> players = new List<Player>();
-                    PacketParser parser = new PacketParser(result.Data);
+                    PacketParser parser = new PacketParser(result.ResponsePacket.Data);
                     ushort count = parser.GetUInt16();
                     for (int i = 0; i < count; i++)
                     {
@@ -515,7 +515,7 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Sends command response.  Data is optional.
         /// </summary>
-        public bool SendCommandResponse(IPAddress destinationIP, CommandType type, ushort sequence, CommandResult result)
+        public bool SendCommandResponse(IPAddress destinationIP, CommandType type, ushort sequence, ResultCode code, byte[] data = null)
         {
             try
             {
@@ -528,7 +528,7 @@ namespace Common.Windows.Networking.Game
                 CommandResponsePacket packet = new CommandResponsePacket(
                     gameTitle: _config.GameTitle, gameVersion: _config.GameVersion, sourceIP: _config.LocalIP,
                     destinationIP: destinationIP, destinationPort: _config.ServerPort, playerName: _localPlayer.Name,
-                    commandType: type, sequence: sequence, result: result);
+                    commandType: type, sequence: sequence, code: code, data: data);
 
                 //send packet
                 byte[] bytes = packet.ToBytes();

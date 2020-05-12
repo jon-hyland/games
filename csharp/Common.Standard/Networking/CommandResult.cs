@@ -1,4 +1,6 @@
-﻿namespace Common.Standard.Networking
+﻿using Common.Standard.Networking.Packets;
+
+namespace Common.Standard.Networking
 {
     /// <summary>
     /// The result of a command request.
@@ -6,12 +8,12 @@
     public class CommandResult
     {
         public ResultCode Code { get; set; }
-        public byte[] Data { get; set; }
+        public CommandResponsePacket ResponsePacket { get; set; }
 
-        public CommandResult(ResultCode code, byte[] data = null)
+        public CommandResult(ResultCode code, CommandResponsePacket responsePacket = null)
         {
             Code = code;
-            Data = data ?? new byte[0];
+            ResponsePacket = responsePacket;
         }
     }
 
