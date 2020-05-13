@@ -443,6 +443,9 @@ namespace GameServer.Networking
                         _clients.Remove(client);
                     }
                 }
+
+                //remove expired players
+                RemoveExpiredPlayers();
             }
             catch (Exception ex)
             {

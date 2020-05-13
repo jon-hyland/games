@@ -245,7 +245,7 @@ namespace Common.Standard.Networking
                     PacketBase packet = PacketBase.FromBytes(bytes);
                     if (packet == null)
                     {
-                        Log.Write("ReadData: Invalid packet was discarded");
+                        Log.Write($"ReadData: Invalid packet from '{_remoteIP}' with {bytes.Length} bytes was discarded");
                         continue;
                     }
 
