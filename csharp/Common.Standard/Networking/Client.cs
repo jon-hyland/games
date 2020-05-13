@@ -270,7 +270,7 @@ namespace Common.Standard.Networking
             {
                 lock (_outgoingQueue)
                 {
-                    Log.Write($"SendPacket: Queuing {packet.Type} of size {packet.ToBytes().Length} to go to {_remoteIP}");
+                    //Log.Write($"Queuing '{packet.Type}' packet with {packet.ToBytes().Length} bytes for destination '{_remoteIP}'");
                     _outgoingQueue.AddRange(packet.ToBytes());
                     _writeSignal.Set();
                 }
@@ -325,7 +325,7 @@ namespace Common.Standard.Networking
                         _outgoingQueue.Clear();
 
                         //write array
-                        Log.Write($"Writing {buffer.Length} bytes to {_remoteIP}");
+                        //Log.Write($"Writing {buffer.Length} bytes to destination '{_remoteIP}'");
                         stream.Write(buffer, 0, buffer.Length);
                     }
                 }

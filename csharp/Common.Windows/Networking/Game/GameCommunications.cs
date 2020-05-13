@@ -595,7 +595,7 @@ namespace Common.Windows.Networking.Game
                 //connection broken?
                 if ((_connectionState == ConnectionState.Connected) && (!_client.IsConnected))
                 {
-                    Log.Write("Disconnect: Connection broken..");
+                    Log.Write("Disconnect: Connection broken");
                     _connectionState = ConnectionState.NotConnected;
                     //Disconnected?.InvokeFromTask();
                     return;

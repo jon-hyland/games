@@ -336,7 +336,7 @@ namespace GameServer.Networking
                 destinationPlayer = GetMatchingPlayer(requestPacket.DestinationIP, requestPacket.GameTitle, requestPacket.GameVersion);
                 if (destinationPlayer == null)
                 {
-                    Log.Write($"Passthrough_Command: Cannot find destination player with IP '{requestPacket.DestinationIP}'");
+                    Log.Write($"Passthrough_Command: Cannot find destination player at '{requestPacket.DestinationIP}'");
                     result.Code = ResultCode.Error;
                     return;
                 }
@@ -345,7 +345,7 @@ namespace GameServer.Networking
                 Client destinationClient = GetClientByPlayer(destinationPlayer);
                 if (destinationClient == null)
                 {
-                    Log.Write($"Passthrough_Command: Destination player does not have assigned TCP client");
+                    Log.Write($"Passthrough_Command: Destination player at {destinationClient.RemoteIP} does not have assigned TCP client");
                     result.Code = ResultCode.Error;
                     return;
                 }
@@ -441,7 +441,7 @@ namespace GameServer.Networking
                     List<Client> disconnected = _clients.Where(c => !c.IsConnected).ToList();
                     foreach (Client client in disconnected)
                     {
-                        Log.Write($"Removing disconnected client '{client.RemoteIP}'..");
+                        Log.Write($"Removing disconnected client '{client.RemoteIP}'");
                         _clients.Remove(client);
                     }
                 }
