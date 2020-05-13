@@ -191,7 +191,7 @@ namespace Bricker.Game
             {
                 //opponent invite
                 if (_pendingOpponent != null)
-                    OpponentRespondLoop();
+                    OpponentResponseLoop();
 
                 //vars
                 MenuSelection selection = MenuSelection.None;
@@ -821,7 +821,7 @@ namespace Bricker.Game
         /// Prompts user with invite request, and starts two-player game loop (or
         /// returns to caller).
         /// </summary>
-        private void OpponentRespondLoop()
+        private void OpponentResponseLoop()
         {
             //return if no pending oppponent
             Player pendingOpponent = _pendingOpponent;

@@ -14,11 +14,6 @@ using System.Threading;
 namespace Common.Windows.Networking.Game
 {
     /// <summary>
-    /// Simple function SetPlayer.. disconnects if connected.
-    /// Simple function SendCommand.. reconnects if not connected (no matter if accepted).
-    /// Move connect logic outside class?  Simplify logic?
-    /// Add event for connection request, function for user connection response.
-    /// Both places set a connection flag.  Change from ConnectionState?
     /// </summary>
     public class GameCommunications : IDisposable
     {
@@ -38,8 +33,6 @@ namespace Common.Windows.Networking.Game
         private readonly object _inviteLock = new object();
         private ushort _commandSequence = 0;
         private ConnectionState _connectionState = ConnectionState.NotConnected;
-        private Player _opponent = null;
-        //private Player _pendingOpponent = null;
         private long _heartbeatsSent = 0;
         private long _dataSent = 0;
         private long _dataReceived = 0;
@@ -56,7 +49,6 @@ namespace Common.Windows.Networking.Game
         public Version GameVersion => _config.GameVersion;
         public IPAddress LocalIP => _config.LocalIP;
         public Player LocalPlayer => _localPlayer;
-        public Player Opponent => _opponent;
         public ConnectionState ConnectionState => _connectionState;
         public long HeartbeatsSent => _heartbeatsSent;
         public long DataSent => _dataSent;
@@ -284,21 +276,21 @@ namespace Common.Windows.Networking.Game
                         //reject
                         else if (result.Code == ResultCode.Reject)
                         {
-                            _opponent = null;
+                            //_opponent = null;
                             //_pendingOpponent = null;
                         }
 
                         //timeout
                         else if (result.Code == ResultCode.Timeout)
                         {
-                            _opponent = null;
+                            //_opponent = null;
                             //_pendingOpponent = null;
                         }
 
                         //error
                         else if (result.Code == ResultCode.Error)
                         {
-                            _opponent = null;
+                            //_opponent = null;
                             //_pendingOpponent = null;
                         }
 
@@ -309,7 +301,7 @@ namespace Common.Windows.Networking.Game
                 finally
                 {
                     if (fireEvent)
-                        OpponentConnected?.InvokeFromTask(_opponent);
+                        OpponentConnected?.InvokeFromTask(opponent);
                 }
             }
             catch (Exception ex)
@@ -607,9 +599,9 @@ namespace Common.Windows.Networking.Game
                     return;
                 }
 
-                //reject if wrong opponent
-                if ((!packet.SourceIP.Equals(_config.ServerIP)) && ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP))))
-                    return;
+                ////reject if wrong opponent
+                //if ((!packet.SourceIP.Equals(_config.ServerIP)) && ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP))))
+                //    return;
 
                 //queue packet for processing
                 lock (_incomingPackets)
