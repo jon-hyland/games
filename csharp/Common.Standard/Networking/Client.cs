@@ -83,6 +83,7 @@ namespace Common.Standard.Networking
         public void Dispose()
         {
             _stop = true;
+            _client?.Close();
             _client?.Dispose();
         }
 

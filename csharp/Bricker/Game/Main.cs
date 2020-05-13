@@ -386,7 +386,6 @@ namespace Bricker.Game
                     {
                         _opponent = null;
                         _pendingOpponent = null;
-                        //MessageBoxLoop("Player has disconnected.", MessageButtons.OK);
                         MessageBoxLoop(new MessageProperties("Player has disconnected."));
                         continue;
                     }
