@@ -18,6 +18,7 @@ namespace GameServer.Networking
     {
         //private
         private readonly IPAddress _ip;
+        private readonly int _port;
         private readonly TcpListener _listener;
         private readonly List<Client> _clients;
         private readonly List<Player> _players;
@@ -35,6 +36,7 @@ namespace GameServer.Networking
         public Server(IPAddress ip, int port)
         {
             _ip = ip;
+            _port = port;
             _listener = new TcpListener(ip, port);
             _clients = new List<Client>();
             _players = new List<Player>();
@@ -51,7 +53,7 @@ namespace GameServer.Networking
         /// </summary>
         public void Start()
         {
-            Log.Write("Starting TCP server..");
+            Log.Write($"Starting TCP server on port '{_port}'");
             _listener.Start();
             _listenThread.Start();
         }
@@ -73,7 +75,7 @@ namespace GameServer.Networking
                     Client client = new Client(_listener.AcceptTcpClient());
 
                     //message
-                    Log.Write($"Accepted TCP connection from '{client.RemoteIP}'..");
+                    Log.Write($"Accepting new TCP connection from '{client.RemoteIP}'");
 
                     //add to list
                     lock (_clients)
@@ -84,6 +86,7 @@ namespace GameServer.Networking
                 }
                 catch (Exception ex)
                 {
+                    Log.Write("ListenThread: Error occurred in listen thread loop");
                     ErrorHandler.LogError(ex);
                 }
             }
@@ -124,7 +127,7 @@ namespace GameServer.Networking
                 {
                     if (existing.Name != player.Name)
                     {
-                        Log.Write($"Changing player name '{existing.Name}' to '{player.Name}'..");
+                        Log.Write($"Changing player name '{existing.Name}' to '{player.Name}' at '{player.IP}'");
                         existing.Name = player.Name;
                     }
                     TimeSpan sinceLastDiscovery = DateTime.Now - existing.LastDiscovery;
@@ -133,7 +136,7 @@ namespace GameServer.Networking
                 }
                 else
                 {
-                    Log.Write($"Adding new player '{player.Name}' at '{player.IP}' playing '{player.GameTitle} v{player.GameVersion}'..");
+                    Log.Write($"Adding new player '{player.Name}' at '{player.IP}' playing '{player.GameTitle} v{player.GameVersion}'");
                     _players.Add(player);
                 }
 
@@ -162,7 +165,7 @@ namespace GameServer.Networking
                     .ToList();
                 foreach (Player p in expired)
                 {
-                    Log.Write($"Removing expired/disconnected player [ip={p.IP}, name={p.Name}]..");
+                    Log.Write($"Removing disconnected player '{p.Name}' at '{p.IP}'");
                     _players.Remove(p);
                 }
             }
@@ -247,10 +250,17 @@ namespace GameServer.Networking
                     }
                 }
 
+                //command response
+                else if (packet is CommandResponsePacket resp)
+                {
+                    //record response
+                    _commandManager.ResponseReceived(resp);
+                }
+
             }
             catch (Exception ex)
             {
-                Log.Write("PacketReceived: Error processing client packet");
+                Log.Write("PacketReceived: Error processing packet");
                 ErrorHandler.LogError(ex);
             }
         }
@@ -271,7 +281,7 @@ namespace GameServer.Networking
                     .ToList();
 
                 //message
-                Log.Write($"Responding to command 'GetPlayers' request from [name={player.Name}, ip={player.IP}]..");
+                Log.Write($"Sending command-response '{packet.CommandType}' ({otherPlayers.Count} player{(otherPlayers.Count != 1 ? "s" : "")}) from 'SERVER' to '{player.IP}'");
 
                 //serialize list to bytes
                 PacketBuilder builder = new PacketBuilder();
@@ -341,13 +351,13 @@ namespace GameServer.Networking
                 }
 
                 //message
-                Log.Write($"Forwarding command '{requestPacket.CommandType}' request from [name={sourcePlayer.Name}, ip={sourcePlayer.IP}] to [name={destinationPlayer.Name}, ip={destinationPlayer.IP}]..");
+                Log.Write($"Forwarding command-request  '{requestPacket.CommandType}' from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
+
+                //record command request being sent
+                _commandManager.RequestSent(requestPacket);
 
                 //forward request to destination
                 destinationClient.SendPacket(requestPacket);
-
-                //record command request has been sent
-                _commandManager.RequestSent(requestPacket);
 
                 //wait for response or timeout
                 while (true)
@@ -368,7 +378,7 @@ namespace GameServer.Networking
             }
             catch (Exception ex)
             {
-                Log.Write("Passthrough_Command: Error passing command to destination");
+                Log.Write("Passthrough_Command: Error forwarding request or waiting for response");
                 ErrorHandler.LogError(ex);
             }
             finally
@@ -383,7 +393,7 @@ namespace GameServer.Networking
                         responsePacket = result.ResponsePacket;
 
                         //message
-                        Log.Write($"Forwarding command '{requestPacket.CommandType}' response from [name={destinationPlayer.Name}, ip={destinationPlayer.IP}] to [name={sourcePlayer.Name}, ip={sourcePlayer.IP}]..");
+                        Log.Write($"Forwarding command-response '{result.ResponsePacket.CommandType}' ({result.ResponsePacket.Code}) from '{destinationPlayer.IP}' to '{sourcePlayer.IP}'");
                     }
                     else
                     {
@@ -400,7 +410,7 @@ namespace GameServer.Networking
                             data: null);
 
                         //message
-                        Log.Write($"Sending command '{requestPacket.CommandType}' result of '{result.Code}' to [name={sourcePlayer.Name}, ip={sourcePlayer.IP}]..");
+                        Log.Write($"Sending command-response '{responsePacket.CommandType}' ({responsePacket.Code}) from 'SERVER' to '{sourceClient.RemoteIP}'");
                     }
 
                     //send response to source
