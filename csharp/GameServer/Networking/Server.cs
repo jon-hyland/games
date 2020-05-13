@@ -107,7 +107,7 @@ namespace GameServer.Networking
                 return _players
                     .Where(p => p.GameTitle.Equals(gameTitle))
                     .Where(p => p.GameVersion.Equals(gameVersion))
-                    .OrderByDescending(p => p.LastDiscovery)
+                    .OrderByDescending(p => p.FirstDiscovery)
                     .ToList();
             }
         }
@@ -130,9 +130,7 @@ namespace GameServer.Networking
                         Log.Write($"Changing player name '{existing.Name}' to '{player.Name}' at '{player.IP}'");
                         existing.Name = player.Name;
                     }
-                    TimeSpan sinceLastDiscovery = DateTime.Now - existing.LastDiscovery;
-                    if (sinceLastDiscovery.TotalSeconds > 60)
-                        existing.LastDiscovery = DateTime.Now;
+                    existing.LastDiscovery = DateTime.Now;
                 }
                 else
                 {
