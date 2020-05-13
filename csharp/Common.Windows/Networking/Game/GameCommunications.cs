@@ -271,7 +271,7 @@ namespace Common.Windows.Networking.Game
                         //    throw new Exception("No opponent set");
 
                         //send connect-request command
-                        byte[] data = PacketBuilder.ToBytes(new object[] { opponent.Name });
+                        byte[] data = PacketBuilder.ToBytes(new object[] { _localPlayer.Name });
                         CommandResult result = SendCommandRequest(opponent.IP, CommandType.ConnectToPlayer, data, TimeSpan.FromSeconds(INVITE_TIMEOUT_SEC));
 
                         //accept
