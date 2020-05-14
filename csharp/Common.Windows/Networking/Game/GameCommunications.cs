@@ -613,6 +613,7 @@ namespace Common.Windows.Networking.Game
         /// </summary>
         private void Heartbeat_Thread()
         {
+            const int intervalMs = 250;
             DateTime lastSend = DateTime.MinValue;
             while (true)
             {
@@ -622,11 +623,9 @@ namespace Common.Windows.Networking.Game
                     if (_isStopped)
                         return;
 
-                    //calculate wait
-                    TimeSpan elapsed = DateTime.Now - lastSend;
-                    int sleepMs = Math.Max(250 - (int)elapsed.TotalMilliseconds, 0);
-
                     //sleep
+                    TimeSpan elapsed = DateTime.Now - lastSend;
+                    int sleepMs = Math.Max(intervalMs - (int)elapsed.TotalMilliseconds, 0);
                     Thread.Sleep(sleepMs);
 
                     //send heartbeat to opponent

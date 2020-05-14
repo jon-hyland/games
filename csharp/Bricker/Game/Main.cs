@@ -12,6 +12,7 @@ using Common.Windows.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
@@ -28,7 +29,8 @@ namespace Bricker.Game
         private readonly MainWindow _window;
         private readonly Dispatcher _dispatcher;
         private readonly Queue<Key> _keyQueue;
-        private Thread _programLoop;
+        private Thread _programLoopThread;
+        private Thread _sendStatusThread;
         private readonly Config _config;
         private readonly Logger _logger;
         private readonly GameCommunications _communications;
@@ -132,11 +134,16 @@ namespace Bricker.Game
         /// </summary>
         public void StartProgramLoop()
         {
-            _programLoop = new Thread(ProgramLoop)
+            _programLoopThread = new Thread(ProgramLoop)
             {
                 IsBackground = true
             };
-            _programLoop.Start();
+            _programLoopThread.Start();
+            _sendStatusThread = new Thread(SendStatus_Thread)
+            {
+                IsBackground = true
+            };
+            _sendStatusThread.Start();
         }
 
         #endregion
@@ -422,8 +429,8 @@ namespace Bricker.Game
             //two-player mode?
             if (opponent != null)
             {
-                //send game status (one last time)
-                SendGameStatus();
+                ////send game status (one last time)
+                //SendGameStatus();
 
                 ////TODO: PASS GAME OVER VIA DATA PARAMETER
                 ////send game-over command, if local player finished
@@ -868,6 +875,33 @@ namespace Bricker.Game
         #region Communications
 
         /// <summary>
+        /// Send game status thread, loops forever sending game status.
+        /// </summary>
+        private void SendStatus_Thread()
+        {
+            const int intervalMs = 100;
+            DateTime lastSend = DateTime.MinValue;
+            while (true)
+            {
+                try
+                {
+                    //sleep
+                    TimeSpan elapsed = DateTime.Now - lastSend;
+                    int sleepMs = Math.Max(intervalMs - (int)elapsed.TotalMilliseconds, 0);
+                    Thread.Sleep(sleepMs);
+
+                    //send status to opponent
+                    lastSend = DateTime.Now;
+                    SendGameStatus();
+                }
+                catch (Exception ex)
+                {
+                    ErrorHandler.LogError(ex);
+                }
+            }
+        }
+
+        /// <summary>
         /// Sends a data packet to opponent containing game status.
         /// </summary>
         private void SendGameStatus()
@@ -875,7 +909,8 @@ namespace Bricker.Game
             try
             {
                 //return if no opponent
-                if (_opponent == null)
+                IPAddress destinationIP = _opponent?.Player?.IP;
+                if (destinationIP == null)
                     return;
 
                 //copy matrix, add live brick
@@ -892,7 +927,7 @@ namespace Bricker.Game
                 byte[] bytes = builder.ToBytes();
 
                 //send data packet
-                _communications.SendData(_opponent.Player.IP, bytes);
+                _communications.SendData(destinationIP, bytes);
             }
             catch (Exception ex)
             {
