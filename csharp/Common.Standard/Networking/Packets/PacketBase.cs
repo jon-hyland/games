@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Standard.Logging;
+using System;
 using System.Net;
 
 namespace Common.Standard.Networking.Packets
@@ -80,7 +81,10 @@ namespace Common.Standard.Networking.Packets
                 PacketParser parser = new PacketParser(bytes);
                 int header = parser.GetInt32();
                 if (header != PACKET_HEADER)
+                {
+                    Log.Write("Invalid packet header");
                     return null;
+                }
 
                 PacketType type = (PacketType)parser.GetByte();
                 switch (type)
@@ -101,8 +105,9 @@ namespace Common.Standard.Networking.Packets
                         return null;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex);
                 return null;
             }
         }

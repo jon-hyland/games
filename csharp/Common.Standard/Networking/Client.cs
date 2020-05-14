@@ -131,13 +131,17 @@ namespace Common.Standard.Networking
                         //end read
                         int bytesRead = stream.EndRead(ar);
 
-                        //add new bytes to queue
-                        for (int i = 0; i < bytesRead; i++)
-                            _incomingQueue.Add(buffer[i]);
+                        //lock queue
+                        lock (_incomingQueue)
+                        {
+                            //add new bytes to queue
+                            for (int i = 0; i < bytesRead; i++)
+                                _incomingQueue.Add(buffer[i]);
 
-                        //set signal
-                        if (bytesRead > 0)
-                            _readSignal.Set();
+                            //set signal
+                            if (bytesRead > 0)
+                                _readSignal.Set();
+                        }
 
                         //begin next read
                         stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(callback), null);
