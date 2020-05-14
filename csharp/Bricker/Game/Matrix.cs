@@ -16,11 +16,6 @@ namespace Bricker.Game
         private Brick _brick;
         private Brick _hold;
 
-        //public
-        public byte[,] Grid => _grid;
-        public Brick Brick => _brick;
-        public Brick Hold => _hold;
-
         /// <summary>
         /// Class constructor.
         /// </summary>
@@ -35,25 +30,91 @@ namespace Bricker.Game
         }
 
         /// <summary>
+        /// XY class indexer that accesses the underlying grid, locking for thread safety.
+        /// </summary>
+        public byte this[int x, int y]
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _grid[x, y];
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    _grid[x, y] = value;
+                }
+
+            }
+        }
+
+        /// <summary>
+        /// Returns copy of grid.
+        /// </summary>
+        public byte[,] GetGrid(bool includeBrick)
+        {
+            lock (this)
+            {
+                byte[,] grid = (byte[,])_grid.Clone();
+                if ((includeBrick) && (_brick != null))
+                {
+                    for (int x = 0; x < _brick.Width; x++)
+                        for (int y = 0; y < _brick.Height; y++)
+                            if (_brick.Grid[x, y] > 0)
+                                grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
+                }
+                return grid;
+            }
+        }
+
+        /// <summary>
+        /// Returns a copy of the live brick, or null if one doesn't exist.
+        /// </summary>
+        public Brick GetBrick()
+        {
+            lock (this)
+            {
+                return _brick?.Clone();
+            }
+        }
+
+        /// <summary>
+        /// Returns a copy of the held brick, or null if one doesn't exist.
+        /// </summary>
+        public Brick GetHold()
+        {
+            lock (this)
+            {
+                return _hold?.Clone();
+            }
+        }
+
+        /// <summary>
         /// Resets the game.
         /// </summary>
         public void NewGame(bool spawnBrick = true)
         {
-            Buffer.BlockCopy(Enumerable.Repeat((byte)0, 12 * 22).ToArray(), 0, _grid, 0, 12 * 22);
-            for (int x = 0; x < 12; x++)
+            lock (this)
             {
-                _grid[x, 0] = 8;
-                _grid[x, 22 - 1] = 8;
+                Buffer.BlockCopy(Enumerable.Repeat((byte)0, 12 * 22).ToArray(), 0, _grid, 0, 12 * 22);
+                for (int x = 0; x < 12; x++)
+                {
+                    _grid[x, 0] = 8;
+                    _grid[x, 22 - 1] = 8;
+                }
+                for (int y = 0; y < 22; y++)
+                {
+                    _grid[0, y] = 8;
+                    _grid[12 - 1, y] = 8;
+                }
+                _brick = null;
+                _hold = null;
+                if (spawnBrick)
+                    SpawnBrick();
             }
-            for (int y = 0; y < 22; y++)
-            {
-                _grid[0, y] = 8;
-                _grid[12 - 1, y] = 8;
-            }
-            _brick = null;
-            _hold = null;
-            if (spawnBrick)
-                SpawnBrick();
         }
 
         /// <summary>
@@ -63,13 +124,13 @@ namespace Bricker.Game
         /// </summary>
         public bool SpawnBrick()
         {
-            lock (_nextBricks)
+            lock (this)
             {
                 while (_nextBricks.Count < 7)
                     _nextBricks.Enqueue(new Brick(_random.Next(7) + 1));
                 _brick = _nextBricks.Dequeue();
+                return _brick.Collision(_grid);
             }
-            return _brick.Collision(_grid);
         }
 
         /// <summary>
@@ -77,15 +138,18 @@ namespace Bricker.Game
         /// </summary>
         public void AddBrickToMatrix()
         {
-            if (_brick == null)
-                return;
+            lock (this)
+            {
+                if (_brick == null)
+                    return;
 
-            for (int x = 0; x < _brick.Width; x++)
-                for (int y = 0; y < _brick.Height; y++)
-                    if (_brick.Grid[x, y] > 0)
-                        _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
+                for (int x = 0; x < _brick.Width; x++)
+                    for (int y = 0; y < _brick.Height; y++)
+                        if (_brick.Grid[x, y] > 0)
+                            _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
 
-            _brick = null;
+                _brick = null;
+            }
         }
 
         /// <summary>
@@ -93,7 +157,7 @@ namespace Bricker.Game
         /// </summary>
         public Brick[] GetNextBricks()
         {
-            lock (_nextBricks)
+            lock (this)
             {
                 return _nextBricks.Take(6).ToArray();
             }
@@ -104,8 +168,11 @@ namespace Bricker.Game
         /// </summary>
         public void MoveBrickLeft()
         {
-            if (_brick != null)
-                _brick.MoveLeft(_grid);
+            lock (this)
+            {
+                if (_brick != null)
+                    _brick.MoveLeft(_grid);
+            }
         }
 
         /// <summary>
@@ -113,8 +180,11 @@ namespace Bricker.Game
         /// </summary>
         public void MoveBrickRight()
         {
-            if (_brick != null)
-                _brick.MoveRight(_grid);
+            lock (this)
+            {
+                if (_brick != null)
+                    _brick.MoveRight(_grid);
+            }
         }
 
         /// <summary>
@@ -122,10 +192,13 @@ namespace Bricker.Game
         /// </summary>
         public bool MoveBrickDown()
         {
-            bool hit = false;
-            if (_brick != null)
-                hit = _brick.MoveDown(_grid);
-            return hit;
+            lock (this)
+            {
+                bool hit = false;
+                if (_brick != null)
+                    hit = _brick.MoveDown(_grid);
+                return hit;
+            }
         }
 
         /// <summary>
@@ -133,8 +206,11 @@ namespace Bricker.Game
         /// </summary>
         public void RotateBrick()
         {
-            if (_brick != null)
-                _brick.Rotate(_grid);
+            lock (this)
+            {
+                if (_brick != null)
+                    _brick.Rotate(_grid);
+            }
         }
 
         /// <summary>
@@ -143,7 +219,7 @@ namespace Bricker.Game
         /// </summary>
         public bool HoldBrick()
         {
-            lock (_nextBricks)
+            lock (this)
             {
                 if (_brick == null)
                     return false;
@@ -176,17 +252,20 @@ namespace Bricker.Game
         /// </summary>
         public List<int> IdentifySolidRows()
         {
-            List<int> rowsToErase = new List<int>();
-            for (int y = 1; y < 21; y++)
+            lock (this)
             {
-                bool solid = true;
-                for (int x = 1; x < 11; x++)
-                    if (_grid[x, y] == 0)
-                        solid = false;
-                if (solid)
-                    rowsToErase.Add(y);
+                List<int> rowsToErase = new List<int>();
+                for (int y = 1; y < 21; y++)
+                {
+                    bool solid = true;
+                    for (int x = 1; x < 11; x++)
+                        if (_grid[x, y] == 0)
+                            solid = false;
+                    if (solid)
+                        rowsToErase.Add(y);
+                }
+                return rowsToErase;
             }
-            return rowsToErase;
         }
 
     }

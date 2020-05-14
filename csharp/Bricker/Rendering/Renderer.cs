@@ -156,7 +156,7 @@ namespace Bricker.Rendering
                 if ((_fakeOpponent) && (opponent == null))
                 {
                     opponent = new Opponent(new Player(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
-                    byte[,] m = (byte[,])matrix.Grid.Clone();
+                    byte[,] m = matrix.GetGrid(includeBrick: true);
                     opponent.UpdateOpponent(m, 3, 144, 12434, 7, false);
                 }
 
@@ -265,19 +265,12 @@ namespace Bricker.Rendering
         {
             using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
+                byte[,] grid = matrix.GetGrid(includeBrick: true);
+
                 for (int x = 1; x < 12; x++)
                     for (int y = 1; y < 22; y++)
-                        if (matrix.Grid[x, y] > 0)
-                            surface.DrawRect(Brick.BrickToColor(matrix.Grid[x, y]), ((x - 1) * 33) + 2, ((y - 1) * 33) + 2, 32, 32);
-
-                Brick brick = matrix.Brick;
-                if (brick != null)
-                    for (int x = 0; x < brick.Width; x++)
-                        for (int y = 0; y < brick.Height; y++)
-                            if (brick.Grid[x, y] > 0)
-                                surface.DrawRect(brick.Color, ((brick.X - 1 + x) * 33) + 2, ((brick.Y - 1 + y) * 33) + 2, 32, 32);
-                            else if (RenderProps.Debug)
-                                surface.DrawRect(Colors.White, ((brick.X - 1 + x) * 33) + 17, ((brick.Y - 1 + y) * 33) + 17, 2, 2);
+                        if (grid[x, y] > 0)
+                            surface.DrawRect(Brick.BrickToColor(grid[x, y]), ((x - 1) * 33) + 2, ((y - 1) * 33) + 2, 32, 32);
 
                 for (int i = 1; i <= 10; i++)
                     surface.DrawLine(Colors.Gray, (i * 33) + 1, 2, (i * 33) + 1, 660, 1);
@@ -318,11 +311,12 @@ namespace Bricker.Rendering
                 surface.DrawLine(_primaryWhite, 0, 161, _hold_Width - 1, 161, 1);
                 surface.DrawText_Centered(_primaryWhite, "hold", 28, 20);
 
-                if (matrix.Hold != null)
+                Brick hold = matrix.GetHold();
+                if (hold != null)
                 {
                     using (Surface container = new Surface(brickArea, brickArea))
                     {
-                        byte[,] grid = ReduceBrick(matrix.Hold.Grid);
+                        byte[,] grid = ReduceBrick(hold.Grid);
                         double swidth = (grid.GetLength(0) * 25) + 1;
                         double sheight = (grid.GetLength(1) * 25) + 1;
                         using (Surface brick = new Surface(swidth, sheight))

@@ -15,7 +15,6 @@ namespace Bricker.Game
         private readonly int _width;
         private readonly int _height;
         private readonly SKColor _color;
-
         private byte[,] _grid;
         private int _x;
         private int _y;
@@ -179,21 +178,24 @@ namespace Bricker.Game
         /// </summary>
         private int CalculateTopSpace()
         {
-            int topSpace = 0;
-            for (int y = 0; y < _height; y++)
+            lock (this)
             {
-                bool empty = true;
-                for (int x = 0; x < _width; x++)
+                int topSpace = 0;
+                for (int y = 0; y < _height; y++)
                 {
-                    if (_grid[x, y] > 0)
-                        empty = false;
+                    bool empty = true;
+                    for (int x = 0; x < _width; x++)
+                    {
+                        if (_grid[x, y] > 0)
+                            empty = false;
+                    }
+                    if (empty)
+                        topSpace++;
+                    else
+                        break;
                 }
-                if (empty)
-                    topSpace++;
-                else
-                    break;
+                return topSpace;
             }
-            return topSpace;
         }
 
         /// <summary>
@@ -201,21 +203,24 @@ namespace Bricker.Game
         /// </summary>
         private int CalculateBottomSpace()
         {
-            int bottomSpace = 0;
-            for (int y = _height - 1; y >= 0; y--)
+            lock (this)
             {
-                bool empty = true;
-                for (int x = 0; x < _width; x++)
+                int bottomSpace = 0;
+                for (int y = _height - 1; y >= 0; y--)
                 {
-                    if (_grid[x, y] > 0)
-                        empty = false;
+                    bool empty = true;
+                    for (int x = 0; x < _width; x++)
+                    {
+                        if (_grid[x, y] > 0)
+                            empty = false;
+                    }
+                    if (empty)
+                        bottomSpace++;
+                    else
+                        break;
                 }
-                if (empty)
-                    bottomSpace++;
-                else
-                    break;
+                return bottomSpace;
             }
-            return bottomSpace;
         }
 
         /// <summary>
@@ -223,24 +228,27 @@ namespace Bricker.Game
         /// </summary>
         public bool Collision(byte[,] matrix)
         {
-            for (int x = 0; x < _width; x++)
+            lock (this)
             {
-                for (int y = 0; y < _height; y++)
+                for (int x = 0; x < _width; x++)
                 {
-                    if (_grid[x, y] > 0)
+                    for (int y = 0; y < _height; y++)
                     {
-                        int mX = x + _x;
-                        int mY = y + _y;
-                        if ((mX < 0) || (mX > 21))
-                            return true;
-                        if ((mY < 0) || (mY > 21))
-                            return true;
-                        if (matrix[mX, mY] > 0)
-                            return true;
+                        if (_grid[x, y] > 0)
+                        {
+                            int mX = x + _x;
+                            int mY = y + _y;
+                            if ((mX < 0) || (mX > 21))
+                                return true;
+                            if ((mY < 0) || (mY > 21))
+                                return true;
+                            if (matrix[mX, mY] > 0)
+                                return true;
+                        }
                     }
                 }
+                return false;
             }
-            return false;
         }
 
         /// <summary>
@@ -248,9 +256,12 @@ namespace Bricker.Game
         /// </summary>
         public void MoveLeft(byte[,] matrix)
         {
-            _x--;
-            if (Collision(matrix))
-                _x++;
+            lock (this)
+            {
+                _x--;
+                if (Collision(matrix))
+                    _x++;
+            }
         }
 
         /// <summary>
@@ -258,9 +269,12 @@ namespace Bricker.Game
         /// </summary>
         public void MoveRight(byte[,] matrix)
         {
-            _x++;
-            if (Collision(matrix))
-                _x--;
+            lock (this)
+            {
+                _x++;
+                if (Collision(matrix))
+                    _x--;
+            }
         }
 
         /// <summary>
@@ -268,14 +282,17 @@ namespace Bricker.Game
         /// </summary>
         public bool MoveDown(byte[,] matrix)
         {
-            _lastDropTime = DateTime.Now;
-            _y++;
-            if (Collision(matrix))
+            lock (this)
             {
-                _y--;
-                return true;
+                _lastDropTime = DateTime.Now;
+                _y++;
+                if (Collision(matrix))
+                {
+                    _y--;
+                    return true;
+                }
+                return false;
             }
-            return false;
         }
 
         /// <summary>
@@ -283,9 +300,12 @@ namespace Bricker.Game
         /// </summary>
         public bool IsDropTime(double intervalMs)
         {
-            double elapsedMs = (DateTime.Now - _lastDropTime).TotalMilliseconds;
-            bool dropTime = elapsedMs >= intervalMs;
-            return dropTime;
+            lock (this)
+            {
+                double elapsedMs = (DateTime.Now - _lastDropTime).TotalMilliseconds;
+                bool dropTime = elapsedMs >= intervalMs;
+                return dropTime;
+            }
         }
 
         /// <summary>
@@ -293,21 +313,24 @@ namespace Bricker.Game
         /// </summary>
         public void Rotate(byte[,] matrix)
         {
-            byte[,] newGrid = new byte[_height, _width];
-            for (int x1 = 0; x1 < _width; x1++)
+            lock (this)
             {
-                for (int y1 = 0; y1 < _height; y1++)
+                byte[,] newGrid = new byte[_height, _width];
+                for (int x1 = 0; x1 < _width; x1++)
                 {
-                    int x2 = -y1 + (_height - 1);
-                    int y2 = x1;
-                    newGrid[x2, y2] = _grid[x1, y1];
+                    for (int y1 = 0; y1 < _height; y1++)
+                    {
+                        int x2 = -y1 + (_height - 1);
+                        int y2 = x1;
+                        newGrid[x2, y2] = _grid[x1, y1];
+                    }
                 }
-            }
-            _grid = newGrid;
+                _grid = newGrid;
 
-            PreventCollision(matrix);
-            _topSpace = CalculateTopSpace();
-            _bottomSpace = CalculateBottomSpace();
+                PreventCollision(matrix);
+                _topSpace = CalculateTopSpace();
+                _bottomSpace = CalculateBottomSpace();
+            }
         }
 
         /// <summary>
@@ -316,51 +339,54 @@ namespace Bricker.Game
         /// </summary>
         private void PreventCollision(byte[,] matrix)
         {
-            int steps = 0;
-            while (Collision(matrix))
+            lock (this)
             {
-                _y++;
-                steps++;
-                if (steps >= 3)
+                int steps = 0;
+                while (Collision(matrix))
                 {
-                    _y -= 3;
-                    break;
+                    _y++;
+                    steps++;
+                    if (steps >= 3)
+                    {
+                        _y -= 3;
+                        break;
+                    }
                 }
-            }
 
-            steps = 0;
-            while (Collision(matrix))
-            {
-                _y--;
-                steps++;
-                if (steps >= 3)
+                steps = 0;
+                while (Collision(matrix))
                 {
-                    _y += 3;
-                    break;
+                    _y--;
+                    steps++;
+                    if (steps >= 3)
+                    {
+                        _y += 3;
+                        break;
+                    }
                 }
-            }
 
-            steps = 0;
-            while (Collision(matrix))
-            {
-                _x++;
-                steps++;
-                if (steps >= 3)
+                steps = 0;
+                while (Collision(matrix))
                 {
-                    _x -= 3;
-                    break;
+                    _x++;
+                    steps++;
+                    if (steps >= 3)
+                    {
+                        _x -= 3;
+                        break;
+                    }
                 }
-            }
 
-            steps = 0;
-            while (Collision(matrix))
-            {
-                _x--;
-                steps++;
-                if (steps >= 3)
+                steps = 0;
+                while (Collision(matrix))
                 {
-                    _x += 3;
-                    break;
+                    _x--;
+                    steps++;
+                    if (steps >= 3)
+                    {
+                        _x += 3;
+                        break;
+                    }
                 }
             }
         }
@@ -370,10 +396,33 @@ namespace Bricker.Game
         /// </summary>
         public void SetXY(int x, int y, byte[,] matrix = null)
         {
-            _x = x;
-            _y = y;
-            if ((matrix != null) && ((x != 0) || (y != 0)))
-                PreventCollision(matrix);
+            lock (this)
+            {
+                _x = x;
+                _y = y;
+                if ((matrix != null) && ((x != 0) || (y != 0)))
+                    PreventCollision(matrix);
+            }
+        }
+
+        /// <summary>
+        /// Returns copy of brick.
+        /// </summary>
+        public Brick Clone()
+        {
+            lock (this)
+            {
+                Brick brick = new Brick(_shapeNum)
+                {
+                    _grid = (byte[,])_grid.Clone(),
+                    _x = _x,
+                    _y = _y,
+                    _topSpace = _topSpace,
+                    _bottomSpace = _bottomSpace,
+                    _lastDropTime = _lastDropTime
+                };
+                return brick;
+            }
         }
 
     }

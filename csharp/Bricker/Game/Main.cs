@@ -204,7 +204,7 @@ namespace Bricker.Game
                 if (selection == MenuSelection.None)
                     selection = (MenuSelection)MenuLoop(new MenuProperties(
                         options: new string[] { "resume", "new game", "two player", "quit" },
-                        enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, true, true },
+                        enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, _communications.ConnectionState != ConnectionState.Disabled, true },
                         allowEsc: false,
                         allowPlayerInvite: true,
                         width: 400,
@@ -879,19 +879,11 @@ namespace Bricker.Game
                     return;
 
                 //copy matrix, add live brick
-                byte[,] matrix = (byte[,])_matrix.Grid.Clone();
-                Brick brick = _matrix.Brick;
-                if (brick != null)
-                {
-                    for (int x = 0; x < brick.Width; x++)
-                        for (int y = 0; y < brick.Height; y++)
-                            if (brick.Grid[x, y] > 0)
-                                matrix[x + brick.X, y + brick.Y] = brick.Grid[x, y];
-                }
+                byte[,] grid = _matrix.GetGrid(includeBrick: true);
 
                 //serialize data                
                 PacketBuilder builder = new PacketBuilder();
-                builder.AddBytes2D(matrix);
+                builder.AddBytes2D(grid);
                 builder.AddUInt16((ushort)_stats.Level);
                 builder.AddUInt16((ushort)_stats.Lines);
                 builder.AddUInt16((ushort)_stats.Score);
@@ -1037,10 +1029,11 @@ namespace Bricker.Game
         /// </summary>
         private bool IsDropTime()
         {
-            if (_matrix.Brick != null)
+            Brick brick = _matrix.GetBrick();
+            if (brick != null)
             {
                 double dropIntervalMs = _levelDropIntervals[_stats.Level - 1];
-                return _matrix.Brick.IsDropTime(dropIntervalMs);
+                return brick.IsDropTime(dropIntervalMs);
             }
             return false;
         }
@@ -1122,7 +1115,7 @@ namespace Bricker.Game
                     if ((x < 1) || (x > 10))
                         break;
                     foreach (int y in rowsToErase)
-                        _matrix.Grid[x, y] = 0;
+                        _matrix[x, y] = 0;
                 }
             }
         }
@@ -1148,7 +1141,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix.Grid[x, row] > 0)
+                    if (_matrix[x, row] > 0)
                     {
                         empty = false;
                         break;
@@ -1168,7 +1161,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix.Grid[x, row] > 0)
+                    if (_matrix[x, row] > 0)
                     {
                         empty = false;
                         break;
@@ -1184,9 +1177,9 @@ namespace Bricker.Game
                 return false;
             for (int y = bottomEmptyRow; y > 1; y--)
                 for (int x = 1; x <= 10; x++)
-                    _matrix.Grid[x, y] = _matrix.Grid[x, y - 1];
+                    _matrix[x, y] = _matrix[x, y - 1];
             for (int x = 1; x <= 10; x++)
-                _matrix.Grid[x, 1] = 0;
+                _matrix[x, 1] = 0;
             return true;
         }
 
@@ -1204,14 +1197,14 @@ namespace Bricker.Game
             {
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix.Grid[x, y] != 0)
+                    if (_matrix[x, y] != 0)
                     {
                         int newY = y - newLines;
                         if (newY > 0)
-                            _matrix.Grid[x, newY] = _matrix.Grid[x, y];
+                            _matrix[x, newY] = _matrix[x, y];
                         else
                             outBounds = true;
-                        _matrix.Grid[x, y] = 0;
+                        _matrix[x, y] = 0;
                     }
                 }
             }
@@ -1231,7 +1224,7 @@ namespace Bricker.Game
                     if ((xx < 1) || (xx > 10))
                         break;
                     for (int y = 20; y > 20 - newLines; y--)
-                        _matrix.Grid[xx, y] = (byte)(xx != gapIndex ? 9 : 0);
+                        _matrix[xx, y] = (byte)(xx != gapIndex ? 9 : 0);
                 }
             }
 
@@ -1256,12 +1249,12 @@ namespace Bricker.Game
                 {
                     for (int y = 1; y <= 20; y++)
                     {
-                        if (_matrix.Grid[x, y] > 0)
+                        if (_matrix[x, y] > 0)
                         {
                             double spaceX = (((x - 1) * 33) + 2) + ((_renderer.FrameWidth - 333) / 2) - 1;
                             double spaceY = (((y - 1) * 33) + 2) + ((_renderer.FrameHeight - 663) / 2) - 1;
-                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.BrickToColor(_matrix.Grid[x, y])));
-                            _matrix.Grid[x, y] = 0;
+                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.BrickToColor(_matrix[x, y])));
+                            _matrix[x, y] = 0;
                         }
                     }
                 }
