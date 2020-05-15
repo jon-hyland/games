@@ -34,11 +34,19 @@ X - Improve message box rendering.
 =============
  GAME SERVER
 =============
-- Create main class, initialize logger.
-- Create server class.
-- Start server, maintain list of clients.
-- Receive packets.
-- Create config file and classes.
+X - Create main class, initialize logger.
+X - Create server class.
+X - Start server, maintain list of clients.
+X- Receive packets.
+X - Create config file and classes.
+X - Add request/response system.
+X - Add get-players command.
+X - Add generic request/response forwarding.
+X - Add generic data passthrough.
+- Design game over behavior and communications.
+- Design player disconnect behavior (session tracking).
+- 
+
 
 
 
