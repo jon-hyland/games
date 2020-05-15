@@ -461,8 +461,8 @@ namespace GameServer.Networking
                     return;
                 }
 
-                //message
-                Log.Write($"Forwarding data packet from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
+                ////message (keep)
+                //Log.Write($"Forwarding data packet from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
 
                 //forward request to destination
                 destinationClient.SendPacket(dataPacket);
