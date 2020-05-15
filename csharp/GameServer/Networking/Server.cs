@@ -240,11 +240,10 @@ namespace GameServer.Networking
                             Answer_GetPlayers(client, req);
                             break;
 
-                        //connect-to-player command
-                        case CommandType.ConnectToPlayer:
+                        //all other commands
+                        default:
                             Passthrough_Command(client, req);
                             break;
-
                     }
                 }
 
