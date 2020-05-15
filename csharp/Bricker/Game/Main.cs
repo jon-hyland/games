@@ -397,9 +397,6 @@ namespace Bricker.Game
                         continue;
                     }
 
-                    //send game status
-                    SendGameStatus();
-
                     //have new sent lines?
                     if (opponent.LinesSent > opponent.LastLinesSent)
                     {
@@ -408,7 +405,6 @@ namespace Bricker.Game
                         bool gameOver = AddSentLines(newLines);
                         if (gameOver)
                         {
-                            //_stats.SetGameOver();
                             _gameState = GameState.GameOver;
                             break;
                         }
