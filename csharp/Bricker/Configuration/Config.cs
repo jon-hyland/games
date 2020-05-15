@@ -1,7 +1,6 @@
-﻿using Common.Standard.Json;
+﻿using Common.Standard.Configuration;
+using Common.Standard.Json;
 using Common.Standard.Networking;
-using Common.Windows.Configuration;
-using SkiaSharp;
 using System;
 using System.IO;
 using System.Net;
@@ -12,7 +11,7 @@ namespace Bricker.Configuration
     /// <summary>
     /// Loads and exposes configuration settings and properties.
     /// </summary>
-    public class Config : IConfig
+    public class Config : IGameConfig
     {
         public string GameTitle { get; }
         public Version GameVersion { get; }
@@ -25,7 +24,6 @@ namespace Bricker.Configuration
         public string HighScoreFile { get; }
         public string InitialsFile { get; }
         public string RemoteInstanceFile { get; }
-        public SKTypeface Typeface { get; }
         public bool AntiAlias { get; }
         public bool HighFrameRate { get; }
         public bool Debug { get; }
@@ -46,7 +44,6 @@ namespace Bricker.Configuration
             HighScoreFile = Path.Combine(ApplicationFolder, "HighScores.txt");
             InitialsFile = Path.Combine(ApplicationFolder, "Initials.txt");
             RemoteInstanceFile = Path.Combine(ApplicationFolder, "RemoteInstances.txt");
-            Typeface = SKTypeface.FromFile(FontFile);
 
             dynamic data = JsonSerialization.Deserialize(File.ReadAllText(ConfigFile));
             AntiAlias = data.antiAlias == 1;

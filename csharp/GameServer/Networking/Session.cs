@@ -27,14 +27,33 @@ namespace GameServer.Networking
             return false;
         }
 
+        public bool ContainsPlayer(int playerKey)
+        {
+            if (Player1.UniqueKey == playerKey)
+                return true;
+            if (Player2.UniqueKey == playerKey)
+                return true;
+            return false;
+        }
+
         public bool ContainsBothPlayers(Player player1, Player player2)
         {
             return ContainsPlayer(player1) && ContainsPlayer(player2);
         }
 
+        public bool ContainsBothPlayers(int player1Key, int player2Key)
+        {
+            return ContainsPlayer(player1Key) && ContainsPlayer(player2Key);
+        }
+
         public bool ContainsEitherPlayer(Player player1, Player player2)
         {
             return ContainsPlayer(player1) || ContainsPlayer(player2);
+        }
+
+        public bool ContainsEitherPlayer(int player1Key, int player2Key)
+        {
+            return ContainsPlayer(player1Key) || ContainsPlayer(player2Key);
         }
 
         public Player GetTimedoutPlayer(int timeoutMs)

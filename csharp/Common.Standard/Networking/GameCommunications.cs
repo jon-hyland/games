@@ -1,17 +1,16 @@
-﻿using Common.Standard.Error;
+﻿using Common.Standard.Configuration;
+using Common.Standard.Error;
 using Common.Standard.Extensions;
 using Common.Standard.Game;
 using Common.Standard.Logging;
-using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
-using Common.Windows.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 
-namespace Common.Windows.Networking.Game
+namespace Common.Standard.Networking
 {
     /// <summary>
     /// </summary>
@@ -21,7 +20,7 @@ namespace Common.Windows.Networking.Game
         private const int INVITE_TIMEOUT_SEC = 20;
 
         //private
-        private readonly IConfig _config = null;
+        private readonly IGameConfig _config = null;
         private readonly Player _localPlayer = null;
         private readonly Client _client = null;
         private readonly CommandManager _commandManager = new CommandManager();
@@ -68,7 +67,7 @@ namespace Common.Windows.Networking.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public GameCommunications(IConfig config, string playerName)
+        public GameCommunications(IGameConfig config, string playerName)
         {
             try
             {
@@ -326,9 +325,6 @@ namespace Common.Windows.Networking.Game
                 //loop
                 while (true)
                 {
-                    //vars
-                    DateTime start = DateTime.Now;
-
                     //get current status
                     CommandResult result = _commandManager.GetCommandStatus(sequence);
 
