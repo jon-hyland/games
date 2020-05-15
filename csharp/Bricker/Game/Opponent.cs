@@ -90,7 +90,7 @@ namespace Bricker.Game
         /// <summary>
         /// Updates opponent after status packet received.
         /// </summary>
-        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent, bool gameOver)
+        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent)
         {
             lock (this)
             {
@@ -101,7 +101,6 @@ namespace Bricker.Game
                 _lines = lines;
                 _score = score;
                 _linesSent = linesSent;
-                _gameOver = _gameOver || gameOver;
             }
         }
 

@@ -157,7 +157,7 @@ namespace Bricker.Rendering
                 {
                     opponent = new Opponent(new Player(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
                     byte[,] m = matrix.GetGrid(includeBrick: true);
-                    opponent.UpdateOpponent(m, 3, 144, 12434, 7, false);
+                    opponent.UpdateOpponent(m, 3, 144, 12434, 7);
                 }
 
                 //vars
@@ -847,8 +847,8 @@ namespace Bricker.Rendering
                 lines.Add($"cmd_responses:   s={communications.CommandResponsesSent}, r={communications.CommandResponsesReceived}");
                 lines.Add($"game_status:   s={communications.DataSent}, r={communications.DataReceived}");
                 lines.Add($"com_state:   {communications.ConnectionState}");
-                //lines.Add($"heartbeat_ms:   {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
             }
+            lines.Add($"errors:   {ErrorHandler.ErrorCount}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {

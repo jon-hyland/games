@@ -1026,10 +1026,9 @@ namespace Bricker.Game
                 int lines = parser.GetUInt16();
                 int score = parser.GetUInt16();
                 int linesSent = parser.GetUInt16();
-                bool gameOver = parser.GetBoolean();
 
                 //update opponent
-                opponent.UpdateOpponent(matrix, level, lines, score, linesSent, gameOver);
+                opponent.UpdateOpponent(matrix, level, lines, score, linesSent);
             }
             catch (Exception ex)
             {
