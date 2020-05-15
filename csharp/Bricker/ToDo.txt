@@ -43,9 +43,15 @@ X - Add request/response system.
 X - Add get-players command.
 X - Add generic request/response forwarding.
 X - Add generic data passthrough.
-X - Fix weird down button bug
+X - Fix weird down button bug.
 X - Design game over behavior and communications.
 - Design player disconnect behavior (session tracking).
+  * Add server-side session tracking.
+  * Add session timeout based on player heartbeats.
+  * Create EndSession command string message from server.
+  * Send EndSession command from server.
+  * Receive EndSession command in game.  Show message, clear opponent.
+
 
 
 
