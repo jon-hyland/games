@@ -45,7 +45,7 @@ X - Add generic request/response forwarding.
 X - Add generic data passthrough.
 - Design game over behavior and communications.
 - Design player disconnect behavior (session tracking).
-- 
+- Weird bug
 
 
 

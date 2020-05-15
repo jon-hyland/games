@@ -9,7 +9,8 @@
         Unspecified = 0,
         GetPlayers = 1,
         ConnectToPlayer = 2,
-        Disconnect = 3,
-        Passthrough = 4
+        GameOver = 3,
+        Disconnect = 4,
+        Passthrough = 5
     }
 }

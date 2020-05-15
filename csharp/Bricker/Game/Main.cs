@@ -84,7 +84,7 @@ namespace Bricker.Game
                     _pendingOpponent = o;
             };
             _communications.DataPacketReceived += (p) => ReceivedGameStatus(p);
-            _communications.CommandRequestPacketReceived += (p) => ReceivedCommandPacket(p);
+            _communications.CommandRequestPacketReceived += (p) => ReceivedCommandRequest(p);
 
             //run tests (usually does nothing)
             RunTests();
@@ -371,7 +371,7 @@ namespace Bricker.Game
                     bool gameOver = BrickHit();
                     if (gameOver)
                     {
-                        _stats.SetGameOver();
+                        //_stats.SetGameOver();
                         _gameState = GameState.GameOver;
                         break;
                     }
@@ -380,7 +380,7 @@ namespace Bricker.Game
                 //hold-swap collision?
                 if (collision)
                 {
-                    _stats.SetGameOver();
+                    //_stats.SetGameOver();
                     _gameState = GameState.GameOver;
                     break;
                 }
@@ -408,7 +408,7 @@ namespace Bricker.Game
                         bool gameOver = AddSentLines(newLines);
                         if (gameOver)
                         {
-                            _stats.SetGameOver();
+                            //_stats.SetGameOver();
                             _gameState = GameState.GameOver;
                             break;
                         }
@@ -429,16 +429,9 @@ namespace Bricker.Game
             //two-player mode?
             if (opponent != null)
             {
-                ////send game status (one last time)
-                //SendGameStatus();
-
-                ////TODO: PASS GAME OVER VIA DATA PARAMETER
-                ////send game-over command, if local player finished
-                //if (_gameState == GameState.GameOver)
-                //    _communications.SendCommandRequest(
-                //        type: CommandType.Passthrough,
-                //        data: null,
-                //        timeout: TimeSpan.FromSeconds(2));
+                //if it's local player that finished, send game over to opponent
+                //sends game status one last time, and receives one last status
+                SendGameOver();
 
                 //message
                 MessageBoxLoop(new MessageProperties(
@@ -872,6 +865,54 @@ namespace Bricker.Game
 
         #endregion
 
+        #region Two-Player Game Over
+
+        /// <summary>
+        /// Sends 'GameOver' command to opponent with final stats.  Waits for response from opponent,
+        /// with their final stats.
+        /// </summary>
+        private void SendGameOver()
+        {
+            CommandResult result = new CommandResult(ResultCode.Unspecified);
+
+            try
+            {
+                //try three times
+                for (int i = 0; i < 3; i++)
+                {
+                    //return if no opponent
+                    Opponent opponent = _opponent;
+                    if (opponent == null)
+                        return;
+
+                    //encode final game status (our version)
+                    byte[] bytes = GameStatusToBytes(_matrix, _stats);
+
+                    //send game-over command request
+                    result = _communications.SendCommandRequest(opponent.Player.IP, CommandType.GameOver, bytes, TimeSpan.FromSeconds(1));
+                    if (result.Code != ResultCode.Accept)
+                        continue;
+
+                    //parse their final game status, and update
+                    UpdateOpponentGameStatus(opponent, result.ResponsePacket.Data);
+
+                    //success
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+            finally
+            {
+                if (result.Code != ResultCode.Accept)
+                    Log.Write($"SendGameOver: Failed with code '{result.Code}'");
+            }
+        }
+
+        #endregion
+
         #region Communications
 
         /// <summary>
@@ -913,18 +954,8 @@ namespace Bricker.Game
                 if (destinationIP == null)
                     return;
 
-                //copy matrix, add live brick
-                byte[,] grid = _matrix.GetGrid(includeBrick: true);
-
                 //serialize data                
-                PacketBuilder builder = new PacketBuilder();
-                builder.AddBytes2D(grid);
-                builder.AddUInt16((ushort)_stats.Level);
-                builder.AddUInt16((ushort)_stats.Lines);
-                builder.AddUInt16((ushort)_stats.Score);
-                builder.AddUInt16((ushort)_stats.LinesSent);
-                builder.AddBoolean(_stats.GameOver);
-                byte[] bytes = builder.ToBytes();
+                byte[] bytes = GameStatusToBytes(_matrix, _stats);
 
                 //send data packet
                 _communications.SendData(destinationIP, bytes);
@@ -933,6 +964,27 @@ namespace Bricker.Game
             {
                 ErrorHandler.LogError(ex);
             }
+        }
+
+        /// <summary>
+        /// Serializes game matrix and stats into game status bytes (to send to opponent).
+        /// </summary>
+        private byte[] GameStatusToBytes(Matrix matrix, GameStats stats)
+        {
+            //copy matrix, add live brick
+            byte[,] grid = matrix.GetGrid(includeBrick: true);
+
+            //serialize data                
+            PacketBuilder builder = new PacketBuilder();
+            builder.AddBytes2D(grid);
+            builder.AddUInt16((ushort)stats.Level);
+            builder.AddUInt16((ushort)stats.Lines);
+            builder.AddUInt16((ushort)stats.Score);
+            builder.AddUInt16((ushort)stats.LinesSent);
+            byte[] bytes = builder.ToBytes();
+
+            //return
+            return bytes;
         }
 
         /// <summary>
@@ -947,8 +999,28 @@ namespace Bricker.Game
                 if (opponent == null)
                     return;
 
+                //parse and update opponent
+                UpdateOpponentGameStatus(opponent, packet.Data);
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Parses game status from bytes, updates opponent.
+        /// </summary>
+        private void UpdateOpponentGameStatus(Opponent opponent, byte[] bytes)
+        {
+            try
+            {
+                //return if no data
+                if ((bytes == null) || (bytes.Length == 0))
+                    return;
+
                 //deserialize data
-                PacketParser parser = new PacketParser(packet.Data);
+                PacketParser parser = new PacketParser(bytes);
                 byte[,] matrix = parser.GetBytes2D();
                 int level = parser.GetUInt16();
                 int lines = parser.GetUInt16();
@@ -968,18 +1040,29 @@ namespace Bricker.Game
         /// <summary>
         /// Fired when command packet received.
         /// </summary>
-        private void ReceivedCommandPacket(CommandRequestPacket packet)
+        private void ReceivedCommandRequest(CommandRequestPacket packet)
         {
             try
             {
-                //switch ((CommandType)packet.CommandType)
-                //{
-                //    //TODO: DETERMINE GAVE-OVER FROM DATA
-                //    case CommandType.Passthrough:
-                //        _opponent?.SetGameOver();
-                //        _communications.SendCommandResponse(packet.CommandType, packet.Sequence, CommandResult.Accept, null);
-                //        break;
-                //}
+                switch (packet.CommandType)
+                {
+                    //game over
+                    case CommandType.GameOver:
+                        Opponent opponent = _opponent;
+                        if (opponent == null)
+                            break;
+                        UpdateOpponentGameStatus(
+                            opponent: opponent,
+                            bytes: packet.Data);
+                        _opponent?.SetGameOver();
+                        _communications.SendCommandResponse(
+                            destinationIP: opponent.Player.IP,
+                            type: packet.CommandType,
+                            sequence: packet.Sequence,
+                            code: ResultCode.Accept,
+                            data: GameStatusToBytes(_matrix, _stats));
+                        break;
+                }
             }
             catch (Exception ex)
             {
