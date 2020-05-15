@@ -324,7 +324,7 @@ namespace Bricker.Game
 
                     //down
                     else if (key == Key.Down)
-                        MoveBrickDown();
+                        hit = MoveBrickDown();
 
                     //rotate
                     else if (key == Key.Up)

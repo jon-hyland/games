@@ -43,9 +43,9 @@ X - Add request/response system.
 X - Add get-players command.
 X - Add generic request/response forwarding.
 X - Add generic data passthrough.
-- Design game over behavior and communications.
+X - Fix weird down button bug
+X - Design game over behavior and communications.
 - Design player disconnect behavior (session tracking).
-- Weird bug
 
 
 
