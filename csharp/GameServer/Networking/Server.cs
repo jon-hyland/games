@@ -113,15 +113,27 @@ namespace GameServer.Networking
         }
 
         /// <summary>
+        /// Returns player with matching key, or null if not found.
+        /// </summary>
+        private Player GetPlayerByKey(int key)
+        {
+            lock (_players)
+            {
+                Player existing = _players
+                    .Where(p => p.UniqueKey == key)
+                    .FirstOrDefault();
+                return existing;
+            }
+        }
+
+        /// <summary>
         /// Adds or updates a discovered player.
         /// </summary>
         private void AddOrUpdatePlayer(Player player, Client client)
         {
             lock (_players)
             {
-                Player existing = _players
-                    .Where(p => p.UniqueKey == player.UniqueKey)
-                    .FirstOrDefault();
+                Player existing = GetPlayerByKey(player.UniqueKey);
 
                 if (existing != null)
                 {
@@ -130,7 +142,7 @@ namespace GameServer.Networking
                         Log.Write($"Changing player name '{existing.Name}' to '{player.Name}' at '{player.IP}'");
                         existing.Name = player.Name;
                     }
-                    Log.Write($"Updating last heartbeat for player '{existing.IP}'");
+                    //Log.Write($"Updating last heartbeat for player '{existing.IP}'");
                     existing.LastHeartbeat = DateTime.Now;
                 }
                 else
@@ -152,8 +164,7 @@ namespace GameServer.Networking
         }
 
         /// <summary>
-        /// Removes any players that haven't checked in within the past minute,
-        /// or no longer have an established TCP connection.
+        /// Removes any players that haven't checked in within the past minute.
         /// </summary>
         private void RemoveExpiredPlayers()
         {
@@ -206,10 +217,18 @@ namespace GameServer.Networking
         /// <summary>
         /// Creates a new session.
         /// </summary>
-        private void CreateSession(Player player1, Player player2)
+        private void CreateSession(int playerKey1, int playerKey2)
         {
             lock (_sessions)
             {
+                //get players
+                Player player1 = GetPlayerByKey(playerKey1);
+                if (player1 == null)
+                    Log.Write($"Cannot create session.. player '{player1.IP}' does not exist or match");
+                Player player2 = GetPlayerByKey(playerKey2);
+                if (player2 == null)
+                    Log.Write($"Cannot create session.. player '{player2.IP}' does not exist or match");
+
                 //session already exists?  do nothing..
                 Session existing = _sessions.Where(s => s.ContainsBothPlayers(player1, player2)).FirstOrDefault();
                 if (existing != null)
@@ -452,7 +471,7 @@ namespace GameServer.Networking
                     {
                         //create session?
                         if ((requestPacket.CommandType == CommandType.ConnectToPlayer) && (result.Code == ResultCode.Accept))
-                            CreateSession(sourcePlayer, destinationPlayer);
+                            CreateSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
 
                         //get original packet
                         responsePacket = result.ResponsePacket;
