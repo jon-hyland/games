@@ -107,7 +107,7 @@ namespace GameServer.Networking
                 return _players
                     .Where(p => p.GameTitle.Equals(gameTitle))
                     .Where(p => p.GameVersion.Equals(gameVersion))
-                    .OrderByDescending(p => p.FirstDiscovery)
+                    .OrderByDescending(p => p.FirstHeartbeat)
                     .ToList();
             }
         }
@@ -130,7 +130,7 @@ namespace GameServer.Networking
                         Log.Write($"Changing player name '{existing.Name}' to '{player.Name}' at '{player.IP}'");
                         existing.Name = player.Name;
                     }
-                    existing.LastDiscovery = DateTime.Now;
+                    existing.LastHeartbeat = DateTime.Now;
                 }
                 else
                 {
@@ -151,7 +151,7 @@ namespace GameServer.Networking
         }
 
         /// <summary>
-        /// Removes any players that haven't checked in within the past 5 minutes,
+        /// Removes any players that haven't checked in within the past minute,
         /// or no longer have an established TCP connection.
         /// </summary>
         private void RemoveExpiredPlayers()
@@ -159,7 +159,7 @@ namespace GameServer.Networking
             lock (_players)
             {
                 List<Player> expired = _players
-                    .Where(p => p.TimeSinceLastDiscovery.TotalMinutes > 1)
+                    .Where(p => p.TimeSinceLastHeartbeat.TotalMinutes > 1)
                     .ToList();
                 foreach (Player p in expired)
                 {
@@ -205,10 +205,68 @@ namespace GameServer.Networking
         /// <summary>
         /// Creates a new session.
         /// </summary>
-        private void CreateSession(ushort sessionID, Player player1, Player player2)
+        private void CreateSession(Player player1, Player player2)
         {
             lock (_sessions)
-                _sessions.Add(new Session(sessionID, player1, player2));
+            {
+                //session already exists?  do nothing..
+                Session existing = _sessions.Where(s => s.ContainsBothPlayers(player1, player2)).FirstOrDefault();
+                if (existing != null)
+                {
+                    Log.Write($"Session with '{player1.IP}' and '{player2.IP}' already exists");
+                    return;
+                }
+
+                //sessions with only one player match?  remove it!
+                List<Session> oneMatch = _sessions.Where(s => s.ContainsEitherPlayer(player1, player2)).ToList();
+                foreach (Session session in oneMatch)
+                {
+                    Log.Write($"Removing conflicting session with '{player1.IP}' and '{player2.IP}'");
+                    _sessions.Remove(session);
+                }
+
+                //create new session
+                Log.Write($"Creating session with '{player1.IP}' and '{player2.IP}'");
+                _sessions.Add(new Session(player1, player2));
+            }
+        }
+
+        /// <summary>
+        /// Removes any session where one or more players haven't sent heatbeat packets
+        /// in over ten seconds.
+        /// </summary>
+        private void RemoveExpiredSessions()
+        {
+            try
+            {
+                lock (_sessions)
+                {
+                    List<Session> expired = new List<Session>();
+                    foreach (Session session in _sessions)
+                    {
+                        Player expiredPlayer = session.GetTimedoutPlayer(timeoutMs: 10000);
+                        if (expiredPlayer != null)
+                        {
+                            Log.Write($"Player '{expiredPlayer.IP}' hasn't send heartbeat in {expiredPlayer.TimeSinceLastHeartbeat.TotalSeconds.ToString("0.0")} seconds");
+                            expired.Add(session);
+                        }
+                    }
+                    foreach (Session session in expired)
+                    {
+                        Log.Write($"Removing expired session with '{session.Player1.IP}' and '{session.Player2.IP}'");
+                        _sessions.Remove(session);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write("RemoveExpiredSessions: Error processing expired session");
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        private void SendDisconnectCommand(Player player)
+        {
         }
 
         #endregion
@@ -387,10 +445,14 @@ namespace GameServer.Networking
             {
                 try
                 {
-                    //create packet
+                    //create response packet
                     CommandResponsePacket responsePacket;
                     if ((result.Code.In(ResultCode.Accept, ResultCode.Reject)) && (result.ResponsePacket != null))
                     {
+                        //create session?
+                        if ((requestPacket.CommandType == CommandType.ConnectToPlayer) && (result.Code == ResultCode.Accept))
+                            CreateSession(sourcePlayer, destinationPlayer);
+
                         //get original packet
                         responsePacket = result.ResponsePacket;
 
@@ -497,6 +559,9 @@ namespace GameServer.Networking
 
                 //remove expired players
                 RemoveExpiredPlayers();
+
+                //remove expired sessions
+                RemoveExpiredSessions();
             }
             catch (Exception ex)
             {

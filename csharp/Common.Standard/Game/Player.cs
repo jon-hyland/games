@@ -15,9 +15,9 @@ namespace Common.Standard.Game
         public string GameTitle { get; }
         public Version GameVersion { get; }
         public string Name { get; set; }
-        public DateTime FirstDiscovery { get; }
-        public DateTime LastDiscovery { get; set; }
-        public TimeSpan TimeSinceLastDiscovery => DateTime.Now - LastDiscovery;
+        public DateTime FirstHeartbeat { get; }
+        public DateTime LastHeartbeat { get; set; }
+        public TimeSpan TimeSinceLastHeartbeat => DateTime.Now - LastHeartbeat;
         public ushort InviteSequence { get; set; }
         public int UniqueKey { get; }
 
@@ -30,8 +30,8 @@ namespace Common.Standard.Game
             GameTitle = gameTitle;
             GameVersion = gameVersion;
             Name = name;
-            FirstDiscovery = DateTime.Now;
-            LastDiscovery = DateTime.Now;
+            FirstHeartbeat = DateTime.Now;
+            LastHeartbeat = DateTime.Now;
             InviteSequence = inviteSequence;
             UniqueKey = $"{IP}|{GameTitle}|{GameVersion}".GetHashCode();
         }

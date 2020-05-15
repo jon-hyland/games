@@ -9,15 +9,40 @@ namespace GameServer.Networking
     /// </summary>
     public class Session
     {
-        public ushort SessionID { get; }
         public Player Player1 { get; }
         public Player Player2 { get; }
 
-        public Session(ushort sessionID, Player player1, Player player2)
+        public Session(Player player1, Player player2)
         {
-            SessionID = sessionID;
             Player1 = player1;
             Player2 = player2;
+        }
+
+        public bool ContainsPlayer(Player player)
+        {
+            if (Player1.UniqueKey == player.UniqueKey)
+                return true;
+            if (Player2.UniqueKey == player.UniqueKey)
+                return true;
+            return false;
+        }
+
+        public bool ContainsBothPlayers(Player player1, Player player2)
+        {
+            return ContainsPlayer(player1) && ContainsPlayer(player2);
+        }
+
+        public bool ContainsEitherPlayer(Player player1, Player player2)
+        {
+            return ContainsPlayer(player1) || ContainsPlayer(player2);
+        }
+
+        public Player GetTimedoutPlayer(int timeoutMs)
+        {
+            Player lastToCheckIn = Player1.TimeSinceLastHeartbeat.TotalMilliseconds >= Player2.TimeSinceLastHeartbeat.TotalMilliseconds ? Player1 : Player2;
+            if (lastToCheckIn.TimeSinceLastHeartbeat.TotalMilliseconds > timeoutMs)
+                return lastToCheckIn;
+            return null;
         }
 
         public Player GetOpponent(Player player)
