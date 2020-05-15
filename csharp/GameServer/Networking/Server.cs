@@ -99,7 +99,7 @@ namespace GameServer.Networking
         /// <summary>
         /// Returns list of matching players.
         /// </summary>
-        private List<Player> GetPlayers(string gameTitle, Version gameVersion)
+        private List<Player> GetMatchingPlayers(string gameTitle, Version gameVersion)
         {
             lock (_players)
             {
@@ -130,6 +130,7 @@ namespace GameServer.Networking
                         Log.Write($"Changing player name '{existing.Name}' to '{player.Name}' at '{player.IP}'");
                         existing.Name = player.Name;
                     }
+                    Log.Write($"Updating last heartbeat for player '{existing.IP}'");
                     existing.LastHeartbeat = DateTime.Now;
                 }
                 else
@@ -336,7 +337,7 @@ namespace GameServer.Networking
                 Player player = Player.FromPacket(packet);
 
                 //get list of connected players (not source player)
-                List<Player> otherPlayers = GetPlayers(player.GameTitle, player.GameVersion)
+                List<Player> otherPlayers = GetMatchingPlayers(player.GameTitle, player.GameVersion)
                     .Where(p => p.UniqueKey != player.UniqueKey)
                     .ToList();
 
