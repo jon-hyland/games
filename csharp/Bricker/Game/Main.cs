@@ -423,6 +423,9 @@ namespace Bricker.Game
             //two-player mode?
             if (opponent != null)
             {
+                //clear lines sent (needed in case opponent restarts before we do)
+                _stats.SetLinesSent(0);
+
                 //if it's local player that finished, send game over to opponent
                 //sends game status one last time, and receives one last status
                 if (_gameState == GameState.GameOver)

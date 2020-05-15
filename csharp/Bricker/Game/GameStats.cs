@@ -90,6 +90,14 @@ namespace Bricker.Game
         }
 
         /// <summary>
+        /// Sets lines sent (two-player mode).
+        /// </summary>
+        public void SetLinesSent(int value)
+        {
+            _linesSent = value;
+        }
+
+        /// <summary>
         /// Returns true if score can be placed on board.
         /// </summary>
         public bool IsHighScore()
