@@ -40,11 +40,6 @@ namespace Bricker.Game
             _linesSent = 0;
         }
 
-        public byte[] ToBytes()
-        {
-
-        }
-
         /// <summary>
         /// Resets stats for new game.
         /// </summary>
