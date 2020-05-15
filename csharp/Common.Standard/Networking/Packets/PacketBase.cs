@@ -136,11 +136,11 @@ namespace Common.Standard.Networking.Packets
         /// <summary>
         /// Command response packet.
         /// </summary>
-        CommandResponse = 4,
+        CommandResponse = 3,
 
         /// <summary>
         /// General data packet, no response required.
         /// </summary>
-        Data = 5,
+        Data = 4,
     }
 }

@@ -235,12 +235,12 @@ namespace GameServer.Networking
                 {
                     switch (req.CommandType)
                     {
-                        //get players
+                        //get-players command
                         case CommandType.GetPlayers:
                             Answer_GetPlayers(client, req);
                             break;
 
-                        //connect to player
+                        //connect-to-player command
                         case CommandType.ConnectToPlayer:
                             Passthrough_Command(client, req);
                             break;
@@ -251,8 +251,13 @@ namespace GameServer.Networking
                 //command response
                 else if (packet is CommandResponsePacket resp)
                 {
-                    //record response
                     _commandManager.ResponseReceived(resp);
+                }
+
+                //data
+                else if (packet is DataPacket dp)
+                {
+                    Passthrough_Data(dp);
                 }
 
             }
@@ -310,8 +315,8 @@ namespace GameServer.Networking
         }
 
         /// <summary>
-        /// Forwards a command request to destination player, waits for response (or timeout),
-        /// responds to source with answer.
+        /// Forwards a command request packet to destination player, waits for response (or timeout),
+        /// responds to source player with answer.
         /// </summary>
         private void Passthrough_Command(Client sourceClient, CommandRequestPacket requestPacket)
         {
@@ -419,6 +424,53 @@ namespace GameServer.Networking
                     Log.Write("Passthrough_Command: Error sending command response to source");
                     ErrorHandler.LogError(ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Forwards a data packet to destination player.  No waiting or response.
+        /// </summary>
+        private void Passthrough_Data(DataPacket dataPacket)
+        {
+            Player sourcePlayer;
+            Player destinationPlayer;
+
+            try
+            {
+                //get source player
+                sourcePlayer = Player.FromPacket(dataPacket);
+                if (sourcePlayer == null)
+                {
+                    Log.Write($"Passthrough_Data: Unable to parse packet");
+                    return;
+                }
+
+                //get destination player
+                destinationPlayer = GetMatchingPlayer(dataPacket.DestinationIP, dataPacket.GameTitle, dataPacket.GameVersion);
+                if (destinationPlayer == null)
+                {
+                    Log.Write($"Passthrough_Data: Cannot find destination player at '{dataPacket.DestinationIP}'");
+                    return;
+                }
+
+                //get destination client
+                Client destinationClient = GetClientByPlayer(destinationPlayer);
+                if (destinationClient == null)
+                {
+                    Log.Write($"Passthrough_Data: Destination player at {destinationClient.RemoteIP} does not have assigned TCP client");
+                    return;
+                }
+
+                //message
+                Log.Write($"Forwarding data packet from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
+
+                //forward request to destination
+                destinationClient.SendPacket(dataPacket);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Passthrough_Data: Error forwarding data packet");
+                ErrorHandler.LogError(ex);
             }
         }
 
