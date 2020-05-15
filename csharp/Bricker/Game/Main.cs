@@ -371,7 +371,6 @@ namespace Bricker.Game
                     bool gameOver = BrickHit();
                     if (gameOver)
                     {
-                        //_stats.SetGameOver();
                         _gameState = GameState.GameOver;
                         break;
                     }
@@ -380,7 +379,6 @@ namespace Bricker.Game
                 //hold-swap collision?
                 if (collision)
                 {
-                    //_stats.SetGameOver();
                     _gameState = GameState.GameOver;
                     break;
                 }
@@ -427,7 +425,8 @@ namespace Bricker.Game
             {
                 //if it's local player that finished, send game over to opponent
                 //sends game status one last time, and receives one last status
-                SendGameOver();
+                if (_gameState == GameState.GameOver)
+                    SendGameOver();
 
                 //message
                 MessageBoxLoop(new MessageProperties(
