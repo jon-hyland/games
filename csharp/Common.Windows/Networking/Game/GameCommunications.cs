@@ -61,6 +61,7 @@ namespace Common.Windows.Networking.Game
         //events
         public event Action<Player> OpponentConnected;
         public event Action<Player> OpponentInviteReceived;
+        public event Action SessionEnded;
         public event Action<CommandRequestPacket> CommandRequestPacketReceived;
         public event Action<CommandResponsePacket> CommandResponsePacketReceived;
         public event Action<DataPacket> DataPacketReceived;
@@ -481,6 +482,9 @@ namespace Common.Windows.Networking.Game
                     OpponentInviteReceived?.InvokeFromTask(pendingOpponent);
                     return;
                 }
+
+                ////special logic for end-session requests
+                //if ((packet is CommandRequestPacket p3) && (p3.CommandType == CommandType.))
 
                 ////reject if wrong opponent
                 //if ((!packet.SourceIP.Equals(_config.ServerIP)) && ((_opponent == null) || (!packet.SourceIP.Equals(_opponent.IP))))
