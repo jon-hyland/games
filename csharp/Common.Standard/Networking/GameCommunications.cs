@@ -60,7 +60,6 @@ namespace Common.Standard.Networking
         //events
         public event Action<Player> OpponentConnected;
         public event Action<Player> OpponentInviteReceived;
-        public event Action SessionEnded;
         public event Action<CommandRequestPacket> CommandRequestPacketReceived;
         public event Action<CommandResponsePacket> CommandResponsePacketReceived;
         public event Action<DataPacket> DataPacketReceived;
@@ -469,12 +468,12 @@ namespace Common.Standard.Networking
                     return;
 
                 //special logic for invite requests
-                if ((packet is CommandRequestPacket p2) && (p2.CommandType == CommandType.ConnectToPlayer))
+                if ((packet is CommandRequestPacket p1) && (p1.CommandType == CommandType.ConnectToPlayer))
                 {
                     _commandRequestsReceived++;
-                    PacketParser parser = new PacketParser(p2.Data);
+                    PacketParser parser = new PacketParser(p1.Data);
                     string playerName = parser.GetString();
-                    Player pendingOpponent = new Player(p2.SourceIP, p2.GameTitle, p2.GameVersion, playerName, p2.Sequence);
+                    Player pendingOpponent = new Player(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
                     OpponentInviteReceived?.InvokeFromTask(pendingOpponent);
                     return;
                 }

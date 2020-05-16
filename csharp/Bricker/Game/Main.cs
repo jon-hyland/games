@@ -42,6 +42,7 @@ namespace Bricker.Game
         private Player _pendingOpponent;
         private Opponent _opponent;
         private GameState _gameState;
+        private bool _sessionEnded;
 
         //public
         public Config Config => _config;
@@ -69,6 +70,7 @@ namespace Bricker.Game
             _pendingOpponent = null;
             _opponent = null;
             _gameState = GameState.NotPlaying;
+            _sessionEnded = false;
 
             //initialize
             RenderProps.Initialize(_config);
@@ -390,22 +392,33 @@ namespace Bricker.Game
                     {
                         _opponent = null;
                         _pendingOpponent = null;
-                        MessageBoxLoop(new MessageProperties("Player has disconnected."));
+                        MessageBoxLoop(new MessageProperties("Disconnected from game server."));
                         continue;
                     }
 
-                    //have new sent lines?
-                    if (opponent.LinesSent > opponent.LastLinesSent)
+                    //session ended?
+                    if (_sessionEnded)
                     {
-                        int newLines = opponent.LinesSent - opponent.LastLinesSent;
-                        opponent.SetLastLinesSent(opponent.LinesSent);
-                        bool gameOver = AddSentLines(newLines);
-                        if (gameOver)
-                        {
-                            _gameState = GameState.GameOver;
-                            break;
-                        }
+                        _opponent = null;
+                        _pendingOpponent = null;
+                        MessageBoxLoop(new MessageProperties("Opponent has disconnected."));
+                        continue;
                     }
+
+                    if (_sessionEnded)
+
+                        //have new sent lines?
+                        if (opponent.LinesSent > opponent.LastLinesSent)
+                        {
+                            int newLines = opponent.LinesSent - opponent.LastLinesSent;
+                            opponent.SetLastLinesSent(opponent.LinesSent);
+                            bool gameOver = AddSentLines(newLines);
+                            if (gameOver)
+                            {
+                                _gameState = GameState.GameOver;
+                                break;
+                            }
+                        }
 
                     //opponent game over logic
                     if (opponent.GameOver)
@@ -1044,19 +1057,30 @@ namespace Bricker.Game
                 {
                     //game over
                     case CommandType.GameOver:
-                        Opponent opponent = _opponent;
-                        if (opponent == null)
+                        Opponent opponent1 = _opponent;
+                        if (opponent1 == null)
                             break;
                         UpdateOpponentGameStatus(
-                            opponent: opponent,
+                            opponent: opponent1,
                             bytes: packet.Data);
                         _opponent?.SetGameOver();
                         _communications.SendCommandResponse(
-                            destinationIP: opponent.Player.IP,
-                            type: packet.CommandType,
+                            destinationIP: opponent1.Player.IP,
+                            type: CommandType.GameOver,
                             sequence: packet.Sequence,
                             code: ResultCode.Accept,
                             data: GameStatusToBytes(_matrix, _stats));
+                        break;
+
+                    //session end
+                    case CommandType.EndSession:
+                        _sessionEnded = true;
+                        _communications.SendCommandResponse(
+                            destinationIP: packet.SourceIP,
+                            type: CommandType.EndSession,
+                            sequence: packet.Sequence,
+                            code: ResultCode.Accept,
+                            data: null);
                         break;
                 }
             }

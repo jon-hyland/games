@@ -53,7 +53,12 @@ X - Design game over behavior and communications.
   * Receive EndSession command in game.  Show message, clear opponent.
 
 
-
+===========
+ QUESTIONS
+===========
+- Can invite logic be moved out of GameComms?
+- Rename GameCommunications?
+- 
 
 
 =======
