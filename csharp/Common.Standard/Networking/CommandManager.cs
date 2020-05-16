@@ -1,4 +1,5 @@
-﻿using Common.Standard.Networking.Packets;
+﻿using Common.Standard.Error;
+using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
 using System;
 using System.Collections.Generic;
@@ -68,6 +69,12 @@ namespace Common.Standard.Networking
                     .Where(c => c.Sequence == packet.Sequence)
                     .OrderBy(c => c.Elapsed)
                     .FirstOrDefault();
+
+                if (command == null)
+                {
+                    ErrorHandler.LogError(new Exception($"Error processing response.. command with sequence '{packet.Sequence}' not found"));
+                    return;
+                }
 
                 if ((packet.Code == ResultCode.Accept) || (packet.Code == ResultCode.Reject))
                 {
