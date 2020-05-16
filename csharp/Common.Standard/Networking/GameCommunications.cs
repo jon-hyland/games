@@ -315,12 +315,12 @@ namespace Common.Standard.Networking
                     timeoutMs: (uint)timeout.TotalMilliseconds,
                     data: data);
 
+                //record command request
+                _commandManager.RequestSent(packet);
+
                 //send packet
                 _client.SendPacket(packet);
                 _commandRequestsSent++;
-
-                //record command request has been sent
-                _commandManager.RequestSent(packet);
 
                 //loop
                 while (true)
