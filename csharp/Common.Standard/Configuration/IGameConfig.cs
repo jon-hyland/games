@@ -1,10 +1,9 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.Net;
 
-namespace Common.Windows.Configuration
+namespace Common.Standard.Configuration
 {
-    public interface IConfig
+    public interface IGameConfig
     {
         string GameTitle { get; }
         Version GameVersion { get; }
@@ -13,7 +12,6 @@ namespace Common.Windows.Configuration
         string ApplicationFolder { get; }
         string ConfigFile { get; }
         string FontFile { get; }
-        SKTypeface Typeface { get; }
         bool AntiAlias { get; }
         bool HighFrameRate { get; }
         bool Debug { get; }

@@ -27,6 +27,7 @@ namespace GameServer.Networking
         private readonly CommandManager _commandManager;
         private readonly Thread _listenThread;
         private readonly SimpleTimer _timer;
+        private readonly Random _random;
 
         #region Constructor
 
@@ -46,6 +47,7 @@ namespace GameServer.Networking
             _listenThread = new Thread(ListenThread);
             _listenThread.IsBackground = true;
             _timer = new SimpleTimer(Timer_Callback, 1000);
+            _random = new Random();
         }
 
         /// <summary>
@@ -252,6 +254,19 @@ namespace GameServer.Networking
         }
 
         /// <summary>
+        /// Returns matching session, or null if no session (expired, etc).
+        /// </summary>
+        private Session GetSession(int player1Key, int player2Key)
+        {
+            lock (_sessions)
+            {
+                return _sessions
+                    .Where(s => s.ContainsBothPlayers(player1Key, player2Key))
+                    .FirstOrDefault();
+            }
+        }
+
+        /// <summary>
         /// Removes any session where one or more players haven't sent heatbeat packets
         /// in over ten seconds.
         /// </summary>
@@ -285,8 +300,57 @@ namespace GameServer.Networking
             }
         }
 
-        private void SendDisconnectCommand(Player player)
+        /// <summary>
+        /// Sends 'EndSession' command to client to inform them of opponent disconnect.
+        /// Waits for client acknowledgment, but doesn't do anything with it.
+        /// </summary>
+        private void SendEndSessionCommand(Client client, Player player)
         {
+            try
+            {
+                //vars
+                uint timeoutMs = 1000;
+                ushort sequence = (ushort)(UInt32.MaxValue - _random.Next(1000));
+                CommandResult result;
+                
+                //create packet
+                CommandRequestPacket packet = new CommandRequestPacket(
+                    gameTitle: player.GameTitle,
+                    gameVersion: player.GameVersion,
+                    sourceIP: _ip,
+                    destinationIP: player.IP,
+                    playerName: player.Name,
+                    commandType: CommandType.EndSession,
+                    sequence: sequence,
+                    retryAttempt: 0,
+                    timeoutMs: timeoutMs,
+                    data: null);
+
+                //record command request being sent
+                _commandManager.RequestSent(packet);
+
+                //forward request to destination
+                client.SendPacket(packet);
+
+                //wait for response or timeout
+                while (true)
+                {
+                    //get current status
+                    result = _commandManager.GetCommandStatus(packet.Sequence);
+
+                    //have answer or timeout?  return!
+                    if (result.Code != ResultCode.Unspecified)
+                        return;
+
+                    //sleep
+                    Thread.Sleep(15);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write("SendEndSessionCommand: Error processing expired session");
+                ErrorHandler.LogError(ex);
+            }
         }
 
         #endregion
@@ -400,6 +464,7 @@ namespace GameServer.Networking
             CommandResult result = new CommandResult(ResultCode.Unspecified);
             Player sourcePlayer = null;
             Player destinationPlayer = null;
+            bool sessionEnded = false;
 
             try
             {
@@ -418,6 +483,16 @@ namespace GameServer.Networking
                 {
                     Log.Write($"Passthrough_Command: Cannot find destination player at '{requestPacket.DestinationIP}'");
                     result.Code = ResultCode.Error;
+                    return;
+                }
+
+                //get session
+                Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                if (session == null)
+                {
+                    Log.Write($"Passthrough_Command: Live session does not exist between '{sourcePlayer.IP}' and '{destinationPlayer.IP}'");
+                    result.Code = ResultCode.Error;
+                    sessionEnded = true;
                     return;
                 }
 
@@ -442,9 +517,6 @@ namespace GameServer.Networking
                 //wait for response or timeout
                 while (true)
                 {
-                    //vars
-                    DateTime start = DateTime.Now;
-
                     //get current status
                     result = _commandManager.GetCommandStatus(requestPacket.Sequence);
 
@@ -499,6 +571,10 @@ namespace GameServer.Networking
 
                     //send response to source
                     sourceClient.SendPacket(responsePacket);
+
+                    //send session-ended command?
+                    if (sessionEnded)
+                        SendEndSessionCommand(sourceClient, sourcePlayer);
                 }
                 catch (Exception ex)
                 {

@@ -10,7 +10,7 @@
         GetPlayers = 1,
         ConnectToPlayer = 2,
         GameOver = 3,
-        Disconnect = 4,
+        EndSession = 4,
         Passthrough = 5
     }
 }

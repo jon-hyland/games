@@ -1,4 +1,4 @@
-﻿using Common.Windows.Configuration;
+﻿using Common.Standard.Configuration;
 using SkiaSharp;
 
 namespace Common.Windows.Rendering
@@ -11,9 +11,9 @@ namespace Common.Windows.Rendering
         public static bool Debug { get; set; }
         public static double DisplayScale { get; set; }
 
-        public static void Initialize(IConfig config)
+        public static void Initialize(IGameConfig config)
         {
-            Typeface = config.Typeface;
+            Typeface = SKTypeface.FromFile(config.FontFile);
             AntiAlias = config.AntiAlias;
             HighFrameRate = config.HighFrameRate;
             Debug = config.Debug;
