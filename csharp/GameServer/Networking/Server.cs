@@ -312,7 +312,10 @@ namespace GameServer.Networking
                 uint timeoutMs = 1000;
                 ushort sequence = (ushort)(UInt32.MaxValue - _random.Next(1000));
                 CommandResult result;
-                
+
+                //message
+                Log.Write($"Sending 'EndSession' command to '{client.RemoteIP}'");
+
                 //create packet
                 CommandRequestPacket packet = new CommandRequestPacket(
                     gameTitle: player.GameTitle,
@@ -398,7 +401,7 @@ namespace GameServer.Networking
                 //data
                 else if (packet is DataPacket dp)
                 {
-                    Passthrough_Data(dp);
+                    Passthrough_Data(client, dp);
                 }
 
             }
@@ -488,7 +491,7 @@ namespace GameServer.Networking
 
                 //get session
                 Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
-                if (session == null)
+                if ((session == null) && (requestPacket.CommandType != CommandType.ConnectToPlayer))
                 {
                     Log.Write($"Passthrough_Command: Live session does not exist between '{sourcePlayer.IP}' and '{destinationPlayer.IP}'");
                     result.Code = ResultCode.Error;
@@ -587,10 +590,11 @@ namespace GameServer.Networking
         /// <summary>
         /// Forwards a data packet to destination player.  No waiting or response.
         /// </summary>
-        private void Passthrough_Data(DataPacket dataPacket)
+        private void Passthrough_Data(Client sourceClient, DataPacket dataPacket)
         {
-            Player sourcePlayer;
+            Player sourcePlayer = null;
             Player destinationPlayer;
+            bool sessionEnded = false;
 
             try
             {
@@ -607,6 +611,15 @@ namespace GameServer.Networking
                 if (destinationPlayer == null)
                 {
                     Log.Write($"Passthrough_Data: Cannot find destination player at '{dataPacket.DestinationIP}'");
+                    return;
+                }
+
+                //get session
+                Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                if (session == null)
+                {
+                    Log.Write($"Passthrough_Data: Live session does not exist between '{sourcePlayer.IP}' and '{destinationPlayer.IP}'");
+                    sessionEnded = true;
                     return;
                 }
 
@@ -628,6 +641,20 @@ namespace GameServer.Networking
             {
                 Log.Write("Passthrough_Data: Error forwarding data packet");
                 ErrorHandler.LogError(ex);
+            }
+            finally
+            {
+                try
+                {
+                    //send session-ended command?
+                    if (sessionEnded)
+                        SendEndSessionCommand(sourceClient, sourcePlayer);
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("Passthrough_Data: Finalizer error");
+                    ErrorHandler.LogError(ex);
+                }
             }
         }
 
