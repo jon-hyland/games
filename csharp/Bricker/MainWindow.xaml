@@ -9,6 +9,7 @@
     Title="Bricker"
     ResizeMode="NoResize"
     SizeToContent="WidthAndHeight"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
     <Border
