@@ -26,6 +26,7 @@ namespace Bricker.Configuration
         public string RemoteInstanceFile { get; }
         public bool AntiAlias { get; }
         public bool HighFrameRate { get; }
+        public bool Background { get; }
         public bool Debug { get; }
         public IPAddress ServerIP { get; }
         public ushort ServerPort { get; }
@@ -48,6 +49,7 @@ namespace Bricker.Configuration
             dynamic data = JsonSerialization.Deserialize(File.ReadAllText(ConfigFile));
             AntiAlias = data.antiAlias == 1;
             HighFrameRate = data.highFrameRate == 1;
+            Background = data.background == 1;
             Debug = data.debug == 1;
             ServerIP = IPAddress.Parse((string)data.multiplayer.server);
             ServerPort = (ushort)data.multiplayer.port;

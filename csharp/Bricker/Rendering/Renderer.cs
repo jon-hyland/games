@@ -865,6 +865,9 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawBackground(Surface frame, GameStats stats)
         {
+            if (!RenderProps.Background)
+                return;
+
             if (_tiles.Count == 0)
                 for (int i = 0; i < 50; i++)
                     _tiles.Add(new BackgroundTile());

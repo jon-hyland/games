@@ -211,8 +211,18 @@ namespace Bricker.Game
                 //main menu loop
                 if (selection == MenuSelection.None)
                     selection = (MenuSelection)MenuLoop(new MenuProperties(
-                        options: new string[] { "resume", "new game", "two player", "quit" },
-                        enabledOptions: new bool[] { _gameState == GameState.GamePaused, true, _communications.ConnectionState != ConnectionState.Disabled, true },
+                        options: new string[] { 
+                            "resume", 
+                            "new game", 
+                            "two player",
+                            "settings",
+                            "quit" },
+                        enabledOptions: new bool[] { 
+                            _gameState == GameState.GamePaused, 
+                            true, 
+                            _communications.ConnectionState != ConnectionState.Disabled, 
+                            true,
+                            true },
                         allowEsc: false,
                         allowPlayerInvite: true,
                         width: 400,
@@ -357,7 +367,11 @@ namespace Bricker.Game
                     else if ((key == Key.PageDown) && (RenderProps.Debug))
                         _stats.SetLevel(_stats.Level - 1);
 
-                    //debug toggle
+                    //background
+                    else if (key == Key.B)
+                        RenderProps.Background = !RenderProps.Background;
+
+                    //debug
                     else if (key == Key.D)
                         RenderProps.Debug = !RenderProps.Debug;
                 }
@@ -524,9 +538,17 @@ namespace Bricker.Game
                         return -1;
                     }
 
-                    //debug toggle
+                    //background
+                    else if (key == Key.B)
+                    {
+                        RenderProps.Background = !RenderProps.Background;
+                    }
+
+                    //debug
                     else if (key == Key.D)
+                    {
                         RenderProps.Debug = !RenderProps.Debug;
+                    }
                 }
             }
             finally

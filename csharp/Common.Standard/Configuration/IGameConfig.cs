@@ -14,6 +14,7 @@ namespace Common.Standard.Configuration
         string FontFile { get; }
         bool AntiAlias { get; }
         bool HighFrameRate { get; }
+        bool Background { get; }
         bool Debug { get; }
         IPAddress ServerIP { get; }
         ushort ServerPort { get; }

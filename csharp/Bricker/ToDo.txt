@@ -50,7 +50,7 @@ X - Design game over behavior and communications.
   X * Add session timeout based on player heartbeats.
   X * Create EndSession command.
   X * Send EndSession command from server.
-  * Receive EndSession command in game.  Show message, clear opponent.
+  X * Receive EndSession command in game.  Show message, clear opponent.
 
 
 ===========
