@@ -259,6 +259,12 @@ namespace Bricker.Game
                     }
                 }
 
+                //settings
+                else if (selection == MenuSelection.Settings)
+                {
+
+                }
+
                 //quit program
                 else if (selection == MenuSelection.Quit)
                 {
