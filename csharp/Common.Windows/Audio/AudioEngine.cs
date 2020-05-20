@@ -23,7 +23,7 @@ namespace Common.Audio
         /// </summary>
         public AudioEngine(int sampleRate = 44100, int channels = 2)
         {
-            _outputDevice = new WaveOutEvent();
+            _outputDevice = new DirectSoundOut(50);
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels));
             _loops = new List<CachedSoundProvider>();
             _mixer.ReadFully = true;
@@ -167,9 +167,9 @@ namespace Common.Audio
         /// </summary>
         public CachedSound(string file)
         {
+            //todo: add resampling
             using (AudioFileReader reader = new AudioFileReader(file))
             {
-                //todo: add resampling here?
                 WaveFormat = reader.WaveFormat;
                 List<float> wholeFile = new List<float>((int)(reader.Length / 4));
                 float[] buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
