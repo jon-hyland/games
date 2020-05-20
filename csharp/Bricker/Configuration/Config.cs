@@ -51,7 +51,14 @@ namespace Bricker.Configuration
             HighFrameRate = data.highFrameRate == 1;
             Background = data.background == 1;
             Debug = data.debug == 1;
-            ServerIP = IPAddress.Parse((string)data.multiplayer.server);
+            try
+            {
+                ServerIP = IPAddress.Parse((string)data.multiplayer.server);
+            }
+            catch
+            {
+                ServerIP = DnsHelper.ResolveHost((string)data.multiplayer.server);
+            }            
             ServerPort = (ushort)data.multiplayer.port;
             Initials = LoadInitials();
         }

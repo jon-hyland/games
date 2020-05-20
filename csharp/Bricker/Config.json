@@ -4,7 +4,7 @@
   "background": 1,
   "debug": 0,
   "multiplayer": {
-    "server": "192.168.1.133",
+    "server": "hyland.one",
     "port": 8780
   }
 }

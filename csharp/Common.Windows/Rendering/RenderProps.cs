@@ -1,6 +1,5 @@
 ﻿using Common.Standard.Configuration;
 using SkiaSharp;
-using System.Net.NetworkInformation;
 
 namespace Common.Windows.Rendering
 {
