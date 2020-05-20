@@ -45,6 +45,7 @@ namespace Bricker.Game
         private Opponent _opponent;
         private GameState _gameState;
         private bool _sessionEnded;
+        private long _musicPosition;
 
         //public
         public Config Config => _config;
@@ -241,7 +242,10 @@ namespace Bricker.Game
             //program loop
             while (true)
             {
-                //play loop
+                //play music, remember position in main song
+                long position = Sounds.GetLoopPosition(Sound.Music1);
+                if (position != 0)
+                    _musicPosition = position;
                 Sounds.Loop(Sound.Music2);
 
                 //opponent invite
@@ -379,13 +383,14 @@ namespace Bricker.Game
                 _stats = new GameStats(_config);
                 _matrix.NewGame();
                 _opponent?.Reset();
+                _musicPosition = 0;
             }
 
             //set flag
             _gameState = GameState.GameLive;
 
-            //change loop
-            Sounds.Loop(Sound.Music1);
+            //play music
+            Sounds.Loop(Sound.Music1, _musicPosition);
 
             //event loop
             while (true)
@@ -420,19 +425,31 @@ namespace Bricker.Game
                 {
                     //left
                     if (key == Key.Left)
+                    {
+                        Sounds.Play(Sound.Click1);
                         MoveBrickLeft();
+                    }
 
                     //right
                     else if (key == Key.Right)
+                    {
+                        Sounds.Play(Sound.Click1);
                         MoveBrickRight();
+                    }
 
                     //down
                     else if (key == Key.Down)
+                    {
+                        Sounds.Play(Sound.Click1);
                         hit = MoveBrickDown();
+                    }
 
                     //rotate
                     else if (key == Key.Up)
+                    {
+                        Sounds.Play(Sound.Click2);
                         RotateBrick();
+                    }
 
                     //drop
                     else if (key == Key.Space)

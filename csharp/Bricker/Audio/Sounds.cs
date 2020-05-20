@@ -21,6 +21,9 @@ namespace Bricker.Audio
         public static SoundSample MenuSelect1 { get; private set; }
         public static SoundSample MenuSelect2 { get; private set; }
         public static SoundSample Error1 { get; private set; }
+        public static SoundSample Click1 { get; private set; }
+        public static SoundSample Click2 { get; private set; }
+        public static SoundSample Click3 { get; private set; }
 
         /// <summary>
         /// Initializes sound files.
@@ -36,6 +39,9 @@ namespace Bricker.Audio
             MenuSelect1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "MenuSelect1.mp3"));
             MenuSelect2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "MenuSelect2.mp3"));
             Error1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Error1.mp3"));
+            Click1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click1.mp3"));
+            Click2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click2.mp3"));
+            Click3 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click3.mp3"));
         }
 
         /// <summary>
@@ -80,9 +86,17 @@ namespace Bricker.Audio
         /// Plays the specified sound sample, looping until stop.
         /// Stops any existing loop.
         /// </summary>
-        public static void Loop(SoundSample sound)
+        public static void Loop(SoundSample sound, long position = 0)
         {
-            _manager?.PlayLoop(sound.ID);
+            _manager?.PlayLoop(id: sound.ID, stopOtherLoops: true, position: position);
+        }
+
+        /// <summary>
+        /// Stops specified sound, if it's looping.  Returns current position (if possible), or 0.
+        /// </summary>
+        public static long StopLoop(SoundSample sound)
+        {
+            return _manager?.StopLoop(sound.ID) ?? 0;
         }
 
         /// <summary>
@@ -91,6 +105,14 @@ namespace Bricker.Audio
         public static void StopLoops()
         {
             _manager?.StopAllLoops();
+        }
+
+        /// <summary>
+        /// Returns current position in specified looping sound, or 0 if not looping sound.
+        /// </summary>
+        public static long GetLoopPosition(SoundSample sound)
+        {
+            return _manager?.GetLoopPosition(sound.ID) ?? 0;
         }
 
         /// <summary>

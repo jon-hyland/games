@@ -100,7 +100,7 @@ namespace Common.Audio
         /// <summary>
         /// Plays a cached sound, looping forever until stop.  Keeps playing if already looping specified sound.
         /// </summary>
-        public void PlayLoop(CachedSound sound, bool stopOtherLoops = true)
+        public void PlayLoop(CachedSound sound, bool stopOtherLoops = true, long position = 0)
         {
             CachedSoundProvider provider;
             lock (_loops)
@@ -109,17 +109,18 @@ namespace Common.Audio
                     _loops.Where(p => p.Sound != sound).ToList().ForEach(p => StopLoop(p.Sound));
                 if (_loops.Where(p => p.Sound == sound).Any())
                     return;
-                provider = new CachedSoundProvider(sound);
+                provider = new CachedSoundProvider(sound, position);
                 _loops.Add(provider);
             }
             AddMixerInput(provider);
         }
 
         /// <summary>
-        /// Stops the specified sound, if it's looping.
+        /// Stops specified sound, if it's looping.  Returns current position (if possible), or 0.
         /// </summary>
-        public void StopLoop(CachedSound sound)
+        public long StopLoop(CachedSound sound)
         {
+            long position = 0;
             lock (_loops)
             {
                 CachedSoundProvider provider = _loops
@@ -127,10 +128,12 @@ namespace Common.Audio
                     .FirstOrDefault();
                 if (provider != null)
                 {
+                    position = provider.Position;
                     provider.Stop();
                     _loops.Remove(provider);
                 }
             }
+            return position;
         }
 
         /// <summary>
@@ -144,6 +147,23 @@ namespace Common.Audio
                     provider.Stop();
                 _loops.Clear();
             }
+        }
+
+        /// <summary>
+        /// Returns current position in specified looping sound, or 0 if not looping sound.
+        /// </summary>
+        public long GetLoopPosition(CachedSound sound)
+        {
+            long position = 0;
+            lock (_loops)
+            {
+                CachedSoundProvider provider = _loops
+                    .Where(p => p.Sound == sound)
+                    .FirstOrDefault();
+                if (provider != null)
+                    position = provider.Position;
+            }
+            return position;
         }
 
         /// <summary>
@@ -223,6 +243,8 @@ namespace Common.Audio
 
         //public
         public CachedSound Sound => _sound;
+        public long Position => _position;
+        public long Length => _sound.AudioData.Length;
 
         /// <summary>
         /// Class constructor.
@@ -230,6 +252,16 @@ namespace Common.Audio
         public CachedSoundProvider(CachedSound sound)
         {
             _sound = sound;
+        }
+
+        /// <summary>
+        /// Class constructor.
+        /// </summary>
+        public CachedSoundProvider(CachedSound sound, long position)
+        {
+            _sound = sound;
+            if (position < _sound.AudioData.Length)
+                _position = position;
         }
 
         /// <summary>

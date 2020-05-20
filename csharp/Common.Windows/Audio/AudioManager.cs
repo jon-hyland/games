@@ -54,17 +54,17 @@ namespace Common.Audio
         /// <summary>
         /// Plays specified sound on a loop.
         /// </summary>
-        public void PlayLoop(int id, bool stopOtherLoops = true)
+        public void PlayLoop(int id, bool stopOtherLoops = true, long position = 0)
         {
-            _engine.PlayLoop(_sounds[id], stopOtherLoops);
+            _engine.PlayLoop(_sounds[id], stopOtherLoops, position);
         }
 
         /// <summary>
-        /// Stops specified loop.
+        /// Stops specified sound, if it's looping.  Returns current position (if possible), or 0.
         /// </summary>
-        public void StopLoop(int id)
+        public long StopLoop(int id)
         {
-            _engine.StopLoop(_sounds[id]);
+            return _engine.StopLoop(_sounds[id]);
         }
 
         /// <summary>
@@ -74,6 +74,15 @@ namespace Common.Audio
         {
             _engine.StopAllLoops();
         }
+
+        /// <summary>
+        /// Returns current position in specified looping sound, or 0 if not looping sound.
+        /// </summary>
+        public long GetLoopPosition(int id)
+        {
+            return _engine.GetLoopPosition(_sounds[id]);
+        }
+
     }
 
     /// <summary>
