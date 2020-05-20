@@ -146,6 +146,9 @@
     <Content Include="Music1.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Test1.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Zorque.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -37,6 +37,8 @@ X - Add Settings menu.
   * Line clear sound.
   * Tetris sound.
   * Add lines sound.
+- Add saving of settings.
+- Allow reset of high scores from settings.
 
 
 =============
