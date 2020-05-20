@@ -15,9 +15,9 @@ namespace Common.Windows.Rendering
         private readonly double _height;
         private readonly SKBitmap _bitmap;
         private readonly SKCanvas _canvas;
-        private static SKPaint _linePaint;
-        private static SKPaint _rectPaint;
-        private static SKPaint _textPaint;
+        //private static SKPaint _linePaint;
+        //private static SKPaint _rectPaint;
+        //private static SKPaint _textPaint;
 
         //public
         public double Width => _width;
@@ -56,17 +56,6 @@ namespace Common.Windows.Rendering
             _canvas?.Dispose();
         }
 
-
-        /// <summary>
-        /// Dispose static resources.
-        /// </summary>
-        public static void DisposeStatic()
-        {
-            _linePaint?.Dispose();
-            _rectPaint?.Dispose();
-            _textPaint?.Dispose();
-        }
-
         /// <summary>
         /// Clears the canvas.
         /// </summary>
@@ -80,18 +69,9 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawLine(SKColor color, double x0, double y0, double x1, double y1, double width = 2d)
         {
-            _linePaint = _linePaint ?? new SKPaint()
-            {
-                Color = Colors.White,
-                Style = SKPaintStyle.Stroke,
-                StrokeCap = SKStrokeCap.Square,
-                StrokeJoin = SKStrokeJoin.Bevel,
-                StrokeWidth = (float)(2 * RenderProps.DisplayScale),
-                IsAntialias = RenderProps.AntiAlias
-            };
-            _linePaint.Color = color;
-            _linePaint.StrokeWidth = (float)(width * RenderProps.DisplayScale);
-            _canvas.DrawLine((float)(x0 * RenderProps.DisplayScale), (float)(y0 * RenderProps.DisplayScale), (float)(x1 * RenderProps.DisplayScale), (float)(y1 * RenderProps.DisplayScale), _linePaint);
+            RenderProps.LinePaint.Color = color;
+            RenderProps.LinePaint.StrokeWidth = (float)(width * RenderProps.DisplayScale);
+            _canvas.DrawLine((float)(x0 * RenderProps.DisplayScale), (float)(y0 * RenderProps.DisplayScale), (float)(x1 * RenderProps.DisplayScale), (float)(y1 * RenderProps.DisplayScale), RenderProps.LinePaint);
         }
 
         /// <summary>
@@ -99,16 +79,8 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawRect(SKColor color, double x, double y, double width, double height)
         {
-            _rectPaint = _rectPaint ?? new SKPaint()
-            {
-                Color = Colors.White,
-                Style = SKPaintStyle.StrokeAndFill,
-                StrokeCap = SKStrokeCap.Square,
-                StrokeJoin = SKStrokeJoin.Bevel,
-                IsAntialias = RenderProps.AntiAlias
-            };
-            _rectPaint.Color = color;
-            _canvas.DrawRect(SKRect.Create((float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale), (float)(width * RenderProps.DisplayScale), (float)(height * RenderProps.DisplayScale)), _rectPaint);
+            RenderProps.RectPaint.Color = color;
+            _canvas.DrawRect(SKRect.Create((float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale), (float)(width * RenderProps.DisplayScale), (float)(height * RenderProps.DisplayScale)), RenderProps.RectPaint);
         }
 
         /// <summary>
@@ -116,18 +88,9 @@ namespace Common.Windows.Rendering
         /// </summary>
         public static void MeasureText(string text, double size, out double width, out double height)
         {
-            _textPaint = _textPaint ?? new SKPaint()
-            {
-                Color = Colors.White,
-                Typeface = RenderProps.Typeface,
-                TextSize = (float)(12 * RenderProps.DisplayScale),
-                IsStroke = false,
-                IsAntialias = RenderProps.AntiAlias
-            };
-
-            _textPaint.TextSize = (float)(size * RenderProps.DisplayScale);
+            RenderProps.TextPaint.TextSize = (float)(size * RenderProps.DisplayScale);
             SKRect r = new SKRect();
-            _textPaint.MeasureText(text, ref r);
+            RenderProps.TextPaint.MeasureText(text, ref r);
 
             width = (r.Width / RenderProps.DisplayScale) + 6;
             height = size * 1.333;
@@ -157,14 +120,14 @@ namespace Common.Windows.Rendering
         public static Surface RenderText(SKColor color, string text, double size)
         {
             MeasureText(text, size, out double width, out double height);
-            _textPaint.Color = color;
+            RenderProps.TextPaint.Color = color;
 
             float x = (float)(2 * RenderProps.DisplayScale);
             float y = (float)((size + (size * 0.05)) * RenderProps.DisplayScale);
 
             Surface surface = new Surface(width, height);
             surface._canvas.Clear(!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack2);
-            surface._canvas.DrawText(text, x, y, _textPaint);
+            surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
             return surface;
         }
 

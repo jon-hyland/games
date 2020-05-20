@@ -29,6 +29,14 @@ X - Add hold feature, six next pieces.
 X - Add background animation.
 X - When popup open, dim primary borders.
 X - Improve message box rendering.
+X - Add Settings menu.
+- Add game music.
+- Add sound effects:
+  * Rotate sound.
+  * Drop sound.
+  * Line clear sound.
+  * Tetris sound.
+  * Add lines sound.
 
 
 =============
@@ -45,7 +53,7 @@ X - Add generic request/response forwarding.
 X - Add generic data passthrough.
 X - Fix weird down button bug.
 X - Design game over behavior and communications.
-- Design player disconnect behavior (session tracking).
+X - Design player disconnect behavior (session tracking).
   X * Add server-side session tracking.
   X * Add session timeout based on player heartbeats.
   X * Create EndSession command.
@@ -69,7 +77,7 @@ X - Design game over behavior and communications.
 - Settings Menu:
   * Config settings.
   * Reset high scores.
-- Esc to resume (main menu).
+X - Esc to resume (main menu).
 - Refactoring (player, opponent, etc).  ErrorHandler like Log.
 - Improve game animation.
 - Add music and sound effects.

@@ -10,9 +10,7 @@ using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 
 namespace Bricker.Rendering
@@ -28,10 +26,6 @@ namespace Bricker.Rendering
         private double _frame_Width;
         private double _frame_Height;
         private double _displayScale;
-        private readonly SKTypeface _typeface;
-        private readonly SKPaint _linePaint;
-        private readonly SKPaint _rectPaint;
-        private readonly SKPaint _textPaint;
         private MenuProperties _menuProps;
         private SettingsProperties _settingProps;
         private InitialsEntryProperties _initialProps;
@@ -87,32 +81,6 @@ namespace Bricker.Rendering
             _window = window;
             _config = config;
             _displayScale = 1;
-            _typeface = SKTypeface.FromFile(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "zorque.ttf"));
-            _linePaint = new SKPaint()
-            {
-                Color = Colors.White,
-                Style = SKPaintStyle.Stroke,
-                StrokeCap = SKStrokeCap.Square,
-                StrokeJoin = SKStrokeJoin.Bevel,
-                StrokeWidth = (float)(2 * _displayScale),
-                IsAntialias = RenderProps.AntiAlias
-            };
-            _rectPaint = new SKPaint()
-            {
-                Color = Colors.White,
-                Style = SKPaintStyle.StrokeAndFill,
-                StrokeCap = SKStrokeCap.Square,
-                StrokeJoin = SKStrokeJoin.Bevel,
-                IsAntialias = RenderProps.AntiAlias
-            };
-            _textPaint = new SKPaint()
-            {
-                Color = Colors.White,
-                Typeface = _typeface,
-                TextSize = (float)(12 * _displayScale),
-                IsStroke = false,
-                IsAntialias = RenderProps.AntiAlias
-            };
             _menuProps = null;
             _initialProps = null;
             _messageProps = null;
@@ -125,10 +93,7 @@ namespace Bricker.Rendering
         /// </summary>
         public void Dispose()
         {
-            _typeface?.Dispose();
-            _linePaint?.Dispose();
-            _rectPaint?.Dispose();
-            _textPaint?.Dispose();
+            RenderProps.Dispose();
         }
 
         /// <summary>
@@ -161,6 +126,9 @@ namespace Bricker.Rendering
                     byte[,] m = matrix.GetGrid(includeBrick: true);
                     opponent.UpdateOpponent(m, 3, 144, 12434, 7);
                 }
+
+                //ensure resources
+
 
                 //vars
                 SKImageInfo info = e.Info;

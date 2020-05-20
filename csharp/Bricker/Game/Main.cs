@@ -2,6 +2,7 @@
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
+using Common.Audio;
 using Common.Standard.Error;
 using Common.Standard.Game;
 using Common.Standard.Logging;
@@ -11,6 +12,7 @@ using Common.Windows.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Windows;
@@ -36,6 +38,7 @@ namespace Bricker.Game
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
         private readonly Random _random;
+        private readonly SoundManager _sounds;
         private GameStats _stats;
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
@@ -64,6 +67,7 @@ namespace Bricker.Game
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
             _random = new Random();
+            _sounds = new SoundManager();
             _stats = new GameStats(_config);
             _spaces = null;
             _levelDropIntervals = new double[10];
@@ -145,6 +149,7 @@ namespace Bricker.Game
                 IsBackground = true
             };
             _sendStatusThread.Start();
+            _sounds.StartBackgroundLoop(Path.Combine(_config.ApplicationFolder, "Music1.mp3"));
         }
 
         #endregion
@@ -182,43 +187,44 @@ namespace Bricker.Game
             //        size: 18,
             //        topMargin: 10,
             //        alignment: Alignment.Right) }));
-            SettingsLoop(new SettingsProperties(
-                items: new SettingsItem[] {
-                    new SettingsItem(
-                        onCaption: "Anti-Alias On",
-                        offCaption: "Anti-Alias Off",
-                        RenderProps.AntiAlias),
-                    new SettingsItem(
-                        onCaption: "High Frame Rate On",
-                        offCaption: "High Frame Rate Off",
-                        RenderProps.HighFrameRate),
-                    new SettingsItem(
-                        onCaption: "Background Animation On",
-                        offCaption: "Background Animation Off",
-                        RenderProps.Background),
-                    new SettingsItem(
-                        onCaption: "Debug Mode On",
-                        offCaption: "Debug Mode Off",
-                        RenderProps.Debug) },
-                fontSize: 42),
-                toggleFunc: (i, v) =>
-                {
-                    switch (i)
-                    {
-                        case 0:
-                            //RenderProps.AntiAlias = v;
-                            break;
-                        case 1:
-                            //RenderProps.HighFrameRate = v;
-                            break;
-                        case 2:
-                            RenderProps.Background = v;
-                            break;
-                        case 3:
-                            RenderProps.Debug = v;
-                            break;
-                    }
-                });
+            //SettingsLoop(new SettingsProperties(
+            //    items: new SettingsItem[] {
+            //        new SettingsItem(
+            //            onCaption: "Anti-Alias On",
+            //            offCaption: "Anti-Alias Off",
+            //            RenderProps.AntiAlias),
+            //        new SettingsItem(
+            //            onCaption: "High Frame Rate On",
+            //            offCaption: "High Frame Rate Off",
+            //            RenderProps.HighFrameRate),
+            //        new SettingsItem(
+            //            onCaption: "Background Animation On",
+            //            offCaption: "Background Animation Off",
+            //            RenderProps.Background),
+            //        new SettingsItem(
+            //            onCaption: "Debug Mode On",
+            //            offCaption: "Debug Mode Off",
+            //            RenderProps.Debug) },
+            //    fontSize: 42),
+            //    toggleFunc: (i, v) =>
+            //    {
+            //        switch (i)
+            //        {
+            //            case 0:
+            //                RenderProps.AntiAlias = v;
+            //                RenderProps.ResetSkia();
+            //                break;
+            //            case 1:
+            //                RenderProps.HighFrameRate = v;
+            //                break;
+            //            case 2:
+            //                RenderProps.Background = v;
+            //                break;
+            //            case 3:
+            //                RenderProps.Debug = v;
+            //                break;
+            //        }
+            //    });
 
             //get player initials
             if (String.IsNullOrWhiteSpace(_config.Initials))
@@ -260,13 +266,13 @@ namespace Bricker.Game
                             _communications.ConnectionState != ConnectionState.Disabled,
                             true,
                             true },
-                        allowEsc: false,
+                        allowEsc: _gameState == GameState.GamePaused,
                         allowPlayerInvite: true,
                         width: 400,
                         height: 380));
 
                 //resume, run game loop
-                if (selection == MenuSelection.Resume)
+                if ((selection == MenuSelection.Resume) || ((_gameState == GameState.GamePaused) && (selection == MenuSelection.None)))
                 {
                     GameLoop(newGame: false);
                 }
@@ -299,7 +305,44 @@ namespace Bricker.Game
                 //settings
                 else if (selection == MenuSelection.Settings)
                 {
-
+                    SettingsLoop(new SettingsProperties(
+                    items: new SettingsItem[] {
+                            new SettingsItem(
+                                onCaption: "Anti-Alias On",
+                                offCaption: "Anti-Alias Off",
+                                RenderProps.AntiAlias),
+                            new SettingsItem(
+                                onCaption: "High Frame Rate On",
+                                offCaption: "High Frame Rate Off",
+                                RenderProps.HighFrameRate),
+                            new SettingsItem(
+                                onCaption: "Background Animation On",
+                                offCaption: "Background Animation Off",
+                                RenderProps.Background),
+                            new SettingsItem(
+                                onCaption: "Debug Mode On",
+                                offCaption: "Debug Mode Off",
+                                RenderProps.Debug) },
+                    fontSize: 42),
+                    toggleFunc: (i, v) =>
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                RenderProps.AntiAlias = v;
+                                RenderProps.ResetSkia();
+                                break;
+                            case 1:
+                                RenderProps.HighFrameRate = v;
+                                break;
+                            case 2:
+                                RenderProps.Background = v;
+                                break;
+                            case 3:
+                                RenderProps.Debug = v;
+                                break;
+                        }
+                    });
                 }
 
                 //quit program

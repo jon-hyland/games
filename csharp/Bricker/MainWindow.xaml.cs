@@ -1,4 +1,5 @@
 ﻿using Bricker.Game;
+using Common.Windows.Rendering;
 using System;
 using System.Windows;
 using System.Windows.Threading;
@@ -12,7 +13,8 @@ namespace Bricker
     {
         //private
         private readonly Main _main;
-        private readonly DispatcherTimer _timer;
+        private DispatcherTimer _timer;
+        private bool _highFrameRate;
 
         /// <summary>
         /// Class constructor.
@@ -24,7 +26,8 @@ namespace Bricker
 
             //vars
             _main = new Main(this);
-            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(_main.Config.HighFrameRate ? 15 : 30), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
+            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(_main.Config.HighFrameRate ? 15 : 45), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
+            _highFrameRate = _main.Config.HighFrameRate;
 
             //events
             _skia.PaintSurface += (s, e) => _main.DrawFrame(e);
@@ -42,6 +45,12 @@ namespace Bricker
         /// </summary>
         private void Timer_Callback(object s, EventArgs e)
         {
+            if (RenderProps.HighFrameRate != _highFrameRate)
+            {
+                _highFrameRate = RenderProps.HighFrameRate;
+                _timer.Stop();
+                _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(RenderProps.HighFrameRate ? 15 : 45), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
+            }
             _skia.InvalidateVisual();
         }
     }
