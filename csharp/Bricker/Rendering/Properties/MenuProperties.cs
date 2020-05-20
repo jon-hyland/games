@@ -5,63 +5,62 @@ namespace Bricker.Rendering.Properties
 {
     public class MenuProperties
     {
-        public string[] Options { get; }
-        public double OptionsSize { get; }
-        public bool[] EnabledOptions { get; }
+        public string[] Items { get; }
+        public double FontSize { get; }
+        public bool[] EnabledItems { get; }
         public string[] Header { get; }
         public double HeaderSize { get; }
         public bool AllowEsc { get; }
         public bool AllowPlayerInvite { get; }
-        public int SelectionIndex { get; private set; }
+        public int SelectedIndex { get; private set; }
         public double Width { get; set; }
         public double Height { get; set; }
         public double CalculatedHeight { get; set; }
         public double HeaderLineHeight { get; set; }
-        public double OptionLineHeight { get; set; }
+        public double ItemLineHeight { get; set; }
 
-        public MenuProperties(string[] options, double optionsSize = 42, bool[] enabledOptions = null, string[] header = null, double headerSize = 24, bool allowEsc = false, bool allowPlayerInvite = false, int selectionIndex = 0, double width = Double.NaN, double height = Double.NaN)
+        public MenuProperties(string[] items, double fontSize = 42, bool[] enabledItems = null, string[] header = null, double headerSize = 24, bool allowEsc = false, bool allowPlayerInvite = false, int selectedIndex = 0, double width = Double.NaN, double height = Double.NaN)
         {
-            Options = options;
-            OptionsSize = optionsSize;
-            EnabledOptions = enabledOptions ?? Enumerable.Repeat(true, options.Length).ToArray();
-            if (EnabledOptions.Length != options.Length)
+            Items = items;
+            FontSize = fontSize;
+            EnabledItems = enabledItems ?? Enumerable.Repeat(true, items.Length).ToArray();
+            if (EnabledItems.Length != items.Length)
                 throw new Exception("Array lengths do not match");
-            if (!EnabledOptions.Where(o => o == true).Any())
+            if (!EnabledItems.Where(o => o == true).Any())
                 throw new Exception("All options cannot be disabled");
             Header = header ?? new string[0];
             HeaderSize = headerSize;
             AllowEsc = allowEsc;
             AllowPlayerInvite = allowPlayerInvite;
-            SelectionIndex = selectionIndex;
+            SelectedIndex = selectedIndex;
             Width = width;
             Height = height;
             CalculatedHeight = Double.NaN;
             HeaderLineHeight = Double.NaN;
-            OptionLineHeight = Double.NaN;
-            while (!EnabledOptions[SelectionIndex])
+            ItemLineHeight = Double.NaN;
+            while (!EnabledItems[SelectedIndex])
                 IncrementSelection();
         }
 
         public int IncrementSelection()
         {
-            SelectionIndex++;
-            if (SelectionIndex >= Options.Length)
-                SelectionIndex = 0;
-            if (!EnabledOptions[SelectionIndex])
+            SelectedIndex++;
+            if (SelectedIndex >= Items.Length)
+                SelectedIndex = 0;
+            if (!EnabledItems[SelectedIndex])
                 return IncrementSelection();
-            return SelectionIndex;
+            return SelectedIndex;
         }
 
         public int DecrementSelection()
         {
-            SelectionIndex--;
-            if (SelectionIndex < 0)
-                SelectionIndex = Options.Length - 1;
-            if (!EnabledOptions[SelectionIndex])
+            SelectedIndex--;
+            if (SelectedIndex < 0)
+                SelectedIndex = Items.Length - 1;
+            if (!EnabledItems[SelectedIndex])
                 return DecrementSelection();
-            return SelectionIndex;
+            return SelectedIndex;
         }
-
-
     }
+
 }

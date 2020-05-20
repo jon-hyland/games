@@ -69,6 +69,7 @@ X - Design game over behavior and communications.
 - Settings Menu:
   * Config settings.
   * Reset high scores.
+
 - Refactoring (player, opponent, etc).  ErrorHandler like Log.
 - Improve game animation.
 - Add music and sound effects.

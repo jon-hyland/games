@@ -182,6 +182,43 @@ namespace Bricker.Game
             //        size: 18,
             //        topMargin: 10,
             //        alignment: Alignment.Right) }));
+            SettingsLoop(new SettingsProperties(
+                items: new SettingsItem[] {
+                    new SettingsItem(
+                        onCaption: "Anti-Alias On",
+                        offCaption: "Anti-Alias Off",
+                        RenderProps.AntiAlias),
+                    new SettingsItem(
+                        onCaption: "High Frame Rate On",
+                        offCaption: "High Frame Rate Off",
+                        RenderProps.HighFrameRate),
+                    new SettingsItem(
+                        onCaption: "Background Animation On",
+                        offCaption: "Background Animation Off",
+                        RenderProps.Background),
+                    new SettingsItem(
+                        onCaption: "Debug Mode On",
+                        offCaption: "Debug Mode Off",
+                        RenderProps.Debug) },
+                fontSize: 42),
+                toggleFunc: (i, v) =>
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            //RenderProps.AntiAlias = v;
+                            break;
+                        case 1:
+                            //RenderProps.HighFrameRate = v;
+                            break;
+                        case 2:
+                            RenderProps.Background = v;
+                            break;
+                        case 3:
+                            RenderProps.Debug = v;
+                            break;
+                    }
+                });
 
             //get player initials
             if (String.IsNullOrWhiteSpace(_config.Initials))
@@ -211,16 +248,16 @@ namespace Bricker.Game
                 //main menu loop
                 if (selection == MenuSelection.None)
                     selection = (MenuSelection)MenuLoop(new MenuProperties(
-                        options: new string[] { 
-                            "resume", 
-                            "new game", 
+                        items: new string[] {
+                            "resume",
+                            "new game",
                             "two player",
                             "settings",
                             "quit" },
-                        enabledOptions: new bool[] { 
-                            _gameState == GameState.GamePaused, 
-                            true, 
-                            _communications.ConnectionState != ConnectionState.Disabled, 
+                        enabledItems: new bool[] {
+                            _gameState == GameState.GamePaused,
+                            true,
+                            _communications.ConnectionState != ConnectionState.Disabled,
                             true,
                             true },
                         allowEsc: false,
@@ -535,7 +572,7 @@ namespace Bricker.Game
                     //enter
                     else if (key == Key.Enter)
                     {
-                        return props.SelectionIndex;
+                        return props.SelectedIndex;
                     }
 
                     //esc
@@ -561,6 +598,84 @@ namespace Bricker.Game
             {
                 //clear properties from renderer
                 _renderer.MenuProps = null;
+            }
+        }
+
+        /// <summary>
+        /// Enters a generic settings loop defined by the specified properties object.
+        /// Returns -1 on exit (Esc), or -2 for opponent invite.
+        /// </summary>
+        private int SettingsLoop(SettingsProperties props, Action<int, bool> toggleFunc)
+        {
+            try
+            {
+                //push properties to renderer
+                _renderer.SettingProps = props;
+
+                //event loop
+                while (true)
+                {
+                    //return if opponent invite
+                    if (_pendingOpponent != null)
+                        return -2;
+
+                    //get next key press
+                    Key key = Key.None;
+                    lock (_keyQueue)
+                    {
+                        if (_keyQueue.Count > 0)
+                            key = _keyQueue.Dequeue();
+                    }
+
+                    //no key?
+                    if (key == Key.None)
+                    {
+                        Thread.Sleep(15);
+                        continue;
+                    }
+
+                    //up
+                    else if ((key == Key.Left) || (key == Key.Up))
+                    {
+                        props.DecrementSelection();
+                    }
+
+                    //down
+                    else if ((key == Key.Right) || (key == Key.Down))
+                    {
+                        props.IncrementSelection();
+                    }
+
+                    //enter
+                    else if (key == Key.Enter)
+                    {
+                        props.Items[props.SelectedIndex].Value = !props.Items[props.SelectedIndex].Value;
+                        toggleFunc(props.SelectedIndex, props.Items[props.SelectedIndex].Value);
+                    }
+
+                    //esc
+                    else if (key == Key.Escape)
+                    {
+                        return -1;
+                    }
+
+                    //background
+                    else if (key == Key.B)
+                    {
+                        RenderProps.Background = !RenderProps.Background;
+                    }
+
+                    //debug
+                    else if (key == Key.D)
+                    {
+                        RenderProps.Debug = !RenderProps.Debug;
+                    }
+                }
+            }
+            finally
+            {
+                //clear properties from renderer
+                _renderer.SettingProps = null;
             }
         }
 

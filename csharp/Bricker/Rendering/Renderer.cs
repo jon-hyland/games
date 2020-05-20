@@ -33,6 +33,7 @@ namespace Bricker.Rendering
         private readonly SKPaint _rectPaint;
         private readonly SKPaint _textPaint;
         private MenuProperties _menuProps;
+        private SettingsProperties _settingProps;
         private InitialsEntryProperties _initialProps;
         private MessageProperties _messageProps;
         private LobbyProperties _lobbyProps;
@@ -73,6 +74,7 @@ namespace Bricker.Rendering
         public double FrameWidth => _frame_Width;
         public double FrameHeight => _frame_Height;
         public MenuProperties MenuProps { get => _menuProps; set => _menuProps = value; }
+        public SettingsProperties SettingProps { get => _settingProps; set => _settingProps = value; }
         public InitialsEntryProperties InitialProps { get => _initialProps; set => _initialProps = value; }
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
         public LobbyProperties LobbyProps { get => _lobbyProps; set => _lobbyProps = value; }
@@ -239,6 +241,9 @@ namespace Bricker.Rendering
 
                 //menu
                 DrawMenu(frame);
+
+                //settings
+                DrawSettings(frame);
 
                 //score entry
                 DrawInitialsEntry(frame);
@@ -568,12 +573,12 @@ namespace Bricker.Rendering
 
             double vertSpacing = 26;
             double horizSpacing = 42;
-            double optionSpacing = 22;
+            double itemSpacing = 22;
 
             if ((props.Width is Double.NaN) || (props.Height is Double.NaN) || (props.CalculatedHeight is Double.NaN))
             {
                 double maxWidth = 0, totalHeight = 0;
-                double headerLineHeight = 0, optionLineHeight = 0;
+                double headerLineHeight = 0, itemLineHeight = 0;
                 foreach (string header in props.Header)
                 {
                     Surface.MeasureText(header, props.HeaderSize, out double w, out double h);
@@ -582,20 +587,20 @@ namespace Bricker.Rendering
                     totalHeight += h;
                     headerLineHeight = h;
                 }
-                foreach (string option in props.Options)
+                foreach (string item in props.Items)
                 {
-                    Surface.MeasureText(option, props.OptionsSize, out double w, out double h);
+                    Surface.MeasureText(item, props.FontSize, out double w, out double h);
                     if (w > maxWidth)
                         maxWidth = w;
                     totalHeight += h;
-                    optionLineHeight = h;
+                    itemLineHeight = h;
                 }
                 props.Width = props.Width is Double.NaN ? (2 + horizSpacing + maxWidth + horizSpacing + 2) : props.Width;
                 double headerHeight = props.Header.Length > 0 ? vertSpacing : 0;
-                props.CalculatedHeight = 2 + totalHeight + vertSpacing + headerHeight + (optionSpacing * (props.Options.Length - 1)) + vertSpacing + 2;
+                props.CalculatedHeight = 2 + totalHeight + vertSpacing + headerHeight + (itemSpacing * (props.Items.Length - 1)) + vertSpacing + 2;
                 props.Height = Math.Max(props.Height is Double.NaN ? props.CalculatedHeight : props.Height, props.CalculatedHeight);
                 props.HeaderLineHeight = headerLineHeight;
-                props.OptionLineHeight = optionLineHeight;
+                props.ItemLineHeight = itemLineHeight;
             }
 
             double width = props.Width, height = props.Height;
@@ -622,16 +627,97 @@ namespace Bricker.Rendering
                     y += vertSpacing;
                 }
 
-                for (int i = 0; i < props.Options.Length; i++)
+                for (int i = 0; i < props.Items.Length; i++)
                 {
                     if (i > 0)
-                        y += optionSpacing;
-                    string option = props.Options[i];
-                    SKColor color = i == props.SelectionIndex ? Colors.FluorescentOrange : Colors.White;
-                    if (!props.EnabledOptions[i])
+                        y += itemSpacing;
+                    string item = props.Items[i];
+                    SKColor color = i == props.SelectedIndex ? Colors.FluorescentOrange : Colors.White;
+                    if (!props.EnabledItems[i])
                         color = Colors.Gray;
-                    surface.DrawText_Centered(color, option, props.OptionsSize, y);
-                    y += props.OptionLineHeight;
+                    surface.DrawText_Centered(color, item, props.FontSize, y);
+                    y += props.ItemLineHeight;
+                }
+
+                frame.Blit(surface, (_frame_Width - width) / 2, (_frame_Height - height) / 2);
+            }
+        }
+
+        /// <summary>
+        /// Draws settings menu.
+        /// </summary>
+        private void DrawSettings(Surface frame)
+        {
+            SettingsProperties props = _settingProps;
+            if (props == null)
+                return;
+
+            double vertSpacing = 26;
+            double horizSpacing = 42;
+            double itemSpacing = 22;
+
+            if ((props.Width is Double.NaN) || (props.Height is Double.NaN) || (props.CalculatedHeight is Double.NaN))
+            {
+                double maxWidth = 0, totalHeight = 0;
+                double /*headerLineHeight = 0, */itemLineHeight = 0;
+                //foreach (string header in props.Header)
+                //{
+                //    Surface.MeasureText(header, props.HeaderSize, out double w, out double h);
+                //    if (w > maxWidth)
+                //        maxWidth = w;
+                //    totalHeight += h;
+                //    headerLineHeight = h;
+                //}
+                foreach (SettingsItem item in props.Items)
+                {
+                    Surface.MeasureText(item.OffCaption, props.FontSize, out double w, out double h);
+                    if (w > maxWidth)
+                        maxWidth = w;
+                    totalHeight += h;
+                    itemLineHeight = h;
+                }
+                props.Width = props.Width is Double.NaN ? (2 + horizSpacing + maxWidth + horizSpacing + 2) : props.Width;
+                //double headerHeight = props.Header.Length > 0 ? vertSpacing : 0;
+                props.CalculatedHeight = 2 + totalHeight + vertSpacing + /*headerHeight +*/ (itemSpacing * (props.Items.Length - 1)) + vertSpacing + 2;
+                props.Height = Math.Max(props.Height is Double.NaN ? props.CalculatedHeight : props.Height, props.CalculatedHeight);
+                //props.HeaderLineHeight = headerLineHeight;
+                props.ItemLineHeight = itemLineHeight;
+            }
+
+            double width = props.Width, height = props.Height;
+            double y = vertSpacing + ((props.Height - props.CalculatedHeight) / 2d);
+            using (Surface surface = new Surface(width, height, Colors.Black))
+            {
+                surface.DrawLine(Colors.White, 0, 0, width - 1, 0, 1);
+                surface.DrawLine(Colors.White, 0, 1, width - 1, 1, 1);
+                surface.DrawLine(Colors.White, 0, height - 2, width - 1, height - 2, 1);
+                surface.DrawLine(Colors.White, 0, height - 1, width - 1, height - 1, 1);
+                surface.DrawLine(Colors.White, 0, 0, 0, height - 1, 1);
+                surface.DrawLine(Colors.White, 1, 0, 1, height - 1, 1);
+                surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
+                surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
+
+                //if (props.Header.Length > 0)
+                //{
+                //    for (int i = 0; i < props.Header.Length; i++)
+                //    {
+                //        string header = props.Header[i];
+                //        surface.DrawText_Centered(Colors.White, header, props.HeaderSize, y);
+                //        y += props.HeaderLineHeight;
+                //    }
+                //    y += vertSpacing;
+                //}
+
+                for (int i = 0; i < props.Items.Length; i++)
+                {
+                    if (i > 0)
+                        y += itemSpacing;
+                    string item = props.Items[i].Caption;
+                    SKColor color = i == props.SelectedIndex ? Colors.FluorescentOrange : Colors.White;
+                    //if (!props.EnabledItems[i])
+                    //    color = Colors.Gray;
+                    surface.DrawText_Centered(color, item, props.FontSize, y);
+                    y += props.ItemLineHeight;
                 }
 
                 frame.Blit(surface, (_frame_Width - width) / 2, (_frame_Height - height) / 2);
