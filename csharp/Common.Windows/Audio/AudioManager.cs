@@ -10,29 +10,29 @@ namespace Common.Audio
     {
         //private
         private readonly AudioEngine _engine;
-        private readonly Dictionary<int, Sound> _sounds;
+        private readonly Dictionary<int, CachedSound> _sounds;
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public AudioManager(IEnumerable<Sound> sounds, int sampleRate = 44100, int channels = 2)
+        public AudioManager(IEnumerable<SoundSample> sounds, int sampleRate = 48000, int channels = 2)
         {
             _engine = new AudioEngine(sampleRate, channels);
-            _sounds = new Dictionary<int, Sound>();
-            foreach (Sound s in sounds)
+            _sounds = new Dictionary<int, CachedSound>();
+            foreach (SoundSample s in sounds)
                 if (!_sounds.ContainsKey(s.ID))
-                    _sounds.Add(s.ID, s);
+                    _sounds.Add(s.ID, new CachedSound(s.File, sampleRate, channels, s.Volume));
         }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public AudioManager(IList<string> files, int sampleRate = 44100, int channels = 2)
+        public AudioManager(IList<string> files, int sampleRate = 48000, int channels = 2)
         {
             _engine = new AudioEngine(sampleRate, channels);
-            _sounds = new Dictionary<int, Sound>();
+            _sounds = new Dictionary<int, CachedSound>();
             for (int i = 0; i < files.Count; i++)
-                _sounds.Add(i, new Sound(i, files[i]));
+                _sounds.Add(i, new CachedSound(files[i], sampleRate, channels));
         }
 
         /// <summary>
@@ -48,17 +48,15 @@ namespace Common.Audio
         /// </summary>
         public void PlaySound(int id)
         {
-            _engine.PlaySound(_sounds[id].Cache);
+            _engine.PlaySound(_sounds[id]);
         }
 
         /// <summary>
         /// Plays specified sound on a loop.
         /// </summary>
-        public void PlayLoop(int id, bool stopAllLoops = true)
+        public void PlayLoop(int id, bool stopOtherLoops = true)
         {
-            if (stopAllLoops)
-                _engine.StopAllLoops();
-            _engine.PlayLoop(_sounds[id].Cache);
+            _engine.PlayLoop(_sounds[id], stopOtherLoops);
         }
 
         /// <summary>
@@ -66,7 +64,7 @@ namespace Common.Audio
         /// </summary>
         public void StopLoop(int id)
         {
-            _engine.StopLoop(_sounds[id].Cache);
+            _engine.StopLoop(_sounds[id]);
         }
 
         /// <summary>
@@ -81,17 +79,17 @@ namespace Common.Audio
     /// <summary>
     /// Represents a sound that can be played.
     /// </summary>
-    public class Sound
+    public class SoundSample
     {
         public int ID { get; }
         public string File { get; }
-        public CachedSound Cache { get; }
+        public float Volume { get; }
 
-        public Sound(int id, string file)
+        public SoundSample(int id, string file, float volume = 1.0f)
         {
             ID = id;
             File = file;
-            Cache = new CachedSound(file);
+            Volume = volume;
         }
     }
 

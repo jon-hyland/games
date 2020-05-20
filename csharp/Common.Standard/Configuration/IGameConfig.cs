@@ -10,6 +10,7 @@ namespace Common.Standard.Configuration
         string DisplayVersion { get; }
         IPAddress LocalIP { get; }
         string ApplicationFolder { get; }
+        string AudioSampleFolder { get; }
         string ConfigFile { get; }
         string FontFile { get; }
         bool AntiAlias { get; }

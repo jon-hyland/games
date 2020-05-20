@@ -18,6 +18,7 @@ namespace Bricker.Configuration
         public string DisplayVersion { get; }
         public IPAddress LocalIP { get; }
         public string ApplicationFolder { get; }
+        public string AudioSampleFolder { get; }
         public string ConfigFile { get; }
         public string LogFile { get; }
         public string FontFile { get; }
@@ -39,6 +40,7 @@ namespace Bricker.Configuration
             DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
             LocalIP = InterfaceDiscovery.GetLocalIP();
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            AudioSampleFolder = Path.Combine(ApplicationFolder, "Samples");
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             LogFile = Path.Combine(ApplicationFolder, "LogFile.txt");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
@@ -58,7 +60,7 @@ namespace Bricker.Configuration
             catch
             {
                 ServerIP = DnsHelper.ResolveHost((string)data.multiplayer.server);
-            }            
+            }
             ServerPort = (ushort)data.multiplayer.port;
             Initials = LoadInitials();
         }

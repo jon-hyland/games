@@ -9,21 +9,30 @@ namespace Common.Audio
     /// <summary>
     /// Opens constant output connection to audio device, continuously sends audio data (silence if nothing playing),
     /// allows mixing of multiple audio signals, preloading/caching of sounds, and looping background sound (for music).
+    /// Converts sounds to proper sample rate and channel number.
     /// http://mark-dot-net.blogspot.com/2014/02/fire-and-forget-audio-playback-with.html
     /// </summary>
     public class AudioEngine : IDisposable
     {
         //private
+        private readonly int _sampleRate;
+        private readonly int _channels;
         private readonly IWavePlayer _outputDevice;
         private readonly MixingSampleProvider _mixer;
         private readonly List<CachedSoundProvider> _loops;
 
+        //public
+        public int SampleRate => _sampleRate;
+        public int Channels => _channels;
+
         /// <summary>
         /// Class constructor,
         /// </summary>
-        public AudioEngine(int sampleRate = 44100, int channels = 2)
+        public AudioEngine(int sampleRate = 48000, int channels = 2, int latency = 50)
         {
-            _outputDevice = new DirectSoundOut(50);
+            _sampleRate = sampleRate;
+            _channels = channels;
+            _outputDevice = new DirectSoundOut(latency);
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels));
             _loops = new List<CachedSoundProvider>();
             _mixer.ReadFully = true;
@@ -89,14 +98,17 @@ namespace Common.Audio
         }
 
         /// <summary>
-        /// Plays a cached sound, looping forever until stop.  Allows only one instance of specified sound.
+        /// Plays a cached sound, looping forever until stop.  Keeps playing if already looping specified sound.
         /// </summary>
-        public void PlayLoop(CachedSound sound)
+        public void PlayLoop(CachedSound sound, bool stopOtherLoops = true)
         {
             CachedSoundProvider provider;
             lock (_loops)
             {
-                StopLoop(sound);
+                if (stopOtherLoops)
+                    _loops.Where(p => p.Sound != sound).ToList().ForEach(p => StopLoop(p.Sound));
+                if (_loops.Where(p => p.Sound == sound).Any())
+                    return;
                 provider = new CachedSoundProvider(sound);
                 _loops.Add(provider);
             }
@@ -165,18 +177,36 @@ namespace Common.Audio
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public CachedSound(string file)
+        public CachedSound(string file, int sampleRate, int channels, float volume = 1.0f)
         {
-            //todo: add resampling
             using (AudioFileReader reader = new AudioFileReader(file))
             {
-                WaveFormat = reader.WaveFormat;
-                List<float> wholeFile = new List<float>((int)(reader.Length / 4));
-                float[] buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
-                int samplesRead;
-                while ((samplesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-                    wholeFile.AddRange(buffer.Take(samplesRead));
-                AudioData = wholeFile.ToArray();
+                reader.Volume = volume;
+                if ((reader.WaveFormat.SampleRate == sampleRate) && (reader.WaveFormat.Channels == channels))
+                {
+                    List<float> wholeFile = new List<float>((int)(reader.Length / 4));
+                    float[] buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                    int samplesRead;
+                    while ((samplesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
+                        wholeFile.AddRange(buffer.Take(samplesRead));
+                    AudioData = wholeFile.ToArray();
+                    WaveFormat = reader.WaveFormat;
+                }
+                else
+                {
+                    WaveFormat newFormat = new WaveFormat(sampleRate, channels);
+                    using (MediaFoundationResampler resampler = new MediaFoundationResampler(reader, newFormat))
+                    {
+                        ISampleProvider sampleProvider = resampler.ToSampleProvider();
+                        List<float> wholeFile = new List<float>();
+                        float[] buffer = new float[newFormat.SampleRate * newFormat.Channels];
+                        int samplesRead;
+                        while ((samplesRead = sampleProvider.Read(buffer, 0, buffer.Length)) > 0)
+                            wholeFile.AddRange(buffer.Take(samplesRead));
+                        AudioData = wholeFile.ToArray();
+                        WaveFormat = newFormat;
+                    }
+                }
             }
         }
     }

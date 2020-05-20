@@ -3,8 +3,8 @@ using Bricker.Configuration;
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
-using Common.Audio;
 using Common.Standard.Error;
+using Common.Standard.Extensions;
 using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
@@ -13,7 +13,6 @@ using Common.Windows.Rendering;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Threading;
 using System.Windows;
@@ -39,7 +38,6 @@ namespace Bricker.Game
         private readonly Renderer _renderer;
         private readonly Matrix _matrix;
         private readonly Random _random;
-        private readonly SoundManager _sounds;
         private GameStats _stats;
         private List<ExplodingSpace> _spaces;
         private readonly double[] _levelDropIntervals;
@@ -68,7 +66,6 @@ namespace Bricker.Game
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
             _random = new Random();
-            _sounds = new SoundManager(_config);
             _stats = new GameStats(_config);
             _spaces = null;
             _levelDropIntervals = new double[10];
@@ -82,6 +79,7 @@ namespace Bricker.Game
             Log.Initiallize(_logger);
             ErrorHandler.Initialize(_logger);
             _window.Title = $"Bricker v{_config.DisplayVersion}";
+            Sounds.Initialize(_config);
 
             //events
             _communications.OpponentInviteReceived += (o) =>
@@ -150,7 +148,6 @@ namespace Bricker.Game
                 IsBackground = true
             };
             _sendStatusThread.Start();
-            _sounds.PlayLoop(Sounds.Music1);
         }
 
         #endregion
@@ -164,6 +161,9 @@ namespace Bricker.Game
         {
             //set flag
             _gameState = GameState.NotPlaying;
+
+            //play loop
+            Sounds.Loop(Sound.Music2);
 
             //start game communications
             _communications.Start();
@@ -241,6 +241,9 @@ namespace Bricker.Game
             //program loop
             while (true)
             {
+                //play loop
+                Sounds.Loop(Sound.Music2);
+
                 //opponent invite
                 if (_pendingOpponent != null)
                     OpponentResponseLoop();
@@ -380,6 +383,9 @@ namespace Bricker.Game
 
             //set flag
             _gameState = GameState.GameLive;
+
+            //change loop
+            Sounds.Loop(Sound.Music1);
 
             //event loop
             while (true)
@@ -604,26 +610,31 @@ namespace Bricker.Game
                     //up
                     else if ((key == Key.Left) || (key == Key.Up))
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.DecrementSelection();
-                        _sounds.PlaySound(Sounds.Test1);
                     }
 
                     //down
                     else if ((key == Key.Right) || (key == Key.Down))
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.IncrementSelection();
-                        _sounds.PlaySound(Sounds.Test1);
                     }
 
                     //enter
                     else if (key == Key.Enter)
                     {
+                        if (props.Items[props.SelectedIndex].In("new game", "resume"))
+                            Sounds.Play(Sound.MenuSelect2);
+                        else
+                            Sounds.Play(Sound.MenuSelect1);
                         return props.SelectedIndex;
                     }
 
                     //esc
                     else if ((props.AllowEsc) && (key == Key.Escape))
                     {
+                        Sounds.Play(Sound.MenuBack1);
                         return -1;
                     }
 
