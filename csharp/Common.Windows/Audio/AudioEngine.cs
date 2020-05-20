@@ -139,6 +139,11 @@ namespace Common.Audio
         /// </summary>
         public void Dispose()
         {
+            lock (_loops)
+            {
+                foreach (CachedSoundProvider p in _loops)
+                    p.Stop();
+            }
             _outputDevice?.Dispose();
         }
 

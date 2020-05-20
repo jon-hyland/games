@@ -11,7 +11,14 @@ namespace Common.Standard.Networking
         /// </summary>
         public static IPAddress ResolveHost(string host)
         {
-            IPAddress ip = Dns.GetHostEntry(host).AddressList.FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork);
+            IPAddress ip = null;
+            try
+            {
+                ip = Dns.GetHostEntry(host).AddressList.FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork);
+            }
+            catch
+            {
+            }
             return ip ?? IPAddress.None;
         }
     }

@@ -1,4 +1,5 @@
-﻿using Bricker.Configuration;
+﻿using Bricker.Audio;
+using Bricker.Configuration;
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
@@ -67,7 +68,7 @@ namespace Bricker.Game
             _renderer = new Renderer(window, _config);
             _matrix = new Matrix();
             _random = new Random();
-            _sounds = new SoundManager();
+            _sounds = new SoundManager(_config);
             _stats = new GameStats(_config);
             _spaces = null;
             _levelDropIntervals = new double[10];
@@ -149,7 +150,7 @@ namespace Bricker.Game
                 IsBackground = true
             };
             _sendStatusThread.Start();
-            _sounds.StartBackgroundLoop(Path.Combine(_config.ApplicationFolder, "Music1.mp3"));
+            _sounds.PlayLoop(Sounds.Music1);
         }
 
         #endregion
@@ -604,12 +605,14 @@ namespace Bricker.Game
                     else if ((key == Key.Left) || (key == Key.Up))
                     {
                         props.DecrementSelection();
+                        _sounds.PlaySound(Sounds.Test1);
                     }
 
                     //down
                     else if ((key == Key.Right) || (key == Key.Down))
                     {
                         props.IncrementSelection();
+                        _sounds.PlaySound(Sounds.Test1);
                     }
 
                     //enter
