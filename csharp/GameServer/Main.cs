@@ -31,6 +31,7 @@ namespace GameServer
                 ErrorHandler.Initialize(_logger);
 
                 //message
+                Log.Write($"===========================================");
                 Log.Write($"Game Server v{_config.DisplayVersion}  (c) 2020 John Hyland");
             }
             catch (Exception ex)

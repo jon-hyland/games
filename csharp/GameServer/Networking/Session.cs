@@ -69,6 +69,10 @@ namespace GameServer.Networking
 
         public Player GetTimedoutPlayer(int timeoutMs)
         {
+            if (Player1.QuitGame)
+                return Player1;
+            if (Player2.QuitGame)
+                return Player2;
             Player lastToCheckIn = Player1.TimeSinceLastHeartbeat.TotalMilliseconds >= Player2.TimeSinceLastHeartbeat.TotalMilliseconds ? Player1 : Player2;
             if (lastToCheckIn.TimeSinceLastHeartbeat.TotalMilliseconds > timeoutMs)
                 return lastToCheckIn;

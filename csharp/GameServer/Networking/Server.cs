@@ -173,7 +173,7 @@ namespace GameServer.Networking
             lock (_players)
             {
                 List<Player> expired = _players
-                    .Where(p => p.TimeSinceLastHeartbeat.TotalMinutes > 1)
+                    .Where(p => (p.TimeSinceLastHeartbeat.TotalMinutes > 1) || (p.QuitGame))
                     .ToList();
                 foreach (Player p in expired)
                 {
@@ -254,6 +254,9 @@ namespace GameServer.Networking
             }
         }
 
+        /// <summary>
+        /// Confirms a session between two players.
+        /// </summary>
         private void ConfirmSession(int player1Key, int player2Key)
         {
             Session session = GetSession(player1Key, player2Key);
@@ -292,7 +295,10 @@ namespace GameServer.Networking
                         Player expiredPlayer = session.GetTimedoutPlayer(timeoutMs: 10000);
                         if (expiredPlayer != null)
                         {
-                            Log.Write($"Player '{expiredPlayer.IP}' hasn't send heartbeat in {expiredPlayer.TimeSinceLastHeartbeat.TotalSeconds.ToString("0.0")} seconds");
+                            if (expiredPlayer.QuitGame)
+                                Log.Write($"Player '{expiredPlayer.IP}' has quit the game");
+                            else
+                                Log.Write($"Player '{expiredPlayer.IP}' hasn't send heartbeat in {expiredPlayer.TimeSinceLastHeartbeat.TotalSeconds.ToString("0.0")} seconds");
                             expired.Add(session);
                             continue;
                         }
@@ -402,6 +408,11 @@ namespace GameServer.Networking
                             Answer_GetPlayers(client, req);
                             break;
 
+                        //quit-game command
+                        case CommandType.QuitGame:
+                            Answer_QuitGame(client, req);
+                            break;
+
                         //all other commands
                         default:
                             Passthrough_Command(client, req);
@@ -471,6 +482,53 @@ namespace GameServer.Networking
             catch (Exception ex)
             {
                 Log.Write("Answer_GetPlayers: Error returning player list");
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Answers a 'QuitGame' request, responds with acceptance.
+        /// </summary>
+        private void Answer_QuitGame(Client sourceClient, CommandRequestPacket packet)
+        {
+            try
+            {
+                //message
+                Log.Write($"Received command-request '{packet.CommandType}' from '{sourceClient.RemoteIP}'");
+
+                //get source player
+                Player player = Player.FromPacket(packet);
+
+                //set quit flag
+                player.QuitGame = true;
+
+                //remove expired players
+                RemoveExpiredPlayers();
+
+                //remove expired sessions
+                RemoveExpiredSessions();
+
+                //message
+                Log.Write($"Sending command-response '{packet.CommandType}' to '{player.IP}'");
+
+                //create packet
+                CommandResponsePacket response = new CommandResponsePacket(
+                    gameTitle: player.GameTitle,
+                    gameVersion: player.GameVersion,
+                    sourceIP: _ip,
+                    destinationIP: player.IP,
+                    playerName: player.Name,
+                    commandType: CommandType.QuitGame,
+                    sequence: packet.Sequence,
+                    code: ResultCode.Accept,
+                    data: null);
+
+                //send response back to source
+                sourceClient.SendPacket(response);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Answer_QuitGame: Unknown error");
                 ErrorHandler.LogError(ex);
             }
         }

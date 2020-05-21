@@ -1,5 +1,4 @@
 ﻿using Common.Standard.Logging;
-using Common.Windows.Rendering;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -40,14 +39,15 @@ namespace Bricker.Logging
         {
             try
             {
-                if (!RenderProps.Debug)
-                    return;
+                //if (!RenderProps.Debug)
+                //    return;
                 string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(message)}";
                 lock (_writer)
                 {
                     Debug.WriteLine(line);
                     _writer.WriteLine(line);
                 }
+                _writer.Flush();
             }
             catch
             {
@@ -61,14 +61,15 @@ namespace Bricker.Logging
         {
             try
             {
-                if (!RenderProps.Debug)
-                    return;
+                //if (!RenderProps.Debug)
+                //    return;
                 string line = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\tError: {Clean(ex?.ToString())}";
                 lock (_writer)
                 {
                     Debug.WriteLine(line);
                     _writer.WriteLine(line);
                 }
+                _writer.Flush();
             }
             catch
             {

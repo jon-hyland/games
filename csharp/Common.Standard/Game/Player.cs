@@ -19,6 +19,7 @@ namespace Common.Standard.Game
         public DateTime LastHeartbeat { get; set; }
         public TimeSpan TimeSinceLastHeartbeat => DateTime.Now - LastHeartbeat;
         public ushort InviteSequence { get; set; }
+        public bool QuitGame { get; set; }
         public int UniqueKey { get; }
 
         /// <summary>
@@ -33,6 +34,7 @@ namespace Common.Standard.Game
             FirstHeartbeat = DateTime.Now;
             LastHeartbeat = DateTime.Now;
             InviteSequence = inviteSequence;
+            QuitGame = false;
             UniqueKey = $"{IP}|{GameTitle}|{GameVersion}".GetHashCode();
         }
 

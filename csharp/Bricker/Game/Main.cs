@@ -108,17 +108,18 @@ namespace Bricker.Game
             }
         }
 
+        #endregion
+
+        #region Window Events
+
         /// <summary>
         /// Fired when main window is closing.
         /// </summary>
         public void WindowClosing()
         {
+            SendQuitGame();
             _logger?.Dispose();
         }
-
-        #endregion
-
-        #region Window Events
 
         /// <summary>
         /// Logs a user keypress for processing.
@@ -165,161 +166,163 @@ namespace Bricker.Game
         /// </summary>
         private void ProgramLoop()
         {
-            //set flag
-            _gameState = GameState.NotPlaying;
-
-            //play loop
-            Sounds.Loop(Sound.Music2);
-
-            //start game communications
-            _communications.Start();
-
-            ////todo: remove!!
-            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
-            //MessageBoxLoop(new MessageProperties("This is a test.", MessageButtons.OK));
-            //MessageBoxLoop(new MessageProperties("This is a test with much more words and different buttons.", MessageButtons.CancelOK));
-            //MessageBoxLoop(new MessageProperties("Message with no buttons", MessageButtons.None));
-            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line" }, MessageButtons.OK));
-            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
-            //MessageBoxLoop(new MessageProperties(new TextLine[] { new TextLine("Message with text line one"), new TextLine("and also text line two") }, MessageButtons.NoYes));
-            //MessageBoxLoop(new MessageProperties(new TextLine[] {
-            //    new TextLine(
-            //        text:"Message with text line one plus bottom margin",
-            //        color: Colors.Coquelicot,
-            //        size: 32,
-            //        bottomMargin: 20),
-            //    new TextLine(
-            //        text:"Message with text line one plus top margin",
-            //        color: Colors.ForestGreen,
-            //        size: 18,
-            //        topMargin: 10,
-            //        alignment: Alignment.Right) }));
-            //SettingsLoop(new SettingsProperties(
-            //    items: new SettingsItem[] {
-            //        new SettingsItem(
-            //            onCaption: "Anti-Alias On",
-            //            offCaption: "Anti-Alias Off",
-            //            RenderProps.AntiAlias),
-            //        new SettingsItem(
-            //            onCaption: "High Frame Rate On",
-            //            offCaption: "High Frame Rate Off",
-            //            RenderProps.HighFrameRate),
-            //        new SettingsItem(
-            //            onCaption: "Background Animation On",
-            //            offCaption: "Background Animation Off",
-            //            RenderProps.Background),
-            //        new SettingsItem(
-            //            onCaption: "Debug Mode On",
-            //            offCaption: "Debug Mode Off",
-            //            RenderProps.Debug) },
-            //    fontSize: 42),
-            //    toggleFunc: (i, v) =>
-            //    {
-            //        switch (i)
-            //        {
-            //            case 0:
-            //                RenderProps.AntiAlias = v;
-            //                RenderProps.ResetSkia();
-            //                break;
-            //            case 1:
-            //                RenderProps.HighFrameRate = v;
-            //                break;
-            //            case 2:
-            //                RenderProps.Background = v;
-            //                break;
-            //            case 3:
-            //                RenderProps.Debug = v;
-            //                break;
-            //        }
-            //    });
-
-            //get player initials
-            if (String.IsNullOrWhiteSpace(_config.Initials))
+            try
             {
-                string initials = InitialsLoop(new string[] { "who are you?", "enter your initials" });
-                if (!String.IsNullOrWhiteSpace(_config.Initials))
-                {
-                    _config.SaveInitials(initials);
-                    _communications.ChangePlayerName(initials);
-                }
-            }
+                //set flag
+                _gameState = GameState.NotPlaying;
 
-            //program loop
-            while (true)
-            {
-                //play music, remember position in main song
-                long position = Sounds.GetLoopPosition(Sound.Music1);
-                if (position != 0)
-                    _musicPosition = position;
+                //play loop
                 Sounds.Loop(Sound.Music2);
 
-                //opponent invite
-                if (_pendingOpponent != null)
-                    OpponentResponseLoop();
+                //start game communications
+                _communications.Start();
 
-                //vars
-                MenuSelection selection = MenuSelection.None;
+                ////todo: remove!!
+                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+                //MessageBoxLoop(new MessageProperties("This is a test.", MessageButtons.OK));
+                //MessageBoxLoop(new MessageProperties("This is a test with much more words and different buttons.", MessageButtons.CancelOK));
+                //MessageBoxLoop(new MessageProperties("Message with no buttons", MessageButtons.None));
+                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line" }, MessageButtons.OK));
+                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+                //MessageBoxLoop(new MessageProperties(new TextLine[] { new TextLine("Message with text line one"), new TextLine("and also text line two") }, MessageButtons.NoYes));
+                //MessageBoxLoop(new MessageProperties(new TextLine[] {
+                //    new TextLine(
+                //        text:"Message with text line one plus bottom margin",
+                //        color: Colors.Coquelicot,
+                //        size: 32,
+                //        bottomMargin: 20),
+                //    new TextLine(
+                //        text:"Message with text line one plus top margin",
+                //        color: Colors.ForestGreen,
+                //        size: 18,
+                //        topMargin: 10,
+                //        alignment: Alignment.Right) }));
+                //SettingsLoop(new SettingsProperties(
+                //    items: new SettingsItem[] {
+                //        new SettingsItem(
+                //            onCaption: "Anti-Alias On",
+                //            offCaption: "Anti-Alias Off",
+                //            RenderProps.AntiAlias),
+                //        new SettingsItem(
+                //            onCaption: "High Frame Rate On",
+                //            offCaption: "High Frame Rate Off",
+                //            RenderProps.HighFrameRate),
+                //        new SettingsItem(
+                //            onCaption: "Background Animation On",
+                //            offCaption: "Background Animation Off",
+                //            RenderProps.Background),
+                //        new SettingsItem(
+                //            onCaption: "Debug Mode On",
+                //            offCaption: "Debug Mode Off",
+                //            RenderProps.Debug) },
+                //    fontSize: 42),
+                //    toggleFunc: (i, v) =>
+                //    {
+                //        switch (i)
+                //        {
+                //            case 0:
+                //                RenderProps.AntiAlias = v;
+                //                RenderProps.ResetSkia();
+                //                break;
+                //            case 1:
+                //                RenderProps.HighFrameRate = v;
+                //                break;
+                //            case 2:
+                //                RenderProps.Background = v;
+                //                break;
+                //            case 3:
+                //                RenderProps.Debug = v;
+                //                break;
+                //        }
+                //    });
 
-                //auto-restart game?
-                if ((_gameState == GameState.GameOver) || (_gameState == GameState.GameOver_OpponentLoss))
-                    selection = MenuSelection.New;
+                //get player initials
+                if (String.IsNullOrWhiteSpace(_config.Initials))
+                {
+                    string initials = InitialsLoop(new string[] { "who are you?", "enter your initials" });
+                    if (!String.IsNullOrWhiteSpace(_config.Initials))
+                    {
+                        _config.SaveInitials(initials);
+                        _communications.ChangePlayerName(initials);
+                    }
+                }
 
-                //main menu loop
-                if (selection == MenuSelection.None)
-                    selection = (MenuSelection)MenuLoop(new MenuProperties(
-                        items: new string[] {
+                //program loop
+                while (true)
+                {
+                    //play music, remember position in main song
+                    long position = Sounds.GetLoopPosition(Sound.Music1);
+                    if (position != 0)
+                        _musicPosition = position;
+                    Sounds.Loop(Sound.Music2);
+
+                    //opponent invite
+                    if (_pendingOpponent != null)
+                        OpponentResponseLoop();
+
+                    //vars
+                    MenuSelection selection = MenuSelection.None;
+
+                    //auto-restart game?
+                    if ((_gameState == GameState.GameOver) || (_gameState == GameState.GameOver_OpponentLoss))
+                        selection = MenuSelection.New;
+
+                    //main menu loop
+                    if (selection == MenuSelection.None)
+                        selection = (MenuSelection)MenuLoop(new MenuProperties(
+                            items: new string[] {
                             "resume",
                             "new game",
                             "two player",
                             "settings",
                             "quit" },
-                        enabledItems: new bool[] {
+                            enabledItems: new bool[] {
                             _gameState == GameState.GamePaused,
                             true,
                             _communications.ConnectionState != ConnectionState.Disabled,
                             true,
                             true },
-                        allowEsc: _gameState == GameState.GamePaused,
-                        allowPlayerInvite: true,
-                        width: 400,
-                        height: 380));
+                            allowEsc: _gameState == GameState.GamePaused,
+                            allowPlayerInvite: true,
+                            width: 400,
+                            height: 380));
 
-                //resume, run game loop
-                if ((selection == MenuSelection.Resume) || ((_gameState == GameState.GamePaused) && (selection == MenuSelection.None)))
-                {
-                    GameLoop(newGame: false);
-                }
-
-                //start new game, run game loop
-                else if (selection == MenuSelection.New)
-                {
-                    GameLoop(newGame: true);
-                }
-
-                //two player mode
-                else if (selection == MenuSelection.TwoPlayer)
-                {
-                    //select discovered player from lobby
-                    Player player = PlayerLobbyLoop();
-                    if (player == null)
-                        continue;
-
-                    //request match, get response
-                    CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
-
-                    //new game?
-                    if ((result.Code == ResultCode.Accept) && (opponent != null))
+                    //resume, run game loop
+                    if ((selection == MenuSelection.Resume) || ((_gameState == GameState.GamePaused) && (selection == MenuSelection.None)))
                     {
-                        _opponent = opponent;
+                        GameLoop(newGame: false);
+                    }
+
+                    //start new game, run game loop
+                    else if (selection == MenuSelection.New)
+                    {
                         GameLoop(newGame: true);
                     }
-                }
 
-                //settings
-                else if (selection == MenuSelection.Settings)
-                {
-                    SettingsLoop(new SettingsProperties(
-                    items: new SettingsItem[] {
+                    //two player mode
+                    else if (selection == MenuSelection.TwoPlayer)
+                    {
+                        //select discovered player from lobby
+                        Player player = PlayerLobbyLoop();
+                        if (player == null)
+                            continue;
+
+                        //request match, get response
+                        CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
+
+                        //new game?
+                        if ((result.Code == ResultCode.Accept) && (opponent != null))
+                        {
+                            _opponent = opponent;
+                            GameLoop(newGame: true);
+                        }
+                    }
+
+                    //settings
+                    else if (selection == MenuSelection.Settings)
+                    {
+                        SettingsLoop(new SettingsProperties(
+                        items: new SettingsItem[] {
                             new SettingsItem(
                                 onCaption: "Music On",
                                 offCaption: "Music Off",
@@ -340,38 +343,47 @@ namespace Bricker.Game
                                 onCaption: "Debug Mode On",
                                 offCaption: "Debug Mode Off",
                                 RenderProps.Debug) },
-                    fontSize: 42),
-                    toggleFunc: (i, v) =>
-                    {
-                        switch (i)
+                        fontSize: 42),
+                        toggleFunc: (i, v) =>
                         {
-                            case 0:
-                                AudioProps.Music = v;
-                                Sounds.Reset();
-                                break;
-                            case 1:
-                                AudioProps.SoundEffects = v;
-                                Sounds.Reset();
-                                break;
-                            case 2:
-                                RenderProps.HighFrameRate = v;
-                                break;
-                            case 3:
-                                RenderProps.Background = v;
-                                break;
-                            case 4:
-                                RenderProps.Debug = v;
-                                break;
-                        }
-                    });
-                }
+                            switch (i)
+                            {
+                                case 0:
+                                    AudioProps.Music = v;
+                                    Sounds.Reset();
+                                    break;
+                                case 1:
+                                    AudioProps.SoundEffects = v;
+                                    Sounds.Reset();
+                                    break;
+                                case 2:
+                                    RenderProps.HighFrameRate = v;
+                                    break;
+                                case 3:
+                                    RenderProps.Background = v;
+                                    break;
+                                case 4:
+                                    RenderProps.Debug = v;
+                                    break;
+                            }
+                        });
+                    }
 
-                //quit program
-                else if (selection == MenuSelection.Quit)
-                {
-                    ExplodeSpaces();
-                    break;
+                    //quit program
+                    else if (selection == MenuSelection.Quit)
+                    {
+                        ExplodeSpaces();
+                        break;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+                MessageBoxLoop(new MessageProperties(
+                    line: $"Something bad happend{Environment.NewLine + Environment.NewLine}{ex.ToString()}",
+                    buttons: MessageButtons.OK,
+                    size: 16));
             }
 
             //end program
@@ -1139,7 +1151,6 @@ namespace Bricker.Game
         private void SendGameOver()
         {
             CommandResult result = new CommandResult(ResultCode.Unspecified);
-
             try
             {
                 //try three times
@@ -1342,6 +1353,43 @@ namespace Bricker.Game
             catch (Exception ex)
             {
                 ErrorHandler.LogError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Sends 'QuitGame' command to server.
+        /// </summary>
+        private void SendQuitGame()
+        {
+            CommandResult result = new CommandResult(ResultCode.Accept);
+
+            try
+            {
+                //return if not connected
+                if (_communications.ConnectionState != ConnectionState.Connected)
+                    return;
+
+                //try three times
+                for (int i = 0; i < 3; i++)
+                {
+                    //send quit-game command request
+                    result = _communications.SendCommandRequest(_config.ServerIP, CommandType.QuitGame, null, TimeSpan.FromSeconds(1));
+                    if (result.Code != ResultCode.Accept)
+                        continue;
+
+                    //success
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Code = ResultCode.Error;
+                ErrorHandler.LogError(ex);
+            }
+            finally
+            {
+                if (result.Code != ResultCode.Accept)
+                    Log.Write($"SendQuitGame: Failed with code '{result.Code}'");
             }
         }
 
