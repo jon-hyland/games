@@ -401,6 +401,7 @@ namespace GameServer.Networking
                 //command request
                 else if (packet is CommandRequestPacket req)
                 {
+                    Log.Write($"Received command-request  '{req.CommandType}' from '{client.RemoteIP}'");
                     switch (req.CommandType)
                     {
                         //get-players command
@@ -423,6 +424,7 @@ namespace GameServer.Networking
                 //command response
                 else if (packet is CommandResponsePacket resp)
                 {
+                    Log.Write($"Received command-response '{resp.CommandType}' from '{client.RemoteIP}'");
                     _commandManager.ResponseReceived(resp);
                 }
 
@@ -456,7 +458,7 @@ namespace GameServer.Networking
                     .ToList();
 
                 //message
-                Log.Write($"Sending command-response '{packet.CommandType}' ({otherPlayers.Count} player{(otherPlayers.Count != 1 ? "s" : "")}) from 'SERVER' to '{player.IP}'");
+                Log.Write($"Sending command-response '{packet.CommandType}' ({otherPlayers.Count} player{(otherPlayers.Count != 1 ? "s" : "")}) to '{player.IP}'");
 
                 //serialize list to bytes
                 PacketBuilder builder = new PacketBuilder();
@@ -493,8 +495,8 @@ namespace GameServer.Networking
         {
             try
             {
-                //message
-                Log.Write($"Received command-request '{packet.CommandType}' from '{sourceClient.RemoteIP}'");
+                ////message
+                //Log.Write($"Received command-request '{packet.CommandType}' from '{sourceClient.RemoteIP}'");
 
                 //get source player
                 Player player = Player.FromPacket(packet);
@@ -653,7 +655,7 @@ namespace GameServer.Networking
                             data: null);
 
                         //message
-                        Log.Write($"Sending command-response '{responsePacket.CommandType}' ({responsePacket.Code}) from 'SERVER' to '{sourceClient.RemoteIP}'");
+                        Log.Write($"Sending command-response '{responsePacket.CommandType}' ({responsePacket.Code}) to '{sourceClient.RemoteIP}'");
                     }
 
                     //send response to source
