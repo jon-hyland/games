@@ -4,8 +4,8 @@
   "background": 1,
   "debug": 0,
   "audio": {
-      "music": 1,
-      "effects": 1
+      "music": 0,
+      "effects": 0
   },
   "multiplayer": {
     "server": "hyland.one",
