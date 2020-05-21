@@ -34,17 +34,17 @@ X - Add music.
 X   * Add menu music.
 X   * Add game music.
 X   * Remember game music position.
-- Add sound effects:
-  X * Menu sounds
-  * Rotate sound.
-  * Drop sound.
-  * Line clear sound.
-  * Tetris sound.
-  * Add lines sound.
+X - Add sound effects:
+X   * Menu sounds
+X   * Rotate sound.
+X   * Drop sound.
+X   * Line clear sound.
+X   * Add lines sound.
 - Add saving of settings.
 - Add sound effects to settings.
 - Add music to settings.
 - Allow reset of high scores from settings.
+- Improve config reader.
 
 
 =============

@@ -3,6 +3,7 @@ using Bricker.Configuration;
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
+using Common.Audio;
 using Common.Standard.Error;
 using Common.Standard.Extensions;
 using Common.Standard.Game;
@@ -77,10 +78,13 @@ namespace Bricker.Game
 
             //initialize
             RenderProps.Initialize(_config);
+            AudioProps.Initialize(_config);
             Log.Initiallize(_logger);
             ErrorHandler.Initialize(_logger);
-            _window.Title = $"Bricker v{_config.DisplayVersion}";
             Sounds.Initialize(_config);
+
+            //ui
+            _window.Title = $"Bricker v{_config.DisplayVersion}";
 
             //events
             _communications.OpponentInviteReceived += (o) =>

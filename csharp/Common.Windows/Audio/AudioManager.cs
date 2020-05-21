@@ -93,12 +93,14 @@ namespace Common.Audio
         public int ID { get; }
         public string File { get; }
         public float Volume { get; }
+        public bool IsMusic { get; }
 
-        public SoundSample(int id, string file, float volume = 1.0f)
+        public SoundSample(int id, string file, float volume = 1.0f, bool isMusic = false)
         {
             ID = id;
             File = file;
             Volume = volume;
+            IsMusic = isMusic;
         }
     }
 

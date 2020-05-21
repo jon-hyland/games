@@ -17,6 +17,8 @@ namespace Common.Standard.Configuration
         bool HighFrameRate { get; }
         bool Background { get; }
         bool Debug { get; }
+        bool Music { get; }
+        bool SoundEffects { get; }
         IPAddress ServerIP { get; }
         ushort ServerPort { get; }
     }

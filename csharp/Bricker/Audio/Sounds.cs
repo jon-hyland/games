@@ -41,8 +41,8 @@ namespace Bricker.Audio
         public static void Initialize(IGameConfig config)
         {
             int id = 0;
-            Music1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Music1.mp3"), 0.1f);
-            Music2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Music2.mp3"), 0.2f);
+            Music1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Music1.mp3"), 0.1f, true);
+            Music2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Music2.mp3"), 0.2f, true);
             MenuMove1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "MenuMove1.mp3"));
             MenuMove2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "MenuMove2.mp3"));
             MenuBack1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "MenuBack1.mp3"));

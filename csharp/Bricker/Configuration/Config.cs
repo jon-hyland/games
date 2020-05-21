@@ -29,6 +29,8 @@ namespace Bricker.Configuration
         public bool HighFrameRate { get; }
         public bool Background { get; }
         public bool Debug { get; }
+        public bool Music { get; }
+        public bool SoundEffects { get; }
         public IPAddress ServerIP { get; }
         public ushort ServerPort { get; }
         public string Initials { get; private set; }
@@ -53,6 +55,8 @@ namespace Bricker.Configuration
             HighFrameRate = data.highFrameRate == 1;
             Background = data.background == 1;
             Debug = data.debug == 1;
+            Music = data.audio.music == 1;
+            SoundEffects = data.audio.effects == 1;
             try
             {
                 ServerIP = IPAddress.Parse((string)data.multiplayer.server);
