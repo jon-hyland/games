@@ -254,7 +254,7 @@ namespace Common.Standard.Networking
                     }
 
                     //fire event
-                    PacketReceived?.Invoke(this, packet);
+                    PacketReceived?.InvokeFromTask(this, packet);   //WARNING, CHANGED THIS!!
                 }
             }
             catch (Exception ex)

@@ -38,7 +38,7 @@ namespace GameServer.Logging
             {
                 lock (_writer)
                 {
-                    Console.WriteLine($"{Clean(message)}");
+                    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(message)}");
                     _writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(message)}");
                 }
                 _writer.Flush();
@@ -57,7 +57,7 @@ namespace GameServer.Logging
             {
                 lock (_writer)
                 {
-                    Console.WriteLine($"{Clean(ex?.ToString())}");
+                    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\t{Clean(ex?.ToString())}");
                     _writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}\tError: {Clean(ex?.ToString())}");
                 }
                 _writer.Flush();
