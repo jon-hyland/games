@@ -447,7 +447,7 @@ namespace Bricker.Game
                     //rotate
                     else if (key == Key.Up)
                     {
-                        Sounds.Play(Sound.Click2);
+                        Sounds.Play(Sound.Click1);
                         RotateBrick();
                     }
 
