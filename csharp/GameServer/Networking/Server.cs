@@ -335,7 +335,7 @@ namespace GameServer.Networking
                 CommandResult result;
 
                 //message
-                Log.Write($"Sending 'EndSession' command to '{client.RemoteIP}'");
+                Log.Write($"Sending 'EndSession' request to '{client.RemoteIP}'");
 
                 //create packet
                 CommandRequestPacket packet = new CommandRequestPacket(
@@ -399,7 +399,7 @@ namespace GameServer.Networking
                 //command request
                 else if (packet is CommandRequestPacket req)
                 {
-                    Log.Write($"Received command-request  '{req.CommandType}' from '{client.RemoteIP}'");
+                    Log.Write($"Received '{req.CommandType}' request from '{client.RemoteIP}'");
                     switch (req.CommandType)
                     {
                         //get-players command
@@ -422,7 +422,7 @@ namespace GameServer.Networking
                 //command response
                 else if (packet is CommandResponsePacket resp)
                 {
-                    Log.Write($"Received command-response '{resp.CommandType}' ({resp.Code}) from '{client.RemoteIP}'");
+                    Log.Write($"Received '{resp.CommandType}' ({resp.Code}) response from '{client.RemoteIP}'");
                     _commandManager.ResponseReceived(resp);
                 }
 
@@ -456,7 +456,7 @@ namespace GameServer.Networking
                     .ToList();
 
                 //message
-                Log.Write($"Sending command-response '{packet.CommandType}' ({otherPlayers.Count} player{(otherPlayers.Count != 1 ? "s" : "")}) to '{player.IP}'");
+                Log.Write($"Sending '{packet.CommandType}' ({otherPlayers.Count} player{(otherPlayers.Count != 1 ? "s" : "")}) response to '{player.IP}'");
 
                 //serialize list to bytes
                 PacketBuilder builder = new PacketBuilder();
@@ -493,9 +493,6 @@ namespace GameServer.Networking
         {
             try
             {
-                ////message
-                //Log.Write($"Received command-request '{packet.CommandType}' from '{sourceClient.RemoteIP}'");
-
                 //get source player
                 Player player = Player.FromPacket(packet);
                 player = GetPlayerByKey(player.UniqueKey);
@@ -510,7 +507,7 @@ namespace GameServer.Networking
                 RemoveExpiredSessions();
 
                 //message
-                Log.Write($"Sending command-response '{packet.CommandType}' to '{player.IP}'");
+                Log.Write($"Sending '{packet.CommandType}' ({ResultCode.Accept}) response to '{player.IP}'");
 
                 //create packet
                 CommandResponsePacket response = new CommandResponsePacket(
@@ -589,7 +586,7 @@ namespace GameServer.Networking
                 }
 
                 //message
-                Log.Write($"Forwarding command-request  '{requestPacket.CommandType}' from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
+                Log.Write($"Forwarding '{requestPacket.CommandType}' request from '{sourcePlayer.IP}' to '{destinationPlayer.IP}'");
 
                 //record command request being sent
                 _commandManager.RequestSent(requestPacket);
@@ -636,7 +633,7 @@ namespace GameServer.Networking
                         responsePacket = result.ResponsePacket;
 
                         //message
-                        Log.Write($"Forwarding command-response '{result.ResponsePacket.CommandType}' ({result.ResponsePacket.Code}) from '{destinationPlayer.IP}' to '{sourcePlayer.IP}'");
+                        Log.Write($"Forwarding '{result.ResponsePacket.CommandType}' ({result.ResponsePacket.Code}) response from '{destinationPlayer.IP}' to '{sourcePlayer.IP}'");
                     }
                     else
                     {
@@ -653,7 +650,7 @@ namespace GameServer.Networking
                             data: null);
 
                         //message
-                        Log.Write($"Sending command-response '{responsePacket.CommandType}' ({responsePacket.Code}) to '{sourceClient.RemoteIP}'");
+                        Log.Write($"Sending '{responsePacket.CommandType}' ({responsePacket.Code}) response to '{sourceClient.RemoteIP}'");
                     }
 
                     //send response to source
