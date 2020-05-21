@@ -46,10 +46,11 @@ namespace Bricker.Game
         private Opponent _opponent;
         private GameState _gameState;
         private bool _sessionEnded;
-        private long _musicPosition;
+        private static long _musicPosition;
 
         //public
         public Config Config => _config;
+        public static long MusicPosition => _musicPosition;
 
         #region Constructor
 
@@ -320,9 +321,13 @@ namespace Bricker.Game
                     SettingsLoop(new SettingsProperties(
                     items: new SettingsItem[] {
                             new SettingsItem(
-                                onCaption: "Anti-Alias On",
-                                offCaption: "Anti-Alias Off",
-                                RenderProps.AntiAlias),
+                                onCaption: "Music On",
+                                offCaption: "Music Off",
+                                AudioProps.Music),
+                            new SettingsItem(
+                                onCaption: "Sound Effects On",
+                                offCaption: "Sound Effects Off",
+                                AudioProps.SoundEffects),
                             new SettingsItem(
                                 onCaption: "High Frame Rate On",
                                 offCaption: "High Frame Rate Off",
@@ -341,16 +346,20 @@ namespace Bricker.Game
                         switch (i)
                         {
                             case 0:
-                                RenderProps.AntiAlias = v;
-                                RenderProps.ResetSkia();
+                                AudioProps.Music = v;
+                                Sounds.Reset();
                                 break;
                             case 1:
-                                RenderProps.HighFrameRate = v;
+                                AudioProps.SoundEffects = v;
+                                Sounds.Reset();
                                 break;
                             case 2:
-                                RenderProps.Background = v;
+                                RenderProps.HighFrameRate = v;
                                 break;
                             case 3:
+                                RenderProps.Background = v;
+                                break;
+                            case 4:
                                 RenderProps.Debug = v;
                                 break;
                         }
@@ -743,6 +752,7 @@ namespace Bricker.Game
                     //esc
                     else if (key == Key.Escape)
                     {
+                        Sounds.Play(Sound.MenuBack1);
                         return -1;
                     }
 
@@ -802,6 +812,7 @@ namespace Bricker.Game
                     //enter
                     else if (key == Key.Enter)
                     {
+                        Sounds.Play(Sound.Click1);
                         _config.SaveInitials(props.Initials);
                         _communications.ChangePlayerName(props.Initials);
                         return props.Initials;
@@ -810,6 +821,7 @@ namespace Bricker.Game
                     //esc
                     else if (key == Key.Escape)
                     {
+                        Sounds.Play(Sound.MenuBack1);
                         return null;
                     }
 
@@ -819,6 +831,8 @@ namespace Bricker.Game
                         position--;
                         if (position < 0)
                             position = 0;
+                        else
+                            Sounds.Play(Sound.Click1);
                         chars[position] = ' ';
                     }
 
@@ -839,6 +853,7 @@ namespace Bricker.Game
                         if ((position > 2) || (position < 0))
                             continue;
                         chars[position] = c;
+                        Sounds.Play(Sound.Click1);
                         position++;
                         if (position > 3)
                             position = 3;
@@ -885,19 +900,35 @@ namespace Bricker.Game
 
                     //enter
                     else if (key == Key.Enter)
-                        return props.Buttons <= MessageButtons.OK ? true : props.ButtonIndex > 0;
+                    {
+                        bool accept = props.Buttons <= MessageButtons.OK ? true : props.ButtonIndex > 0;
+                        if (accept)
+                            Sounds.Play(Sound.Click1);
+                        else
+                            Sounds.Play(Sound.MenuBack1);
+                        return accept;
+                    }
 
                     //esc
                     else if (key == Key.Escape)
+                    {
+                        Sounds.Play(Sound.MenuBack1);
                         return false;
+                    }
 
                     //left
                     else if ((key == Key.Left) || (key == Key.Up))
+                    {
+                        Sounds.Play(Sound.MenuMove1);
                         props.DecrementsIndex();
+                    }
 
                     //right
                     else if ((key == Key.Right) || (key == Key.Down))
+                    {
+                        Sounds.Play(Sound.MenuMove1);
                         props.IncrementIndex();
+                    }
 
                     //debug toggle
                     else if (key == Key.D)
@@ -957,6 +988,7 @@ namespace Bricker.Game
                     //enter
                     else if (key == Key.Enter)
                     {
+                        Sounds.Play(Sound.Click1);
                         if ((props.ButtonIndex == 1) && (props.PlayerIndex >= 0) && (props.PlayerIndex <= (players.Count - 1)))
                             return players[props.PlayerIndex];
                         return null;
@@ -965,30 +997,35 @@ namespace Bricker.Game
                     //esc
                     else if (key == Key.Escape)
                     {
+                        Sounds.Play(Sound.MenuBack1);
                         return null;
                     }
 
                     //left
                     else if (key == Key.Left)
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.DecrementButtonIndex();
                     }
 
                     //right
                     else if (key == Key.Right)
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.IncrementButtonIndex();
                     }
 
                     //up
                     else if (key == Key.Up)
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.DecrementPlayerIndex();
                     }
 
                     //down
                     else if (key == Key.Down)
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.IncrementPlayerIndex();
                     }
                 }

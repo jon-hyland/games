@@ -1,5 +1,5 @@
 ﻿==============
- BRICKER v3.0
+ BRICKER v3.x
 ==============
 X - Outline Two-Player game loops.
 X - Outline Opponent class.
@@ -40,11 +40,34 @@ X   * Rotate sound.
 X   * Drop sound.
 X   * Line clear sound.
 X   * Add lines sound.
+X - Add sound effects to settings.
+X - Add music to settings.
+
 - Add saving of settings.
-- Add sound effects to settings.
-- Add music to settings.
 - Allow reset of high scores from settings.
 - Improve config reader.
+
+
+Clear1          Clear lines
+Clear2          
+Click1          Brick move, menu select
+Click2          
+Click3          
+Error1          
+Explode1        
+Explode2        
+Explode3        Explode spaces 
+Hit1            
+Hit2            Brick hit bottom
+LevelUp1        Level up
+MenuBack1       
+MenuMove1       
+MenuMove2       
+MenuSelect1     
+MenuSelect2     
+Music1          
+Music2          
+Send1           
 
 
 =============
@@ -53,7 +76,7 @@ X   * Add lines sound.
 X - Create main class, initialize logger.
 X - Create server class.
 X - Start server, maintain list of clients.
-X- Receive packets.
+X - Receive packets.
 X - Create config file and classes.
 X - Add request/response system.
 X - Add get-players command.
@@ -62,11 +85,11 @@ X - Add generic data passthrough.
 X - Fix weird down button bug.
 X - Design game over behavior and communications.
 X - Design player disconnect behavior (session tracking).
-  X * Add server-side session tracking.
-  X * Add session timeout based on player heartbeats.
-  X * Create EndSession command.
-  X * Send EndSession command from server.
-  X * Receive EndSession command in game.  Show message, clear opponent.
+X   * Add server-side session tracking.
+X   * Add session timeout based on player heartbeats.
+X   * Create EndSession command.
+X   * Send EndSession command from server.
+X   * Receive EndSession command in game.  Show message, clear opponent.
 
 
 ===========
@@ -74,18 +97,10 @@ X - Design player disconnect behavior (session tracking).
 ===========
 - Can invite logic be moved out of GameComms?
 - Rename GameCommunications?
-- 
 
 
 =======
  LATER
 =======
-- Config:
-  * Disable background.
-- Settings Menu:
-  * Config settings.
-  * Reset high scores.
-X - Esc to resume (main menu).
 - Refactoring (player, opponent, etc).  ErrorHandler like Log.
 - Improve game animation.
-- Add music and sound effects.
