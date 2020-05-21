@@ -297,11 +297,11 @@ namespace Common.Standard.Networking
                 lock (this)
                 {
                     _commandSequence++;
-                    if (_commandSequence >= UInt16.MaxValue)
+                    if (_commandSequence > 9999)
                         _commandSequence = 1;
                     sequence = _commandSequence;
-                    if (type == CommandType.ConnectToPlayer)
-                        sequence = BitConverter.ToUInt16(BitConverter.GetBytes($"{_config.LocalIP}|{destinationIP}|{_config.DisplayVersion}".GetHashCode()), 0);
+                    //if (type == CommandType.ConnectToPlayer)
+                    //    sequence = BitConverter.ToUInt16(BitConverter.GetBytes($"{_config.LocalIP}|{destinationIP}|{_config.DisplayVersion}".GetHashCode()), 0);
                 }
 
                 //create packet
