@@ -417,6 +417,7 @@ namespace Bricker.Game
                 _matrix.NewGame();
                 _opponent?.Reset();
                 _musicPosition = 0;
+                _sessionEnded = false;
             }
 
             //set flag
