@@ -18,14 +18,14 @@ namespace Common.Standard.Game
         public DateTime FirstHeartbeat { get; }
         public DateTime LastHeartbeat { get; set; }
         public TimeSpan TimeSinceLastHeartbeat => DateTime.Now - LastHeartbeat;
-        public ushort InviteSequence { get; set; }
+        public int InviteSequence { get; set; }
         public bool QuitGame { get; set; }
         public int UniqueKey { get; }
 
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, ushort inviteSequence = 0)
+        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, int inviteSequence = 0)
         {
             IP = ip;
             GameTitle = gameTitle;

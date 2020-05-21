@@ -10,13 +10,13 @@ namespace Common.Standard.Networking.Packets
     {
         //private
         private readonly CommandType _commandType;
-        private readonly ushort _sequence;
+        private readonly int _sequence;
         private readonly ResultCode _code;
         private readonly byte[] _data;
 
         //public
         public CommandType CommandType => _commandType;
-        public ushort Sequence => _sequence;
+        public int Sequence => _sequence;
         public ResultCode Code => _code;
         public byte[] Data => _data;
 
@@ -24,7 +24,7 @@ namespace Common.Standard.Networking.Packets
         /// Class constructor.
         /// </summary>
         public CommandResponsePacket(string gameTitle, Version gameVersion, IPAddress sourceIP, IPAddress destinationIP,
-            string playerName, CommandType commandType, ushort sequence, ResultCode code, byte[] data)
+            string playerName, CommandType commandType, int sequence, ResultCode code, byte[] data)
             : base(PacketType.CommandResponse, gameTitle, gameVersion, sourceIP, destinationIP, playerName)
         {
             _commandType = commandType;
@@ -40,7 +40,7 @@ namespace Common.Standard.Networking.Packets
             : base(PacketType.CommandResponse, parser)
         {
             _commandType = (CommandType)parser.GetUInt16();
-            _sequence = parser.GetUInt16();
+            _sequence = parser.GetInt32();
             _code = (ResultCode)parser.GetByte();
             _data = parser.GetBytes();
         }
@@ -51,7 +51,7 @@ namespace Common.Standard.Networking.Packets
         protected override void AddInstanceBytes(PacketBuilder builder)
         {
             builder.AddUInt16((ushort)_commandType);
-            builder.AddUInt16(_sequence);
+            builder.AddInt32(_sequence);
             builder.AddByte((byte)_code);
             builder.AddBytes(_data);
         }

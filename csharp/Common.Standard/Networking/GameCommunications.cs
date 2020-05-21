@@ -30,7 +30,7 @@ namespace Common.Standard.Networking
         private readonly Thread _incomingPacketThread = null;
         private readonly Thread _heartbeatThread = null;
         private readonly object _inviteLock = new object();
-        private ushort _commandSequence = 0;
+        private readonly Random _random = new Random();
         private ConnectionState _connectionState = ConnectionState.NotConnected;
         private long _heartbeatsSent = 0;
         private long _dataSent = 0;
@@ -293,15 +293,10 @@ namespace Common.Standard.Networking
                     return new CommandResult(ResultCode.Error);
 
                 //vars
-                ushort sequence;
+                int sequence;
                 lock (this)
                 {
-                    _commandSequence++;
-                    if (_commandSequence > 9999)
-                        _commandSequence = 1;
-                    sequence = _commandSequence;
-                    //if (type == CommandType.ConnectToPlayer)
-                    //    sequence = BitConverter.ToUInt16(BitConverter.GetBytes($"{_config.LocalIP}|{destinationIP}|{_config.DisplayVersion}".GetHashCode()), 0);
+                    sequence = _random.Next(Int32.MinValue, Int32.MaxValue);
                 }
 
                 //create packet
@@ -350,7 +345,7 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Sends command response.  Data is optional.
         /// </summary>
-        public bool SendCommandResponse(IPAddress destinationIP, CommandType type, ushort sequence, ResultCode code, byte[] data = null)
+        public bool SendCommandResponse(IPAddress destinationIP, CommandType type, int sequence, ResultCode code, byte[] data = null)
         {
             try
             {

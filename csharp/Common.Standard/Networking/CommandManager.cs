@@ -96,7 +96,7 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Returns the status of the specified command.
         /// </summary>
-        public CommandResult GetCommandStatus(ushort sequence)
+        public CommandResult GetCommandStatus(int sequence)
         {
             lock (_commands)
             {
@@ -139,7 +139,7 @@ namespace Common.Standard.Networking
         private class Command
         {
             public CommandType CommandType { get; }
-            public ushort Sequence { get; }
+            public int Sequence { get; }
             public ResultCode Code { get; set; }
             public CommandResponsePacket ResponsePacket { get; set; }
             public ushort RetryAttempt { get; set; }
@@ -149,7 +149,7 @@ namespace Common.Standard.Networking
             public bool IsTimedOut => Elapsed > Timeout;
             public bool IsExpired => Elapsed > Timeout.Add(TimeSpan.FromSeconds(60));
 
-            public Command(CommandType commandType, ushort sequence, TimeSpan timeout)
+            public Command(CommandType commandType, int sequence, TimeSpan timeout)
             {
                 CommandType = commandType;
                 Sequence = sequence;
