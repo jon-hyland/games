@@ -695,6 +695,7 @@ namespace GameServer.Networking
                 if (destinationPlayer == null)
                 {
                     Log.Write($"Passthrough_Data: Cannot find destination player at '{dataPacket.DestinationIP}'");
+                    sessionEnded = true;
                     return;
                 }
 
@@ -712,6 +713,7 @@ namespace GameServer.Networking
                 if (destinationClient == null)
                 {
                     Log.Write($"Passthrough_Data: Destination player at {destinationClient.RemoteIP} does not have assigned TCP client");
+                    sessionEnded = true;
                     return;
                 }
 
