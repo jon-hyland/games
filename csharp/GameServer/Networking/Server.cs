@@ -498,6 +498,7 @@ namespace GameServer.Networking
 
                 //get source player
                 Player player = Player.FromPacket(packet);
+                player = GetPlayerByKey(player.UniqueKey);
 
                 //set quit flag
                 player.QuitGame = true;
