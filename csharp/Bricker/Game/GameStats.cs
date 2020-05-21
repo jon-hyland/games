@@ -62,23 +62,32 @@ namespace Bricker.Game
 
         /// <summary>
         /// Increments cleared line count, and sets level.
+        /// Returns true on level increase.
         /// </summary>
-        public void IncrementLines(int value)
+        public bool IncrementLines(int value)
         {
             _lines += value;
-            _level = (_lines / 25) + 1;
+            int newLevel = (_lines / 25) + 1;
+            if (newLevel > _level)
+                return SetLevel(newLevel);
+            return false;
         }
 
         /// <summary>
         /// Sets the current level.
         /// </summary>
-        public void SetLevel(int level)
+        public bool SetLevel(int level)
         {
             if (level > 10)
                 level = 10;
             if (level < 1)
                 level = 1;
-            _level = level;
+            if (level != _level)
+            {
+                _level = level;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>

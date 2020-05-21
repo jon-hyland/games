@@ -471,11 +471,17 @@ namespace Bricker.Game
 
                     //level up
                     else if ((key == Key.PageUp) && (RenderProps.Debug))
+                    {
+                        Sounds.Play(Sound.LevelUp1);
                         _stats.SetLevel(_stats.Level + 1);
+                    }
 
                     //level down
                     else if ((key == Key.PageDown) && (RenderProps.Debug))
+                    {
+                        Sounds.Play(Sound.LevelUp1);
                         _stats.SetLevel(_stats.Level - 1);
+                    }
 
                     //background
                     else if (key == Key.B)
@@ -493,7 +499,7 @@ namespace Bricker.Game
                 //brick hit bottom?
                 if (hit)
                 {
-                    Sounds.Play(Sound.Hit1);
+                    Sounds.Play(Sound.Hit2);
                     bool gameOver = BrickHit();
                     if (gameOver)
                     {
@@ -644,7 +650,7 @@ namespace Bricker.Game
                         if (props.Items[props.SelectedIndex].In("new game", "resume"))
                             Sounds.Play(Sound.MenuSelect2);
                         else
-                            Sounds.Play(Sound.MenuSelect1);
+                            Sounds.Play(Sound.Click1);
                         return props.SelectedIndex;
                     }
 
@@ -711,18 +717,21 @@ namespace Bricker.Game
                     //up
                     else if ((key == Key.Left) || (key == Key.Up))
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.DecrementSelection();
                     }
 
                     //down
                     else if ((key == Key.Right) || (key == Key.Down))
                     {
+                        Sounds.Play(Sound.MenuMove1);
                         props.IncrementSelection();
                     }
 
                     //enter
                     else if (key == Key.Enter)
                     {
+                        Sounds.Play(Sound.Click1);
                         props.Items[props.SelectedIndex].Value = !props.Items[props.SelectedIndex].Value;
                         toggleFunc(props.SelectedIndex, props.Items[props.SelectedIndex].Value);
                     }
@@ -1412,7 +1421,11 @@ namespace Bricker.Game
                 Sounds.Play(Sound.Clear1);
 
                 //increment lines
-                _stats.IncrementLines(rows.Count);
+                bool levelUp = _stats.IncrementLines(rows.Count);
+
+                //play sound?
+                if (levelUp)
+                    Sounds.Play(Sound.LevelUp1);
 
                 //calculate base score + bonus
                 int points, linesToSend = 0;
@@ -1607,6 +1620,8 @@ namespace Bricker.Game
         {
             try
             {
+                Sounds.Play(Sound.Explode3);
+
                 List<ExplodingSpace> spaces = new List<ExplodingSpace>();
                 _matrix.AddBrickToMatrix();
                 for (int x = 1; x <= 10; x++)
