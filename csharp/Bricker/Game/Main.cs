@@ -1046,18 +1046,6 @@ namespace Bricker.Game
             opponent = null;
             try
             {
-                ////show message
-                //_renderer.MessageProps = new MessageProperties(
-                //    line: "Connecting to opponent..",
-                //    size: 24,
-                //    buttons: MessageButtons.None);
-
-                ////connect to opponent
-                //Thread.Sleep(750);
-                //bool success = _communications.SetOpponentAndConnect(player);
-                //if (!success)
-                //    return result = new CommandResult(ResultCode.Error);
-
                 //show message
                 _renderer.MessageProps = new MessageProperties(
                     line: "Invite sent.  Waiting for response..",

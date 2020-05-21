@@ -1,4 +1,5 @@
 ﻿using Common.Standard.Game;
+using System;
 
 namespace GameServer.Networking
 {
@@ -11,11 +12,21 @@ namespace GameServer.Networking
     {
         public Player Player1 { get; }
         public Player Player2 { get; }
+        public bool IsConfirmed { get; private set; }
+        public DateTime CreateTime { get; set; }
+        public TimeSpan TimeSinceCreated => DateTime.Now - CreateTime;
 
         public Session(Player player1, Player player2)
         {
             Player1 = player1;
             Player2 = player2;
+            IsConfirmed = false;
+            CreateTime = DateTime.Now;
+        }
+
+        public void ConfirmSession()
+        {
+            IsConfirmed = true;
         }
 
         public bool ContainsPlayer(Player player)

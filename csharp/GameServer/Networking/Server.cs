@@ -217,7 +217,7 @@ namespace GameServer.Networking
         #region Sessions
 
         /// <summary>
-        /// Creates a new session.
+        /// Creates a new unconfirmed session.
         /// </summary>
         private void CreateSession(int playerKey1, int playerKey2)
         {
@@ -236,6 +236,7 @@ namespace GameServer.Networking
                 if (existing != null)
                 {
                     Log.Write($"Session with '{player1.IP}' and '{player2.IP}' already exists");
+                    existing.CreateTime = DateTime.Now;
                     return;
                 }
 
@@ -248,9 +249,18 @@ namespace GameServer.Networking
                 }
 
                 //create new session
-                Log.Write($"Creating session with '{player1.IP}' and '{player2.IP}'");
+                Log.Write($"Creating unconfirmed session between '{player1.IP}' and '{player2.IP}'");
                 _sessions.Add(new Session(player1, player2));
             }
+        }
+
+        private void ConfirmSession(int player1Key, int player2Key)
+        {
+            Session session = GetSession(player1Key, player2Key);
+            if (session == null)
+                return;
+            Log.Write($"Confirming session between '{session.Player1.IP}' and '{session.Player2.IP}'");
+            session.ConfirmSession();
         }
 
         /// <summary>
@@ -268,7 +278,7 @@ namespace GameServer.Networking
 
         /// <summary>
         /// Removes any session where one or more players haven't sent heatbeat packets
-        /// in over ten seconds.
+        /// in over 10 seconds, or a session isn't confirmed within 30 seconds.
         /// </summary>
         private void RemoveExpiredSessions()
         {
@@ -284,11 +294,18 @@ namespace GameServer.Networking
                         {
                             Log.Write($"Player '{expiredPlayer.IP}' hasn't send heartbeat in {expiredPlayer.TimeSinceLastHeartbeat.TotalSeconds.ToString("0.0")} seconds");
                             expired.Add(session);
+                            continue;
+                        }
+                        if ((!session.IsConfirmed) && (session.TimeSinceCreated.TotalSeconds > 30))
+                        {
+                            Log.Write($"Session was not confirmed within 30 seconds");
+                            expired.Add(session);
+                            continue;
                         }
                     }
                     foreach (Session session in expired)
                     {
-                        Log.Write($"Removing expired session with '{session.Player1.IP}' and '{session.Player2.IP}'");
+                        Log.Write($"Removing expired session between '{session.Player1.IP}' and '{session.Player2.IP}'");
                         _sessions.Remove(session);
                     }
                 }
@@ -489,6 +506,10 @@ namespace GameServer.Networking
                     return;
                 }
 
+                //create session?
+                if (requestPacket.CommandType == CommandType.ConnectToPlayer)
+                    CreateSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+
                 //get session
                 Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
                 if ((session == null) && (requestPacket.CommandType != CommandType.ConnectToPlayer))
@@ -544,9 +565,13 @@ namespace GameServer.Networking
                     CommandResponsePacket responsePacket;
                     if ((result.Code.In(ResultCode.Accept, ResultCode.Reject)) && (result.ResponsePacket != null))
                     {
-                        //create session?
+                        ////create session?
+                        //if ((requestPacket.CommandType == CommandType.ConnectToPlayer) && (result.Code == ResultCode.Accept))
+                        //    CreateSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+
+                        //confirm session?
                         if ((requestPacket.CommandType == CommandType.ConnectToPlayer) && (result.Code == ResultCode.Accept))
-                            CreateSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                            ConfirmSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
 
                         //get original packet
                         responsePacket = result.ResponsePacket;
