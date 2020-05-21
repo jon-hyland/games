@@ -295,9 +295,7 @@ namespace GameServer.Networking
                         Player expiredPlayer = session.GetTimedoutPlayer(timeoutMs: 10000);
                         if (expiredPlayer != null)
                         {
-                            if (expiredPlayer.QuitGame)
-                                Log.Write($"Player '{expiredPlayer.IP}' has quit the game");
-                            else
+                            if (!expiredPlayer.QuitGame)
                                 Log.Write($"Player '{expiredPlayer.IP}' hasn't send heartbeat in {expiredPlayer.TimeSinceLastHeartbeat.TotalSeconds.ToString("0.0")} seconds");
                             expired.Add(session);
                             continue;
