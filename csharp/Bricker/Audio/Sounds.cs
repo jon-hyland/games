@@ -24,6 +24,12 @@ namespace Bricker.Audio
         public static SoundSample Click1 { get; private set; }
         public static SoundSample Click2 { get; private set; }
         public static SoundSample Click3 { get; private set; }
+        public static SoundSample Clear1 { get; private set; }
+        public static SoundSample Clear2 { get; private set; }
+        public static SoundSample Hit1 { get; private set; }
+        public static SoundSample LevelUp1 { get; private set; }
+        public static SoundSample Send1 { get; private set; }
+
 
         /// <summary>
         /// Initializes sound files.
@@ -42,6 +48,11 @@ namespace Bricker.Audio
             Click1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click1.mp3"));
             Click2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click2.mp3"));
             Click3 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Click3.mp3"));
+            Clear1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Clear1.mp3"));
+            Clear2 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Clear2.mp3"));
+            Hit1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Hit1.mp3"));
+            LevelUp1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "LevelUp1.mp3"));
+            Send1 = new SoundSample(++id, Path.Combine(config.AudioSampleFolder, "Send1.mp3"));
         }
 
         /// <summary>

@@ -493,6 +493,7 @@ namespace Bricker.Game
                 //brick hit bottom?
                 if (hit)
                 {
+                    Sounds.Play(Sound.Hit1);
                     bool gameOver = BrickHit();
                     if (gameOver)
                     {
@@ -529,20 +530,19 @@ namespace Bricker.Game
                         continue;
                     }
 
-                    if (_sessionEnded)
-
-                        //have new sent lines?
-                        if (opponent.LinesSent > opponent.LastLinesSent)
+                    //have new sent lines?
+                    if (opponent.LinesSent > opponent.LastLinesSent)
+                    {
+                        Sounds.Play(Sound.Send1);
+                        int newLines = opponent.LinesSent - opponent.LastLinesSent;
+                        opponent.SetLastLinesSent(opponent.LinesSent);
+                        bool gameOver = AddSentLines(newLines);
+                        if (gameOver)
                         {
-                            int newLines = opponent.LinesSent - opponent.LastLinesSent;
-                            opponent.SetLastLinesSent(opponent.LinesSent);
-                            bool gameOver = AddSentLines(newLines);
-                            if (gameOver)
-                            {
-                                _gameState = GameState.GameOver;
-                                break;
-                            }
+                            _gameState = GameState.GameOver;
+                            break;
                         }
+                    }
 
                     //opponent game over logic
                     if (opponent.GameOver)
@@ -1408,6 +1408,9 @@ namespace Bricker.Game
             //have rows?
             if (rows.Count > 0)
             {
+                //play sound
+                Sounds.Play(Sound.Clear1);
+
                 //increment lines
                 _stats.IncrementLines(rows.Count);
 
@@ -1444,9 +1447,15 @@ namespace Bricker.Game
                 EraseFilledRows(rows);
                 DropGrid();
 
-                //increment sent lines
-                _stats.IncrementLinesSent(linesToSend);
+                //increment sent lines?
+                if (linesToSend > 0)
+                {
+                    Sounds.Play(Sound.Send1);
+                    _stats.IncrementLinesSent(linesToSend);
+                }
             }
+
+            //collision?
             bool collision = _matrix.SpawnBrick();
             return collision;
         }
