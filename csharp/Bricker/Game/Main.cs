@@ -310,11 +310,19 @@ namespace Bricker.Game
                         //request match, get response
                         CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
 
-                        //new game?
+                        //accept?
                         if ((result.Code == ResultCode.Accept) && (opponent != null))
                         {
+                            _pendingOpponent = null;
                             _opponent = opponent;
                             GameLoop(newGame: true);
+                        }
+
+                        //reject or timeout
+                        else
+                        {
+                            _pendingOpponent = null;
+                            _opponent = null;
                         }
                     }
 
@@ -895,6 +903,13 @@ namespace Bricker.Game
                 //event loop
                 while (true)
                 {
+                    //timeout?
+                    if (DateTime.Now > props.TimeoutTime)
+                    {
+                        Sounds.Play(Sound.MenuBack1);
+                        return false;
+                    }
+
                     //get next key press, or continue
                     Key key = Key.None;
                     lock (_keyQueue)
@@ -1111,7 +1126,8 @@ namespace Bricker.Game
                     $"{pendingOpponent.Name} has challenged you to a match!",
                     $"Do you accept?"
                 },
-                buttons: MessageButtons.NoYes));
+                buttons: MessageButtons.NoYes,
+                timeoutSecs: 15));
 
             //decline?
             if (!accept)
