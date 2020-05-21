@@ -49,6 +49,7 @@ namespace Common.Standard.Networking
                 if (command != null)
                 {
                     command.RetryAttempt = packet.RetryAttempt;
+                    command.StartTime = DateTime.Now;
                 }
                 else
                 {
@@ -143,7 +144,7 @@ namespace Common.Standard.Networking
             public CommandResponsePacket ResponsePacket { get; set; }
             public ushort RetryAttempt { get; set; }
             public TimeSpan Timeout { get; }
-            public DateTime StartTime { get; }
+            public DateTime StartTime { get; set; }
             public TimeSpan Elapsed => DateTime.Now - StartTime;
             public bool IsTimedOut => Elapsed > Timeout;
             public bool IsExpired => Elapsed > Timeout.Add(TimeSpan.FromSeconds(60));
