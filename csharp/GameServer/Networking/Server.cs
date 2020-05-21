@@ -422,7 +422,7 @@ namespace GameServer.Networking
                 //command response
                 else if (packet is CommandResponsePacket resp)
                 {
-                    Log.Write($"Received command-response '{resp.CommandType}' from '{client.RemoteIP}'");
+                    Log.Write($"Received command-response '{resp.CommandType}' ({resp.Code}) from '{client.RemoteIP}'");
                     _commandManager.ResponseReceived(resp);
                 }
 
