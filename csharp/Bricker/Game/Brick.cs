@@ -1,6 +1,9 @@
-﻿using Common.Windows.Rendering;
+﻿using Common.Standard.Error;
+using Common.Standard.Logging;
+using Common.Windows.Rendering;
 using SkiaSharp;
 using System;
+using System.Linq;
 
 namespace Bricker.Game
 {
@@ -224,34 +227,6 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Returns true if filled brick space conflicts with filled matrix space.
-        /// </summary>
-        public bool Collision(byte[,] matrix)
-        {
-            lock (this)
-            {
-                for (int x = 0; x < _width; x++)
-                {
-                    for (int y = 0; y < _height; y++)
-                    {
-                        if (_grid[x, y] > 0)
-                        {
-                            int mX = x + _x;
-                            int mY = y + _y;
-                            if ((mX < 0) || (mX > 21))
-                                return true;
-                            if ((mY < 0) || (mY > 21))
-                                return true;
-                            if (matrix[mX, mY] > 0)
-                                return true;
-                        }
-                    }
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Moves the brick left, unless collision.
         /// </summary>
         public void MoveLeft(byte[,] matrix)
@@ -259,7 +234,7 @@ namespace Bricker.Game
             lock (this)
             {
                 _x--;
-                if (Collision(matrix))
+                if (Collision(matrix, _grid, _x, _y))
                     _x++;
             }
         }
@@ -272,7 +247,7 @@ namespace Bricker.Game
             lock (this)
             {
                 _x++;
-                if (Collision(matrix))
+                if (Collision(matrix, _grid, _x, _y))
                     _x--;
             }
         }
@@ -286,7 +261,7 @@ namespace Bricker.Game
             {
                 _lastDropTime = DateTime.Now;
                 _y++;
-                if (Collision(matrix))
+                if (Collision(matrix, _grid, _x, _y))
                 {
                     _y--;
                     return true;
@@ -309,84 +284,132 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Rotates the brick 90* clockwise, moving slightly if there's a collision.
+        /// Rotates the brick 90* clockwise.
         /// </summary>
-        public void Rotate(byte[,] matrix)
+        public void Rotate(byte[,] matrixGrid)
         {
             lock (this)
             {
-                byte[,] newGrid = new byte[_height, _width];
+                byte[,] newBrickGrid = new byte[_height, _width];
                 for (int x1 = 0; x1 < _width; x1++)
                 {
                     for (int y1 = 0; y1 < _height; y1++)
                     {
                         int x2 = -y1 + (_height - 1);
                         int y2 = x1;
-                        newGrid[x2, y2] = _grid[x1, y1];
+                        newBrickGrid[x2, y2] = _grid[x1, y1];
                     }
                 }
-                _grid = newGrid;
 
-                PreventCollision(matrix);
+                int newBrickX = _x, newBrickY = _y;
+                PreventCollision(matrixGrid, newBrickGrid, ref newBrickX, ref newBrickY, 3);
+                if (!Collision(matrixGrid, newBrickGrid, newBrickX, newBrickY))
+                {
+                    _grid = newBrickGrid;
+                    _x = newBrickX;
+                    _y = newBrickY;
+                }
+
                 _topSpace = CalculateTopSpace();
                 _bottomSpace = CalculateBottomSpace();
             }
         }
 
         /// <summary>
-        /// Tries moving brick up to three steps in any direction to avoid a collision.  If not,
+        /// Returns true if filled brick space conflicts with filled matrix space.
+        /// </summary>
+        public static bool Collision(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        {
+            try
+            {
+                for (int x = 0; x < brickGrid.GetLength(0); x++)
+                {
+                    for (int y = 0; y < brickGrid.GetLength(1); y++)
+                    {
+                        if (brickGrid[x, y] > 0)
+                        {
+                            int matrixX = x + brickX;
+                            int matrixY = y + brickY;
+                            if ((matrixX < 0) || (matrixX > 21))
+                                return true;
+                            if ((matrixY < 0) || (matrixY > 21))
+                                return true;
+                            if (matrixGrid[matrixX, matrixY] > 0)
+                                return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    byte[] mg = new byte[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
+                    Buffer.BlockCopy(matrixGrid, 0, mg, 0, mg.Length);
+                    byte[] bg = new byte[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
+                    Buffer.BlockCopy(brickGrid, 0, bg, 0, bg.Length);
+                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => x.ToString()))}, bg: {String.Join("", bg.Select(x => x.ToString()))}");
+                    ErrorHandler.LogError(ex);
+                }
+                catch
+                {
+                }
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Tries moving brick up to X steps in any direction to avoid a collision.  If not,
         /// brick remains at original location.
         /// </summary>
-        private void PreventCollision(byte[,] matrix)
+        private static void PreventCollision(byte[,] matrixGrid, byte[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
         {
-            lock (this)
+            int steps = 0;
+            while (Collision(matrixGrid, brickGrid, brickX, brickY))
             {
-                int steps = 0;
-                while (Collision(matrix))
+                brickY++;
+                steps++;
+                if (steps >= maxSteps)
                 {
-                    _y++;
-                    steps++;
-                    if (steps >= 3)
-                    {
-                        _y -= 3;
-                        break;
-                    }
+                    brickY -= maxSteps;
+                    break;
                 }
+            }
 
-                steps = 0;
-                while (Collision(matrix))
+            steps = 0;
+            while (Collision(matrixGrid, brickGrid, brickX, brickY))
+            {
+                brickY--;
+                steps++;
+                if (steps >= maxSteps)
                 {
-                    _y--;
-                    steps++;
-                    if (steps >= 3)
-                    {
-                        _y += 3;
-                        break;
-                    }
+                    brickY += maxSteps;
+                    break;
                 }
+            }
 
-                steps = 0;
-                while (Collision(matrix))
+            steps = 0;
+            while (Collision(matrixGrid, brickGrid, brickX, brickY))
+            {
+                brickX++;
+                steps++;
+                if (steps >= maxSteps)
                 {
-                    _x++;
-                    steps++;
-                    if (steps >= 3)
-                    {
-                        _x -= 3;
-                        break;
-                    }
+                    brickX -= maxSteps;
+                    break;
                 }
+            }
 
-                steps = 0;
-                while (Collision(matrix))
+            steps = 0;
+            while (Collision(matrixGrid, brickGrid, brickX, brickY))
+            {
+                brickX--;
+                steps++;
+                if (steps >= maxSteps)
                 {
-                    _x--;
-                    steps++;
-                    if (steps >= 3)
-                    {
-                        _x += 3;
-                        break;
-                    }
+                    brickX += maxSteps;
+                    break;
                 }
             }
         }
@@ -394,15 +417,25 @@ namespace Bricker.Game
         /// <summary>
         /// Changes the X/Y location, usually on hold swap.
         /// </summary>
-        public void SetXY(int x, int y, byte[,] matrix = null)
+        public void SetXY(int x, int y, byte[,] matrixGrid)
         {
             lock (this)
             {
-                _x = x;
-                _y = y;
-                if ((matrix != null) && ((x != 0) || (y != 0)))
-                    PreventCollision(matrix);
+                PreventCollision(matrixGrid, _grid, ref x, ref y, 5);
+                if (!Collision(matrixGrid, _grid, x, y))
+                {
+                    _x = x;
+                    _y = y;
+                }
             }
+        }
+
+        /// <summary>
+        /// Called when spawned onto the matrix, used to reset last drop time, etc.
+        /// </summary>
+        public void Spawned()
+        {
+            _lastDropTime = DateTime.Now;
         }
 
         /// <summary>

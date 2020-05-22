@@ -47,7 +47,6 @@ namespace Bricker.Game
                 {
                     _grid[x, y] = value;
                 }
-
             }
         }
 
@@ -64,7 +63,13 @@ namespace Bricker.Game
                     for (int x = 0; x < _brick.Width; x++)
                         for (int y = 0; y < _brick.Height; y++)
                             if (_brick.Grid[x, y] > 0)
-                                grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
+                            {
+                                int gx = x + _brick.X;
+                                int gy = y + _brick.Y;
+                                if ((gx < 0) || (gx > 11) || (gy < 0) || (gy > 21))
+                                    continue;
+                                grid[gx, gy] = _brick.Grid[x, y];
+                            }
                 }
                 return grid;
             }
@@ -129,7 +134,8 @@ namespace Bricker.Game
                 while (_nextBricks.Count < 7)
                     _nextBricks.Enqueue(new Brick(_random.Next(7) + 1));
                 _brick = _nextBricks.Dequeue();
-                return _brick.Collision(_grid);
+                _brick.Spawned();
+                return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
             }
         }
 
@@ -230,19 +236,19 @@ namespace Bricker.Game
                 if (_hold == null)
                 {
                     _hold = _brick;
-                    _hold.SetXY(0, 0);
+                    //_hold.SetXY(0, 0);
                     SpawnBrick();
                     _brick.SetXY(oX, oY, _grid);
-                    return _brick.Collision(_grid);
+                    return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
                 }
                 else
                 {
                     Brick temp = _hold;
                     _hold = _brick;
-                    _hold.SetXY(0, 0);
+                    //_hold.SetXY(0, 0);
                     _brick = temp;
                     _brick.SetXY(oX, oY, _grid);
-                    return _brick.Collision(_grid);
+                    return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
                 }
             }
         }
