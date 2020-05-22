@@ -73,6 +73,9 @@ namespace Bricker.Rendering
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
         public LobbyProperties LobbyProps { get => _lobbyProps; set => _lobbyProps = value; }
 
+        //remove this
+        public bool Resting { get; set; }
+
         /// <summary>
         /// Class constructor.
         /// </summary>
@@ -903,6 +906,7 @@ namespace Bricker.Rendering
                 lines.Add($"com_state:   {communications.ConnectionState}");
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
+            lines.Add($"resting:   {(Resting ? "1" : "0")}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {

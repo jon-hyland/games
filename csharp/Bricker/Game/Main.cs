@@ -409,6 +409,10 @@ namespace Bricker.Game
         {
             //vars
             Opponent opponent;
+            bool hit;
+            bool resting = false;
+            bool collision;
+            bool moveAfterResting = false;
 
             //new game?
             if (newGame)
@@ -440,9 +444,8 @@ namespace Bricker.Game
                 }
 
                 //vars
-                bool hit = false;
-                bool resting = false;
-                bool collision = false;
+                hit = false;
+                collision = false;
 
                 //sleep
                 Thread.Sleep(15);
@@ -462,28 +465,38 @@ namespace Bricker.Game
                     if (key == Key.Left)
                     {
                         Sounds.Play(Sound.Click1);
-                        MoveBrickLeft();
+                        bool restingBefore = resting;
+                        MoveBrickLeft(out bool moved, out resting);
+                        moveAfterResting = moved && restingBefore;
+                        _renderer.Resting = resting;
                     }
 
                     //right
                     else if (key == Key.Right)
                     {
                         Sounds.Play(Sound.Click1);
-                        MoveBrickRight();
+                        bool restingBefore = resting;
+                        MoveBrickRight(out bool moved, out resting);
+                        moveAfterResting = moved && restingBefore;
+                        _renderer.Resting = resting;
                     }
 
                     //down
                     else if (key == Key.Down)
                     {
                         Sounds.Play(Sound.Click1);
+                        moveAfterResting = resting;
                         MoveBrickDown(out hit, out resting);
+                        _renderer.Resting = resting;
                     }
 
                     //rotate
                     else if (key == Key.Up)
                     {
                         Sounds.Play(Sound.Click1);
-                        RotateBrick();
+                        moveAfterResting = resting;
+                        RotateBrick(out resting);
+                        _renderer.Resting = resting;
                     }
 
                     //drop
@@ -495,7 +508,10 @@ namespace Bricker.Game
 
                     //hold
                     else if (key == Key.C)
-                        collision = HoldBrick();
+                    {
+                        HoldBrick(out collision, out resting);
+                        _renderer.Resting = resting;
+                    }
 
                     //menu
                     else if ((key == Key.Escape) || (key == Key.Q))
@@ -520,21 +536,30 @@ namespace Bricker.Game
 
                     //background
                     else if (key == Key.B)
+                    {
                         RenderProps.Background = !RenderProps.Background;
+                    }
 
                     //debug
                     else if (key == Key.D)
+                    {
                         RenderProps.Debug = !RenderProps.Debug;
+                    }
                 }
 
                 //drop brick timer?
-                if (IsDropTime())
+                if (IsDropTime(resting, moveAfterResting))
+                {
+                    moveAfterResting = false;
                     MoveBrickDown(out hit, out resting);
+                    _renderer.Resting = resting;
+                }
 
                 //hit bottom?
                 if (hit)
                 {
                     Sounds.Play(Sound.Hit2);
+                    moveAfterResting = false;
                     bool gameOver = BrickHit();
                     if (gameOver)
                     {
@@ -543,11 +568,10 @@ namespace Bricker.Game
                     }
                 }
 
-                //resting on bottom?
-                if (resting)
-                {
-
-                }
+                ////resting on bottom?
+                //if (resting)
+                //{
+                //}
 
                 //hold-swap collision?
                 if (collision)
@@ -1424,17 +1448,17 @@ namespace Bricker.Game
         /// <summary>
         /// Moves brick left.
         /// </summary>
-        private void MoveBrickLeft()
+        private void MoveBrickLeft(out bool moved, out bool resting)
         {
-            _matrix.MoveBrickLeft();
+            _matrix.MoveBrickLeft(out moved, out resting);
         }
 
         /// <summary>
         /// Moves brick right.
         /// </summary>
-        private void MoveBrickRight()
+        private void MoveBrickRight(out bool moved, out bool resting)
         {
-            _matrix.MoveBrickRight();
+            _matrix.MoveBrickRight(out moved, out resting);
         }
 
         /// <summary>
@@ -1450,17 +1474,17 @@ namespace Bricker.Game
         /// <summary>
         /// Rotates brick.
         /// </summary>
-        private void RotateBrick()
+        private void RotateBrick(out bool resting)
         {
-            _matrix.RotateBrick();
+            _matrix.RotateBrick(out resting);
         }
 
         /// <summary>
         /// Swaps hold brick.  Tries to avoid a collision, but returns true (game over) if it can't.
         /// </summary>
-        private bool HoldBrick()
+        private void HoldBrick(out bool collision, out bool resting)
         {
-            return _matrix.HoldBrick();
+            _matrix.HoldBrick(out collision, out resting);
         }
 
         /// <summary>
@@ -1491,13 +1515,17 @@ namespace Bricker.Game
         /// <summary>
         /// Returns true if it's time for brick to drop.
         /// </summary>
-        private bool IsDropTime()
+        private bool IsDropTime(bool resting, bool moveAfterResting)
         {
             Brick brick = _matrix.GetBrick();
             if (brick != null)
             {
                 double dropIntervalMs = _levelDropIntervals[_stats.Level - 1];
-                return brick.IsDropTime(dropIntervalMs);
+                if (resting && moveAfterResting)
+                    dropIntervalMs *= 2;
+                double elapsedMs = (DateTime.Now - brick.LastDropTime).TotalMilliseconds;
+                bool dropTime = elapsedMs >= dropIntervalMs;
+                return dropTime;
             }
             return false;
         }

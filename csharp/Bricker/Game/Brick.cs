@@ -245,26 +245,36 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick left, unless collision.
         /// </summary>
-        public void MoveLeft(byte[,] matrix)
+        public void MoveLeft(byte[,] matrix, out bool moved, out bool resting)
         {
             lock (this)
             {
                 _x--;
+                moved = true;
                 if (Collision(matrix, _grid, _x, _y))
+                {
                     _x++;
+                    moved = false;
+                }
+                resting = Resting(matrix, _grid, _x, _y);
             }
         }
 
         /// <summary>
         /// Moves the brick right, unless collision.
         /// </summary>
-        public void MoveRight(byte[,] matrix)
+        public void MoveRight(byte[,] matrix, out bool moved, out bool resting)
         {
             lock (this)
             {
                 _x++;
+                moved = true;
                 if (Collision(matrix, _grid, _x, _y))
+                {
                     _x--;
+                    moved = false;
+                }
+                resting = Resting(matrix, _grid, _x, _y);
             }
         }
 
@@ -292,22 +302,9 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Returns true if its time to drop brick (gravity).
-        /// </summary>
-        public bool IsDropTime(double intervalMs)
-        {
-            lock (this)
-            {
-                double elapsedMs = (DateTime.Now - _lastDropTime).TotalMilliseconds;
-                bool dropTime = elapsedMs >= intervalMs;
-                return dropTime;
-            }
-        }
-
-        /// <summary>
         /// Rotates the brick 90* clockwise.
         /// </summary>
-        public void Rotate(byte[,] matrixGrid)
+        public void Rotate(byte[,] matrixGrid, out bool resting)
         {
             lock (this)
             {
@@ -330,6 +327,7 @@ namespace Bricker.Game
                     _x = newBrickX;
                     _y = newBrickY;
                 }
+                resting = Resting(matrixGrid, _grid, _x, _y);
 
                 _topSpace = CalculateTopSpace();
                 _bottomSpace = CalculateBottomSpace();

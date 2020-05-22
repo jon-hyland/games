@@ -172,24 +172,28 @@ namespace Bricker.Game
         /// <summary>
         /// Moves brick to the left.
         /// </summary>
-        public void MoveBrickLeft()
+        public void MoveBrickLeft(out bool moved, out bool resting)
         {
             lock (this)
             {
+                moved = false;
+                resting = false;
                 if (_brick != null)
-                    _brick.MoveLeft(_grid);
+                    _brick.MoveLeft(_grid, out moved, out resting);
             }
         }
 
         /// <summary>
         /// Moves brick to the righ.
         /// </summary>
-        public void MoveBrickRight()
+        public void MoveBrickRight(out bool moved, out bool resting)
         {
             lock (this)
             {
+                moved = false;
+                resting = false;
                 if (_brick != null)
-                    _brick.MoveRight(_grid);
+                    _brick.MoveRight(_grid, out moved, out resting);
             }
         }
 
@@ -210,12 +214,13 @@ namespace Bricker.Game
         /// <summary>
         /// Rotates the live brick, if one exists.
         /// </summary>
-        public void RotateBrick()
+        public void RotateBrick(out bool resting)
         {
             lock (this)
             {
+                resting = false;
                 if (_brick != null)
-                    _brick.Rotate(_grid);
+                    _brick.Rotate(_grid, out resting);
             }
         }
 
@@ -223,12 +228,14 @@ namespace Bricker.Game
         /// Takes the currently live brick and puts it in hold.  If there's already
         /// a brick held, the two swap.  Returns true if swap causes collision.
         /// </summary>
-        public bool HoldBrick()
+        public void HoldBrick(out bool collision, out bool resting)
         {
             lock (this)
             {
+                collision = false;
+                resting = false;
                 if (_brick == null)
-                    return false;
+                    return;
 
                 int oX = _brick.X;
                 int oY = _brick.Y;
@@ -236,19 +243,21 @@ namespace Bricker.Game
                 if (_hold == null)
                 {
                     _hold = _brick;
-                    //_hold.SetXY(0, 0);
                     SpawnBrick();
                     _brick.SetXY(oX, oY, _grid);
-                    return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    return;
                 }
                 else
                 {
                     Brick temp = _hold;
                     _hold = _brick;
-                    //_hold.SetXY(0, 0);
                     _brick = temp;
                     _brick.SetXY(oX, oY, _grid);
-                    return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
+                    return;
                 }
             }
         }
