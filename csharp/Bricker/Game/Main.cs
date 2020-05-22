@@ -41,6 +41,7 @@ namespace Bricker.Game
         private readonly Random _random;
         private GameStats _stats;
         private List<ExplodingSpace> _spaces;
+        private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
         private Opponent _opponent;
         private GameState _gameState;
@@ -70,6 +71,7 @@ namespace Bricker.Game
             _random = new Random();
             _stats = new GameStats(_config);
             _spaces = null;
+            _levelDropIntervals = new double[10];
             _pendingOpponent = null;
             _opponent = null;
             _gameState = GameState.NotPlaying;
@@ -96,6 +98,14 @@ namespace Bricker.Game
 
             //run tests (usually does nothing)
             RunTests();
+
+            //calculate level drop intervals
+            double interval = 2000;
+            for (int i = 0; i < 10; i++)
+            {
+                interval *= 0.8;
+                _levelDropIntervals[i] = interval;
+            }
         }
 
         #endregion
@@ -1430,9 +1440,9 @@ namespace Bricker.Game
         /// <summary>
         /// Moves brick down.  Returns true if brick hits bottom.
         /// </summary>
-        private void MoveBrickDown(int level, out bool hit, out bool resting)
+        private void MoveBrickDown(out bool hit, out bool resting)
         {
-            _matrix.MoveBrickDown(level, out hit, out resting);
+            _matrix.MoveBrickDown(out hit, out resting);
             if (hit)
                 _stats.IncrementScore(1);
         }

@@ -118,7 +118,7 @@ namespace Bricker.Game
                 _brick = null;
                 _hold = null;
                 if (spawnBrick)
-                    SpawnBrick(1);
+                    SpawnBrick();
             }
         }
 
@@ -127,14 +127,14 @@ namespace Bricker.Game
         /// Refills the queue with six items.
         /// Returns true if current brick collides with matrix shape.
         /// </summary>
-        public bool SpawnBrick(int level)
+        public bool SpawnBrick()
         {
             lock (this)
             {
                 while (_nextBricks.Count < 7)
                     _nextBricks.Enqueue(new Brick(_random.Next(7) + 1));
                 _brick = _nextBricks.Dequeue();
-                _brick.Spawned(level);
+                _brick.Spawned();
                 return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
             }
         }
@@ -196,14 +196,14 @@ namespace Bricker.Game
         /// <summary>
         /// Moves brick down.  Returns true if brick hits bottom.
         /// </summary>
-        public void MoveBrickDown(int level, out bool hit, out bool resting)
+        public void MoveBrickDown(out bool hit, out bool resting)
         {
             lock (this)
             {
                 hit = false;
                 resting = false;
                 if (_brick != null)
-                    _brick.MoveDown(_grid, level, out hit, out resting);
+                    _brick.MoveDown(_grid, out hit, out resting);
             }
         }
 
@@ -223,7 +223,7 @@ namespace Bricker.Game
         /// Takes the currently live brick and puts it in hold.  If there's already
         /// a brick held, the two swap.  Returns true if swap causes collision.
         /// </summary>
-        public bool HoldBrick(int level)
+        public bool HoldBrick()
         {
             lock (this)
             {
@@ -237,7 +237,7 @@ namespace Bricker.Game
                 {
                     _hold = _brick;
                     //_hold.SetXY(0, 0);
-                    SpawnBrick(level);
+                    SpawnBrick();
                     _brick.SetXY(oX, oY, _grid);
                     return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
                 }
