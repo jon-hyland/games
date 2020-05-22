@@ -568,11 +568,6 @@ namespace Bricker.Game
                     }
                 }
 
-                ////resting on bottom?
-                //if (resting)
-                //{
-                //}
-
                 //hold-swap collision?
                 if (collision)
                 {
