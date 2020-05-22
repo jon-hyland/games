@@ -42,14 +42,14 @@ X   * Line clear sound.
 X   * Add lines sound.
 X - Add sound effects to settings.
 X - Add music to settings.
+X - Network Fixes:
+X   * Send Game Quit to Server, even on Window close
+X   * Accept timeout not working right
 - Add saving of settings.
 - Allow reset of high scores from settings.
 - Improve config reader.
 - Allow initials change.
 
-- Network Fixes:
-  * Send Game Quit to Server, even on Window close
-  * Accept timeout not working right
 
 
 Clear1          Clear lines

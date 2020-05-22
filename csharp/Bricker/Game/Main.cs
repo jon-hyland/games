@@ -583,6 +583,7 @@ namespace Bricker.Game
                     {
                         _opponent = null;
                         _pendingOpponent = null;
+                        Sounds.Play(Sound.Error1);
                         MessageBoxLoop(new MessageProperties("Disconnected from game server."));
                         continue;
                     }
@@ -592,6 +593,7 @@ namespace Bricker.Game
                     {
                         _opponent = null;
                         _pendingOpponent = null;
+                        Sounds.Play(Sound.Error1);
                         MessageBoxLoop(new MessageProperties("Opponent has disconnected."));
                         continue;
                     }
@@ -1117,6 +1119,7 @@ namespace Bricker.Game
                 _renderer.MessageProps = null;
 
                 //show message if no acceptance
+                Sounds.Play(Sound.Error1);
                 if (result.Code == ResultCode.Error)
                     MessageBoxLoop(new MessageProperties("Unable to connect, an error occurred."));
                 else if (result.Code == ResultCode.Reject)

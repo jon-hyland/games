@@ -61,7 +61,7 @@ namespace Bricker.Rendering
         private double _score_YCenter;
         private double _highScores_XCenter;
         private double _highScores_YCenter;
-        private readonly bool _fakeOpponent = false;
+        private readonly bool _fakeOpponent = true;
         private bool _menuUp => _menuProps != null || _initialProps != null || _messageProps != null || _lobbyProps != null;
         private SKColor _primaryWhite => !_menuUp ? Colors.White : Colors.DimWhite;
 
@@ -149,11 +149,11 @@ namespace Bricker.Rendering
                 _hold_Width = 132;
                 _hold_Height = _player_Height;
                 _player_TotalWidth = _hold_Width - 2 + _player_Width - 2 + _next_Width;
-                _left_Center1 = (_frame_Width - _player_TotalWidth) / 4;
-                _left_Center2 = (_frame_Width - _player_Width) / 4;
-                _right_Center1 = _frame_Width - ((_frame_Width - _player_TotalWidth) / 4);
+                _left_Center1 = ((_frame_Width - _player_TotalWidth) / 4) - 1;
+                _left_Center2 = ((_frame_Width - _player_Width) / 4) - 1;
+                _right_Center1 = (_frame_Width - ((_frame_Width - _player_TotalWidth) / 4)) + 1;
                 _title_XCenter = _left_Center1;
-                _title_YCenter = 88;
+                _title_YCenter = opponent == null ? 88 : 52;
                 _controls_XCenter = _left_Center1;
                 _controls_YCenter = 465;
                 _opponent_XCenter = _left_Center1;
@@ -434,10 +434,10 @@ namespace Bricker.Rendering
             if (opponent == null)
                 return;
 
-            Space[,] matrix = opponent.GetMatrix();
-            double brickSize = 20d;
-            double matrixWidth = 2d + (brickSize * 10d) + 9d + 2d;
-            double matrixHeight = 2d + (brickSize * 20d) + 19d + 2d;
+            Space[,] grid = opponent.GetMatrix();
+            int brickSize = 24;
+            double matrixWidth = 2d + (brickSize * 10d) + 2d;
+            double matrixHeight = 2d + (brickSize * 20d) + 2d;
 
             double statsHeight = 21;
             double textSpacing = -2;
@@ -463,16 +463,26 @@ namespace Bricker.Rendering
                 using (Surface matrixSurface = new Surface(matrixWidth, matrixHeight, Colors.Black))
                 {
                     for (int x = 1; x < 12; x++)
+                    {
                         for (int y = 1; y < 22; y++)
-                            if (matrix[x, y].IsSolid())
-                                matrixSurface.DrawRect(Brick.SpaceToColor(matrix[x, y]), ((x - 1d) * (brickSize + 1d)) + 1.5d, ((y - 1d) * (brickSize + 1)) + 1.5d, brickSize, brickSize);
+                        {
+                            if (grid[x, y].Exists())
+                            {
+                                Space space = grid[x, y];
+                                if (!_spaces[brickSize].ContainsKey(space))
+                                    _spaces[brickSize].Add(space, CreateBrickSurface(space, brickSize));
+                                Surface s = _spaces[brickSize][space];
+                                matrixSurface.Blit(s, ((x - 1) * brickSize) + 2, ((y - 1) * brickSize) + 2);
+                            }
+                        }
+                    }
                     matrixSurface.DrawLine(_primaryWhite, 0.5d, 0.5d, matrixWidth - 1.5d, 0.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, matrixHeight - 1.5d, 0.5d, matrixHeight - 1.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, 0.5d, matrixHeight - 1.5d, 0.5d, 0.5d, 2d);
                     surface.Blit(matrixSurface, (width - matrixWidth) / 2d, headerHeight + betweenSpacing);
                 }
-                frame.Blit(surface, _opponent_XCenter - (width / 2), _frame_Height - ((_frame_Height - _player_Height) / 2) - height - 15);
+                frame.Blit(surface, _opponent_XCenter - (width / 2), _frame_Height - ((_frame_Height - _player_Height) / 2) - height + 1);
             }
         }
 
