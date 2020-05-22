@@ -41,7 +41,6 @@ namespace Bricker.Game
         private readonly Random _random;
         private GameStats _stats;
         private List<ExplodingSpace> _spaces;
-        private readonly double[] _levelDropIntervals;
         private Player _pendingOpponent;
         private Opponent _opponent;
         private GameState _gameState;
@@ -71,7 +70,6 @@ namespace Bricker.Game
             _random = new Random();
             _stats = new GameStats(_config);
             _spaces = null;
-            _levelDropIntervals = new double[10];
             _pendingOpponent = null;
             _opponent = null;
             _gameState = GameState.NotPlaying;
@@ -98,14 +96,6 @@ namespace Bricker.Game
 
             //run tests (usually does nothing)
             RunTests();
-
-            //calculate level drop intervals
-            double interval = 2000;
-            for (int i = 0; i < 10; i++)
-            {
-                interval *= 0.8;
-                _levelDropIntervals[i] = interval;
-            }
         }
 
         #endregion
@@ -441,6 +431,7 @@ namespace Bricker.Game
 
                 //vars
                 bool hit = false;
+                bool resting = false;
                 bool collision = false;
 
                 //sleep
@@ -475,7 +466,7 @@ namespace Bricker.Game
                     else if (key == Key.Down)
                     {
                         Sounds.Play(Sound.Click1);
-                        hit = MoveBrickDown();
+                        MoveBrickDown(out hit, out resting);
                     }
 
                     //rotate
@@ -528,9 +519,9 @@ namespace Bricker.Game
 
                 //drop brick timer?
                 if (IsDropTime())
-                    hit = MoveBrickDown();
+                    MoveBrickDown(out hit, out resting);
 
-                //brick hit bottom?
+                //hit bottom?
                 if (hit)
                 {
                     Sounds.Play(Sound.Hit2);
@@ -540,6 +531,12 @@ namespace Bricker.Game
                         _gameState = GameState.GameOver;
                         break;
                     }
+                }
+
+                //resting on bottom?
+                if (resting)
+                {
+
                 }
 
                 //hold-swap collision?
@@ -1433,12 +1430,11 @@ namespace Bricker.Game
         /// <summary>
         /// Moves brick down.  Returns true if brick hits bottom.
         /// </summary>
-        private bool MoveBrickDown()
+        private void MoveBrickDown(int level, out bool hit, out bool resting)
         {
-            bool hit = _matrix.MoveBrickDown();
+            _matrix.MoveBrickDown(level, out hit, out resting);
             if (hit)
                 _stats.IncrementScore(1);
-            return hit;
         }
 
         /// <summary>
@@ -1473,7 +1469,7 @@ namespace Bricker.Game
                 int expectedDrops = (int)Math.Round(dropsPerSecond * elapsed.TotalSeconds);
                 while (dropCount < expectedDrops)
                 {
-                    hit = MoveBrickDown();
+                    MoveBrickDown(out hit, out _);
                     dropCount++;
                     if (hit)
                         break;

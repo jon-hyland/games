@@ -15,7 +15,9 @@ namespace Bricker.Game
     public class Brick
     {
         //const
-        private static readonly Dictionary<int, List<Point>> _antiCollisionPatterns = new Dictionary<int, List<Point>>();
+        private static readonly object _staticLock = new object();
+        private static readonly Dictionary<int, List<Point>> _antiCollisionPatterns;
+        private static readonly List<double> _levelDropIntervals;
 
         //private
         private readonly int _shapeNum;
@@ -27,7 +29,8 @@ namespace Bricker.Game
         private int _y;
         private int _topSpace;
         private int _bottomSpace;
-        private DateTime _lastDropTime;
+        private DateTime _nextDropTime_Normal;
+        private DateTime _nextDropTime_Resting;
 
         //public
         public int ShapeNum => _shapeNum;
@@ -39,7 +42,6 @@ namespace Bricker.Game
         public int Y => _y;
         public int TopSpace => _topSpace;
         public int BottomSpace => _bottomSpace;
-        public DateTime LastDropTime => _lastDropTime;
 
         /// <summary>
         /// Class constructor.
@@ -124,7 +126,8 @@ namespace Bricker.Game
             _bottomSpace = CalculateBottomSpace();
             _x = (12 - _width) / 2;
             _y = 1 - _topSpace;
-            _lastDropTime = DateTime.Now;
+            _nextDropTime_Normal = DateTime.Now.AddMilliseconds(_levelDropIntervals[0]);
+            _nextDropTime_Resting = DateTime.Now.AddMilliseconds(_levelDropIntervals[0] * 2);
         }
 
         /// <summary>
@@ -132,10 +135,16 @@ namespace Bricker.Game
         /// </summary>
         static Brick()
         {
-            lock (_antiCollisionPatterns)
+            lock (_staticLock)
             {
-                if (_antiCollisionPatterns.Count == 0)
-                    _antiCollisionPatterns = GenerateAntiCollisionPatterns();
+                _antiCollisionPatterns = GenerateAntiCollisionPatterns();
+                _levelDropIntervals = new List<double>();
+                double interval = 2000;
+                for (int i = 0; i < 10; i++)
+                {
+                    interval *= 0.8;
+                    _levelDropIntervals[i] = interval;
+                }
             }
         }
 
@@ -245,12 +254,12 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick left, unless collision.
         /// </summary>
-        public void MoveLeft(byte[,] matrix)
+        public void MoveLeft(byte[,] matrixGrid)
         {
             lock (this)
             {
                 _x--;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                     _x++;
             }
         }
@@ -258,12 +267,12 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick right, unless collision.
         /// </summary>
-        public void MoveRight(byte[,] matrix)
+        public void MoveRight(byte[,] matrixGrid)
         {
             lock (this)
             {
                 _x++;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                     _x--;
             }
         }
@@ -271,31 +280,36 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick down, unless collision.
         /// </summary>
-        public bool MoveDown(byte[,] matrix)
+        public void MoveDown(byte[,] matrixGrid, int level, out bool hit, out bool resting)
         {
             lock (this)
             {
-                _lastDropTime = DateTime.Now;
+                hit = false;
+                resting = false;
+                _nextDropTime_Normal = DateTime.Now.AddMilliseconds(_levelDropIntervals[level - 1]);
+                _nextDropTime_Resting = DateTime.Now.AddMilliseconds(_levelDropIntervals[level - 1] * 2);
                 _y++;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                 {
                     _y--;
-                    return true;
+                    hit = true;
                 }
-                return false;
+                if (Resting(matrixGrid, _grid, _x, _y))
+                {
+                    resting = true;
+                }
             }
         }
 
         /// <summary>
         /// Returns true if its time to drop brick (gravity).
         /// </summary>
-        public bool IsDropTime(double intervalMs)
+        public bool IsDropTime(bool resting)
         {
             lock (this)
             {
-                double elapsedMs = (DateTime.Now - _lastDropTime).TotalMilliseconds;
-                bool dropTime = elapsedMs >= intervalMs;
-                return dropTime;
+                DateTime nextDropTime = !resting ? _nextDropTime_Normal : _nextDropTime_Resting;
+                return DateTime.Now >= nextDropTime;
             }
         }
 
@@ -328,6 +342,50 @@ namespace Bricker.Game
 
                 _topSpace = CalculateTopSpace();
                 _bottomSpace = CalculateBottomSpace();
+            }
+        }
+
+        /// <summary>
+        /// Returns true if a filled brick space is above a filled grid space.
+        /// </summary>
+        public static bool Resting(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        {
+            try
+            {
+                for (int x = 0; x < brickGrid.GetLength(0); x++)
+                {
+                    for (int y = 0; y < brickGrid.GetLength(1); y++)
+                    {
+                        if (brickGrid[x, y] > 0)
+                        {
+                            int matrixX = x + brickX;
+                            int matrixY = y + brickY + 1;
+                            if ((matrixX < 0) || (matrixX > 21))
+                                continue;
+                            if ((matrixY < 0) || (matrixY > 21))
+                                continue;
+                            if (matrixGrid[matrixX, matrixY] > 0)
+                                return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    byte[] mg = new byte[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
+                    Buffer.BlockCopy(matrixGrid, 0, mg, 0, mg.Length);
+                    byte[] bg = new byte[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
+                    Buffer.BlockCopy(brickGrid, 0, bg, 0, bg.Length);
+                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => x.ToString()))}, bg: {String.Join("", bg.Select(x => x.ToString()))}");
+                    ErrorHandler.LogError(ex);
+                }
+                catch
+                {
+                }
+                return false;
             }
         }
 
@@ -381,7 +439,7 @@ namespace Bricker.Game
         /// </summary>
         private static void PreventCollision(byte[,] matrixGrid, byte[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
         {
-            int oX = brickX, oY = brickY;
+            //int oX = brickX, oY = brickY;
             try
             {
                 maxSteps = Math.Max(Math.Min(maxSteps, 5), 1);
@@ -406,10 +464,10 @@ namespace Bricker.Game
             }
             finally
             {
-                if ((brickX != oX) || (brickY != oY))
-                {
-                    string foo = "";
-                }
+                //if ((brickX != oX) || (brickY != oY))
+                //{
+                //    string foo = "";
+                //}
             }
         }
 
@@ -430,11 +488,12 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Called when spawned onto the matrix, used to reset last drop time, etc.
+        /// Called when spawned onto the matrix, used to reset next drop time, etc.
         /// </summary>
-        public void Spawned()
+        public void Spawned(int level)
         {
-            _lastDropTime = DateTime.Now;
+            _nextDropTime_Normal = DateTime.Now.AddMilliseconds(_levelDropIntervals[level - 1]);
+            _nextDropTime_Resting = DateTime.Now.AddMilliseconds(_levelDropIntervals[level - 1] * 2);
         }
 
         /// <summary>
@@ -451,7 +510,8 @@ namespace Bricker.Game
                     _y = _y,
                     _topSpace = _topSpace,
                     _bottomSpace = _bottomSpace,
-                    _lastDropTime = _lastDropTime
+                    _nextDropTime_Normal = _nextDropTime_Normal,
+                    _nextDropTime_Resting = _nextDropTime_Resting
                 };
                 return brick;
             }
