@@ -10,7 +10,7 @@ namespace Bricker.Game
     {
         //private
         private readonly Player _player;
-        private readonly byte[,] _matrix;
+        private readonly Space[,] _matrix;
         private int _level;
         private int _lines;
         private int _score;
@@ -33,7 +33,7 @@ namespace Bricker.Game
         public Opponent(Player player)
         {
             _player = player;
-            _matrix = new byte[12, 22];
+            _matrix = new Space[12, 22];
             _level = 1;
             _lines = 0;
             _score = 0;
@@ -49,7 +49,7 @@ namespace Bricker.Game
         {
             for (int x = 0; x < 12; x++)
                 for (int y = 0; y < 22; y++)
-                    _matrix[x, y] = 0;
+                    _matrix[x, y] = Space.Empty;
             _level = 1;
             _lines = 0;
             _score = 0;
@@ -61,12 +61,12 @@ namespace Bricker.Game
         /// <summary>
         /// Returns thread-safe shallow copy of opponents matrix.
         /// </summary>
-        public byte[,] GetMatrix()
+        public Space[,] GetMatrix()
         {
-            byte[,] matrix;
+            Space[,] matrix;
             lock (this)
             {
-                matrix = (byte[,])_matrix.Clone();
+                matrix = (Space[,])_matrix.Clone();
             }
             return matrix;
         }
@@ -90,7 +90,7 @@ namespace Bricker.Game
         /// <summary>
         /// Updates opponent after status packet received.
         /// </summary>
-        public void UpdateOpponent(byte[,] matrix, int level, int lines, int score, int linesSent)
+        public void UpdateOpponent(Space[,] matrix, int level, int lines, int score, int linesSent)
         {
             lock (this)
             {

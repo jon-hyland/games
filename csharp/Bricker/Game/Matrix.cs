@@ -11,7 +11,7 @@ namespace Bricker.Game
     {
         //private
         private readonly Random _random;
-        private readonly byte[,] _grid;
+        private readonly Space[,] _grid;
         private readonly Queue<Brick> _nextBricks;
         private Brick _brick;
         private Brick _hold;
@@ -22,7 +22,7 @@ namespace Bricker.Game
         public Matrix()
         {
             _random = new Random();
-            _grid = new byte[12, 22];
+            _grid = new Space[12, 22];
             _nextBricks = new Queue<Brick>();
             _brick = null;
             _hold = null;
@@ -32,7 +32,7 @@ namespace Bricker.Game
         /// <summary>
         /// XY class indexer that accesses the underlying grid, locking for thread safety.
         /// </summary>
-        public byte this[int x, int y]
+        public Space this[int x, int y]
         {
             get
             {
@@ -53,24 +53,24 @@ namespace Bricker.Game
         /// <summary>
         /// Returns copy of grid.
         /// </summary>
-        public byte[,] GetGrid(bool includeBrick)
+        public Space[,] GetGrid(bool includeBrick)
         {
             lock (this)
             {
-                byte[,] grid = (byte[,])_grid.Clone();
+                Space[,] grid = (Space[,])_grid.Clone();
                 if ((includeBrick) && (_brick != null))
                 {
                     for (int x = 0; x < _brick.Width; x++)
                     {
                         for (int y = 0; y < _brick.Height; y++)
                         {
-                            if (_brick.Grid[x, y] > 0)
+                            if (_brick.Grid[x, y].IsSolid())
                             {
                                 int gx = x + _brick.X;
                                 int gy = y + _brick.Y;
                                 int gyg = y + _brick.YGhost;
                                 if ((gx >= 0) && (gx <= 11) && (gyg >= 0) && (gyg <= 21))
-                                    grid[gx, gyg] = 9;
+                                    grid[gx, gyg] = (Space)((byte)_brick.Grid[x, y] + 7);
                                 if ((gx >= 0) && (gx <= 11) && (gy >= 0) && (gy <= 21))
                                     grid[gx, gy] = _brick.Grid[x, y];
                             }
@@ -113,13 +113,13 @@ namespace Bricker.Game
                 Buffer.BlockCopy(Enumerable.Repeat((byte)0, 12 * 22).ToArray(), 0, _grid, 0, 12 * 22);
                 for (int x = 0; x < 12; x++)
                 {
-                    _grid[x, 0] = 8;
-                    _grid[x, 22 - 1] = 8;
+                    _grid[x, 0] = Space.Edge;
+                    _grid[x, 22 - 1] = Space.Edge;
                 }
                 for (int y = 0; y < 22; y++)
                 {
-                    _grid[0, y] = 8;
-                    _grid[12 - 1, y] = 8;
+                    _grid[0, y] = Space.Edge;
+                    _grid[12 - 1, y] = Space.Edge;
                 }
                 _brick = null;
                 _hold = null;
@@ -138,7 +138,7 @@ namespace Bricker.Game
             lock (this)
             {
                 while (_nextBricks.Count < 7)
-                    _nextBricks.Enqueue(new Brick(_random.Next(7) + 1));
+                    _nextBricks.Enqueue(new Brick((Space)(_random.Next(7) + 1)));
                 _brick = _nextBricks.Dequeue();
                 _brick.Spawned(_grid);
                 return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
@@ -157,7 +157,7 @@ namespace Bricker.Game
 
                 for (int x = 0; x < _brick.Width; x++)
                     for (int y = 0; y < _brick.Height; y++)
-                        if (_brick.Grid[x, y] > 0)
+                        if (_brick.Grid[x, y].IsSolid())
                             _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
 
                 _brick = null;
@@ -280,7 +280,7 @@ namespace Bricker.Game
                 {
                     bool solid = true;
                     for (int x = 1; x < 11; x++)
-                        if (_grid[x, y] == 0)
+                        if (!_grid[x, y].IsSolid())
                             solid = false;
                     if (solid)
                         rowsToErase.Add(y);

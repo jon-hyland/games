@@ -26,7 +26,7 @@ namespace Bricker.Rendering
         private double _frame_Width;
         private double _frame_Height;
         private double _displayScale;
-        private readonly Dictionary<byte, Surface> _bricks;
+        private readonly Dictionary<Space, Surface> _spaces;
         private MenuProperties _menuProps;
         private SettingsProperties _settingProps;
         private InitialsEntryProperties _initialProps;
@@ -85,7 +85,7 @@ namespace Bricker.Rendering
             _window = window;
             _config = config;
             _displayScale = 1;
-            _bricks = new Dictionary<byte, Surface>();
+            _spaces = new Dictionary<Space, Surface>();
             _menuProps = null;
             _initialProps = null;
             _messageProps = null;
@@ -128,7 +128,7 @@ namespace Bricker.Rendering
                 if ((_fakeOpponent) && (opponent == null))
                 {
                     opponent = new Opponent(new Player(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
-                    byte[,] m = matrix.GetGrid(includeBrick: true);
+                    Space[,] m = matrix.GetGrid(includeBrick: true);
                     opponent.UpdateOpponent(m, 3, 144, 12434, 7);
                 }
 
@@ -236,12 +236,15 @@ namespace Bricker.Rendering
             }
         }
 
-        private Surface CreateBrickSurface(byte shape)
+        /// <summary>
+        /// Generates a prerendered surface to repesent each type of space (small colored square).
+        /// </summary>
+        private Surface CreateBrickSurface(Space space)
         {
             double size = 32;
             double x = 0;
             double y = 0;
-            SKColor color = Brick.BrickToColor(shape);
+            SKColor color = Brick.SpaceToColor(space);
             SKColor lighter = Colors.GetLighter(color);
             SKColor darker = Colors.GetDarker(color);
             Surface surface = new Surface(size, size, Colors.Transparent);
@@ -268,7 +271,7 @@ namespace Bricker.Rendering
         {
             using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
-                byte[,] grid = matrix.GetGrid(includeBrick: true);
+                Space[,] grid = matrix.GetGrid(includeBrick: true);
                 for (int i = 0; i <= 10; i++)
                     surface.DrawLine(Colors.Gray, (i * 32) + 2, 0, (i * 32) + 2, surface.Height, 1);
                 for (int i = 0; i <= 20; i++)
@@ -277,15 +280,15 @@ namespace Bricker.Rendering
                 {
                     for (int y = 1; y < 22; y++)
                     {
-                        if ((grid[x, y] >= 1) && (grid[x, y] <= 7))
+                        if (grid[x, y].IsStandard())
                         {
-                            byte shape = grid[x, y];
-                            if (!_bricks.ContainsKey(shape))
-                                _bricks.Add(shape, CreateBrickSurface(shape));
-                            Surface brick = _bricks[shape];
+                            Space space = grid[x, y];
+                            if (!_spaces.ContainsKey(space))
+                                _spaces.Add(space, CreateBrickSurface(space));
+                            Surface brick = _spaces[space];
                             surface.Blit(brick, ((x - 1) * 32) + 2, ((y - 1) * 32) + 2);
                         }
-                        else if (grid[x, y] == 9)
+                        else if (grid[x, y].IsGhost())
                         {
                             surface.DrawRect(Colors.DimWhite, ((x - 1) * 32) + 16, ((y - 1) * 32) + 16, 4, 4);
                         }
@@ -329,7 +332,7 @@ namespace Bricker.Rendering
                 {
                     using (Surface container = new Surface(brickArea, brickArea))
                     {
-                        byte[,] grid = ReduceBrick(hold.Grid);
+                        Space[,] grid = ReduceBrick(hold.Grid);
                         double swidth = (grid.GetLength(0) * 25) + 1;
                         double sheight = (grid.GetLength(1) * 25) + 1;
                         using (Surface brick = new Surface(swidth, sheight))
@@ -337,7 +340,7 @@ namespace Bricker.Rendering
                             for (int x = 0; x < grid.GetLength(0); x++)
                                 for (int y = 0; y < grid.GetLength(1); y++)
                                     if (grid[x, y] > 0)
-                                        brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
+                                        brick.DrawRect(Brick.SpaceToColor(grid[x, y]), x * 25, y * 25, 24, 24);
                             container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
                         }
                         surface.Blit(container, (_next_Width - brickArea) / 2, titleSpacing);
@@ -372,15 +375,15 @@ namespace Bricker.Rendering
                 {
                     using (Surface container = new Surface(brickArea, brickArea))
                     {
-                        byte[,] grid = ReduceBrick(nextBricks[i].Grid);
+                        Space[,] grid = ReduceBrick(nextBricks[i].Grid);
                         double swidth = (grid.GetLength(0) * 25) + 1;
                         double sheight = (grid.GetLength(1) * 25) + 1;
                         using (Surface brick = new Surface(swidth, sheight))
                         {
                             for (int x = 0; x < grid.GetLength(0); x++)
                                 for (int y = 0; y < grid.GetLength(1); y++)
-                                    if (grid[x, y] > 0)
-                                        brick.DrawRect(Brick.BrickToColor(grid[x, y]), x * 25, y * 25, 24, 24);
+                                    if (grid[x, y].IsSolid())
+                                        brick.DrawRect(Brick.SpaceToColor(grid[x, y]), x * 25, y * 25, 24, 24);
                             container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
                         }
                         surface.Blit(container, (_next_Width - brickArea) / 2, titleSpacing + ((brickArea + brickSpacing) * i));
@@ -398,7 +401,7 @@ namespace Bricker.Rendering
             if (opponent == null)
                 return;
 
-            byte[,] matrix = opponent.GetMatrix();
+            Space[,] matrix = opponent.GetMatrix();
             double brickSize = 20d;
             double matrixWidth = 2d + (brickSize * 10d) + 9d + 2d;
             double matrixHeight = 2d + (brickSize * 20d) + 19d + 2d;
@@ -429,7 +432,7 @@ namespace Bricker.Rendering
                     for (int x = 1; x < 12; x++)
                         for (int y = 1; y < 22; y++)
                             if (matrix[x, y] > 0)
-                                matrixSurface.DrawRect(Brick.BrickToColor(matrix[x, y]), ((x - 1d) * (brickSize + 1d)) + 1.5d, ((y - 1d) * (brickSize + 1)) + 1.5d, brickSize, brickSize);
+                                matrixSurface.DrawRect(Brick.SpaceToColor(matrix[x, y]), ((x - 1d) * (brickSize + 1d)) + 1.5d, ((y - 1d) * (brickSize + 1)) + 1.5d, brickSize, brickSize);
                     matrixSurface.DrawLine(_primaryWhite, 0.5d, 0.5d, matrixWidth - 1.5d, 0.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, matrixHeight - 1.5d, 0.5d, matrixHeight - 1.5d, 2d);
@@ -1020,14 +1023,14 @@ namespace Bricker.Rendering
         /// <summary>
         /// Removes empty rows and columns from specified brick, returning a smaller grid.
         /// </summary>
-        private static byte[,] ReduceBrick(byte[,] brick)
+        private static Space[,] ReduceBrick(Space[,] brick)
         {
             int left = Int32.MaxValue, right = Int32.MinValue, top = Int32.MaxValue, bottom = Int32.MinValue;
             for (int x = 0; x < brick.GetLength(0); x++)
             {
                 for (int y = 0; y < brick.GetLength(1); y++)
                 {
-                    if (brick[x, y] > 0)
+                    if (brick[x, y].IsSolid())
                     {
                         left = x < left ? x : left;
                         right = x > right ? x : right;
@@ -1040,7 +1043,7 @@ namespace Bricker.Rendering
             int height = (bottom - top) + 1;
             int xOffset = left;
             int yOffset = top;
-            byte[,] reduced = new byte[width, height];
+            Space[,] reduced = new Space[width, height];
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
                     reduced[x, y] = brick[x + xOffset, y + yOffset];

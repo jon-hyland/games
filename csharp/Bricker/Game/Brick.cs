@@ -5,6 +5,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Shapes;
 
 namespace Bricker.Game
 {
@@ -19,11 +20,11 @@ namespace Bricker.Game
         private static readonly Dictionary<int, List<Point>> _antiCollisionPatterns;
 
         //private
-        private readonly int _shapeNum;
+        private readonly Space _space;
         private readonly int _width;
         private readonly int _height;
         private readonly SKColor _color;
-        private byte[,] _grid;
+        private Space[,] _grid;
         private int _x;
         private int _y;
         private int _yGhost;
@@ -32,11 +33,11 @@ namespace Bricker.Game
         private DateTime _lastDropTime;
 
         //public
-        public int ShapeNum => _shapeNum;
+        public Space Space => _space;
         public int Width => _width;
         public int Height => _height;
         public SKColor Color => _color;
-        public byte[,] Grid => _grid;
+        public Space[,] Grid => _grid;
         public int X => _x;
         public int Y => _y;
         public int YGhost => _yGhost;
@@ -47,80 +48,80 @@ namespace Bricker.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Brick(int shapeNum)
+        public Brick(Space space)
         {
-            _shapeNum = shapeNum;
-            switch (shapeNum)
+            _space = space;
+            switch (space)
             {
-                case 1: // I
+                case Space.I_White:
                     _width = 4;
                     _height = 4;
-                    _grid = new byte[_width, _height];
-                    _grid[0, 2] = 1;
-                    _grid[1, 2] = 1;
-                    _grid[2, 2] = 1;
-                    _grid[3, 2] = 1;
-                    _color = BrickToColor(1);
+                    _grid = new Space[_width, _height];
+                    _grid[0, 2] = space;
+                    _grid[1, 2] = space;
+                    _grid[2, 2] = space;
+                    _grid[3, 2] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 2: // J
+                case Space.J_Blue:
                     _width = 3;
                     _height = 3;
-                    _grid = new byte[_width, _height];
-                    _grid[0, 1] = 2;
-                    _grid[0, 2] = 2;
-                    _grid[1, 2] = 2;
-                    _grid[2, 2] = 2;
-                    _color = BrickToColor(2);
+                    _grid = new Space[_width, _height];
+                    _grid[0, 1] = space;
+                    _grid[0, 2] = space;
+                    _grid[1, 2] = space;
+                    _grid[2, 2] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 3: // L
+                case Space.L_Yellow:
                     _width = 3;
                     _height = 3;
-                    _grid = new byte[_width, _height];
-                    _grid[2, 1] = 3;
-                    _grid[0, 2] = 3;
-                    _grid[1, 2] = 3;
-                    _grid[2, 2] = 3;
-                    _color = BrickToColor(3);
+                    _grid = new Space[_width, _height];
+                    _grid[2, 1] = space;
+                    _grid[0, 2] = space;
+                    _grid[1, 2] = space;
+                    _grid[2, 2] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 4: // O
+                case Space.O_Gray:
                     _width = 2;
                     _height = 2;
-                    _grid = new byte[_width, _height];
-                    _grid[0, 0] = 4;
-                    _grid[0, 1] = 4;
-                    _grid[1, 0] = 4;
-                    _grid[1, 1] = 4;
-                    _color = BrickToColor(4);
+                    _grid = new Space[_width, _height];
+                    _grid[0, 0] = space;
+                    _grid[0, 1] = space;
+                    _grid[1, 0] = space;
+                    _grid[1, 1] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 5: // S
+                case Space.S_Green:
                     _width = 4;
                     _height = 4;
-                    _grid = new byte[_width, _height];
-                    _grid[1, 0] = 5;
-                    _grid[2, 0] = 5;
-                    _grid[0, 1] = 5;
-                    _grid[1, 1] = 5;
-                    _color = BrickToColor(5);
+                    _grid = new Space[_width, _height];
+                    _grid[1, 0] = space;
+                    _grid[2, 0] = space;
+                    _grid[0, 1] = space;
+                    _grid[1, 1] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 6: // T
+                case Space.T_Purple:
                     _width = 4;
                     _height = 4;
-                    _grid = new byte[_width, _height];
-                    _grid[1, 1] = 6;
-                    _grid[0, 2] = 6;
-                    _grid[1, 2] = 6;
-                    _grid[2, 2] = 6;
-                    _color = BrickToColor(6);
+                    _grid = new Space[_width, _height];
+                    _grid[1, 1] = space;
+                    _grid[0, 2] = space;
+                    _grid[1, 2] = space;
+                    _grid[2, 2] = space;
+                    _color = SpaceToColor(space);
                     break;
-                case 7: // Z
+                case Space.Z_Red:
                     _width = 4;
                     _height = 4;
-                    _grid = new byte[_width, _height];
-                    _grid[0, 0] = 7;
-                    _grid[1, 0] = 7;
-                    _grid[1, 1] = 7;
-                    _grid[2, 1] = 7;
-                    _color = BrickToColor(7);
+                    _grid = new Space[_width, _height];
+                    _grid[0, 0] = space;
+                    _grid[1, 0] = space;
+                    _grid[1, 1] = space;
+                    _grid[2, 1] = space;
+                    _color = SpaceToColor(space);
                     break;
             }
             _topSpace = CalculateTopSpace();
@@ -145,51 +146,42 @@ namespace Bricker.Game
         /// <summary>
         /// Returns color for specified brick shape.
         /// </summary>
-        public static SKColor BrickToColor(byte shape)
+        public static SKColor SpaceToColor(Space space)
         {
-            switch (shape)
+            switch (space)
             {
-                //empty
-                case 0:
-                    return Colors.Black;
-
-                //1 - I
-                case 1:
-                    return Colors.SilverPink;
-
-                //2 - J
-                case 2:
-                    return Colors.TuftsBlue;
-
-                //3 - L
-                case 3:
-                    return Colors.ChromeYellow;
-
-                //4 - O
-                case 4:
-                    return Colors.Independence;
-
-                //5 - S
-                case 5:
-                    return Colors.ForestGreen;
-
-                //6 - T
-                case 6:
-                    return Colors.Byzantine;
-
-                //7 - Z
-                case 7:
-                    return Colors.Coquelicot;
-
-                //edge
-                case 8:
+                case Space.Empty:
                     return Colors.Transparent;
-
-                //gray
-                case 9:
-                    return Colors.Gray;
-
-                //undefined
+                case Space.I_White:
+                    return Colors.SilverPink;
+                case Space.J_Blue:
+                    return Colors.TuftsBlue;
+                case Space.L_Yellow:
+                    return Colors.ChromeYellow;
+                case Space.O_Gray:
+                    return Colors.Independence;
+                case Space.S_Green:
+                    return Colors.ForestGreen;
+                case Space.T_Purple:
+                    return Colors.Byzantine;
+                case Space.Z_Red:
+                    return Colors.Coquelicot;
+                case Space.Edge:
+                    return Colors.Transparent;
+                case Space.I_White_Ghost:
+                    return Colors.GetDarker(Colors.SilverPink);
+                case Space.J_Blue_Ghost:
+                    return Colors.GetDarker(Colors.TuftsBlue);
+                case Space.L_Yellow_Ghost:
+                    return Colors.GetDarker(Colors.ChromeYellow);
+                case Space.O_Gray_Ghost:
+                    return Colors.GetDarker(Colors.Independence);
+                case Space.S_Green_Ghost:
+                    return Colors.GetDarker(Colors.ForestGreen);
+                case Space.T_Purple_Ghost:
+                    return Colors.GetDarker(Colors.Byzantine);
+                case Space.Z_Red_Ghost:
+                    return Colors.GetDarker(Colors.Coquelicot);
                 default:
                     return Colors.Transparent;
             }
@@ -208,7 +200,7 @@ namespace Bricker.Game
                     bool empty = true;
                     for (int x = 0; x < _width; x++)
                     {
-                        if (_grid[x, y] > 0)
+                        if (_grid[x, y].IsSolid())
                             empty = false;
                     }
                     if (empty)
@@ -233,7 +225,7 @@ namespace Bricker.Game
                     bool empty = true;
                     for (int x = 0; x < _width; x++)
                     {
-                        if (_grid[x, y] > 0)
+                        if (_grid[x, y].IsSolid())
                             empty = false;
                     }
                     if (empty)
@@ -248,7 +240,7 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick left, unless collision.
         /// </summary>
-        public void MoveLeft(byte[,] matrixGrid, out bool moved, out bool resting)
+        public void MoveLeft(Space[,] matrixGrid, out bool moved, out bool resting)
         {
             lock (this)
             {
@@ -267,7 +259,7 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick right, unless collision.
         /// </summary>
-        public void MoveRight(byte[,] matrixGrid, out bool moved, out bool resting)
+        public void MoveRight(Space[,] matrixGrid, out bool moved, out bool resting)
         {
             lock (this)
             {
@@ -286,7 +278,7 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick down, unless collision.
         /// </summary>
-        public void MoveDown(byte[,] matrixGrid, out bool hit, out bool resting)
+        public void MoveDown(Space[,] matrixGrid, out bool hit, out bool resting)
         {
             lock (this)
             {
@@ -310,11 +302,11 @@ namespace Bricker.Game
         /// <summary>
         /// Rotates the brick 90* clockwise.
         /// </summary>
-        public void Rotate(byte[,] matrixGrid, out bool resting)
+        public void Rotate(Space[,] matrixGrid, out bool resting)
         {
             lock (this)
             {
-                byte[,] newBrickGrid = new byte[_height, _width];
+                Space[,] newBrickGrid = new Space[_height, _width];
                 for (int x1 = 0; x1 < _width; x1++)
                 {
                     for (int y1 = 0; y1 < _height; y1++)
@@ -344,7 +336,7 @@ namespace Bricker.Game
         /// <summary>
         /// Returns true if a filled brick space is above a filled grid space.
         /// </summary>
-        public static bool Resting(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        public static bool Resting(Space[,] matrixGrid, Space[,] brickGrid, int brickX, int brickY)
         {
             try
             {
@@ -352,7 +344,7 @@ namespace Bricker.Game
                 {
                     for (int y = 0; y < brickGrid.GetLength(1); y++)
                     {
-                        if (brickGrid[x, y] > 0)
+                        if (brickGrid[x, y].IsSolid())
                         {
                             int matrixX = x + brickX;
                             int matrixY = y + brickY + 1;
@@ -360,7 +352,7 @@ namespace Bricker.Game
                                 continue;
                             if ((matrixY < 0) || (matrixY > 21))
                                 continue;
-                            if (matrixGrid[matrixX, matrixY] > 0)
+                            if (matrixGrid[matrixX, matrixY].IsSolid())
                                 return true;
                         }
                     }
@@ -371,11 +363,11 @@ namespace Bricker.Game
             {
                 try
                 {
-                    byte[] mg = new byte[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
+                    Space[] mg = new Space[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
                     Buffer.BlockCopy(matrixGrid, 0, mg, 0, mg.Length);
-                    byte[] bg = new byte[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
+                    Space[] bg = new Space[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
                     Buffer.BlockCopy(brickGrid, 0, bg, 0, bg.Length);
-                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => x.ToString()))}, bg: {String.Join("", bg.Select(x => x.ToString()))}");
+                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => ((byte)x).ToString() ))}, bg: {String.Join("", bg.Select(x => ((byte)x).ToString()))}");
                     ErrorHandler.LogError(ex);
                 }
                 catch
@@ -388,7 +380,7 @@ namespace Bricker.Game
         /// <summary>
         /// Returns true if filled brick space conflicts with filled matrix space.
         /// </summary>
-        public static bool Collision(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        public static bool Collision(Space[,] matrixGrid, Space[,] brickGrid, int brickX, int brickY)
         {
             try
             {
@@ -396,7 +388,7 @@ namespace Bricker.Game
                 {
                     for (int y = 0; y < brickGrid.GetLength(1); y++)
                     {
-                        if (brickGrid[x, y] > 0)
+                        if (brickGrid[x, y].IsSolid())
                         {
                             int matrixX = x + brickX;
                             int matrixY = y + brickY;
@@ -404,7 +396,7 @@ namespace Bricker.Game
                                 return true;
                             if ((matrixY < 0) || (matrixY > 21))
                                 return true;
-                            if (matrixGrid[matrixX, matrixY] > 0)
+                            if (matrixGrid[matrixX, matrixY].IsSolid())
                                 return true;
                         }
                     }
@@ -415,11 +407,11 @@ namespace Bricker.Game
             {
                 try
                 {
-                    byte[] mg = new byte[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
+                    Space[] mg = new Space[matrixGrid.GetLength(0) * matrixGrid.GetLength(1)];
                     Buffer.BlockCopy(matrixGrid, 0, mg, 0, mg.Length);
-                    byte[] bg = new byte[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
+                    Space[] bg = new Space[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
                     Buffer.BlockCopy(brickGrid, 0, bg, 0, bg.Length);
-                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => x.ToString()))}, bg: {String.Join("", bg.Select(x => x.ToString()))}");
+                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => ((byte)x).ToString()))}, bg: {String.Join("", bg.Select(x => ((byte)x).ToString()))}");
                     ErrorHandler.LogError(ex);
                 }
                 catch
@@ -433,7 +425,7 @@ namespace Bricker.Game
         /// Tries moving brick up to X steps in any direction to avoid a collision.  If not,
         /// brick remains at original location.
         /// </summary>
-        private static void PreventCollision(byte[,] matrixGrid, byte[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
+        private static void PreventCollision(Space[,] matrixGrid, Space[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
         {
             maxSteps = Math.Max(Math.Min(maxSteps, 5), 1);
             List<Point> pattern;
@@ -459,7 +451,7 @@ namespace Bricker.Game
         /// <summary>
         /// Changes the X/Y location, usually on hold swap.
         /// </summary>
-        public void SetXY(int x, int y, byte[,] matrixGrid)
+        public void SetXY(int x, int y, Space[,] matrixGrid)
         {
             lock (this)
             {
@@ -476,7 +468,7 @@ namespace Bricker.Game
         /// <summary>
         /// Calculates Y ghost (y of brick at rest).
         /// </summary>
-        private static int GetYGhost(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        private static int GetYGhost(Space[,] matrixGrid, Space[,] brickGrid, int brickX, int brickY)
         {
             int lastGoodY = brickY;
             for (int y = brickY; y < matrixGrid.GetLength(1); y++)
@@ -492,7 +484,7 @@ namespace Bricker.Game
         /// <summary>
         /// Called when spawned onto the matrix, used to reset last drop time, calculate ghost, etc.
         /// </summary>
-        public void Spawned(byte[,] matrixGrid)
+        public void Spawned(Space[,] matrixGrid)
         {
             _lastDropTime = DateTime.Now;
             _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
@@ -505,9 +497,9 @@ namespace Bricker.Game
         {
             lock (this)
             {
-                Brick brick = new Brick(_shapeNum)
+                Brick brick = new Brick(_space)
                 {
-                    _grid = (byte[,])_grid.Clone(),
+                    _grid = (Space[,])_grid.Clone(),
                     _x = _x,
                     _y = _y,
                     _topSpace = _topSpace,

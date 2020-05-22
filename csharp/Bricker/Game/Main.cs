@@ -1302,7 +1302,9 @@ namespace Bricker.Game
         private byte[] GameStatusToBytes(Matrix matrix, GameStats stats)
         {
             //copy matrix, add live brick
-            byte[,] grid = matrix.GetGrid(includeBrick: true);
+            Space[,] sgrid = matrix.GetGrid(includeBrick: true);
+            byte[,] grid = new byte[sgrid.GetLength(0), sgrid.GetLength(1)];
+            Buffer.BlockCopy(sgrid, 0, grid, 0, sgrid.Length);
 
             //serialize data                
             PacketBuilder builder = new PacketBuilder();
@@ -1351,7 +1353,9 @@ namespace Bricker.Game
 
                 //deserialize data
                 PacketParser parser = new PacketParser(bytes);
-                byte[,] matrix = parser.GetBytes2D();
+                byte[,] bmatrix = parser.GetBytes2D();
+                Space[,] matrix = new Space[bmatrix.GetLength(0), bmatrix.GetLength(1)];
+                Buffer.BlockCopy(bmatrix, 0, matrix, 0, bmatrix.Length);
                 int level = parser.GetUInt16();
                 int lines = parser.GetUInt16();
                 int score = parser.GetUInt16();
@@ -1626,7 +1630,7 @@ namespace Bricker.Game
                     if ((x < 1) || (x > 10))
                         break;
                     foreach (int y in rowsToErase)
-                        _matrix[x, y] = 0;
+                        _matrix[x, y] = Space.Empty;
                 }
             }
         }
@@ -1652,7 +1656,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, row] > 0)
+                    if (_matrix[x, row].IsSolid())
                     {
                         empty = false;
                         break;
@@ -1672,7 +1676,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, row] > 0)
+                    if (_matrix[x, row].IsSolid())
                     {
                         empty = false;
                         break;
@@ -1690,7 +1694,7 @@ namespace Bricker.Game
                 for (int x = 1; x <= 10; x++)
                     _matrix[x, y] = _matrix[x, y - 1];
             for (int x = 1; x <= 10; x++)
-                _matrix[x, 1] = 0;
+                _matrix[x, 1] = Space.Empty;
             return true;
         }
 
@@ -1708,14 +1712,14 @@ namespace Bricker.Game
             {
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, y] != 0)
+                    if (_matrix[x, y].IsSolid())
                     {
                         int newY = y - newLines;
                         if (newY > 0)
                             _matrix[x, newY] = _matrix[x, y];
                         else
                             outBounds = true;
-                        _matrix[x, y] = 0;
+                        _matrix[x, y] = Space.Sent;
                     }
                 }
             }
@@ -1735,7 +1739,7 @@ namespace Bricker.Game
                     if ((xx < 1) || (xx > 10))
                         break;
                     for (int y = 20; y > 20 - newLines; y--)
-                        _matrix[xx, y] = (byte)(xx != gapIndex ? 9 : 0);
+                        _matrix[xx, y] = (xx != gapIndex ? Space.Sent : Space.Empty);
                 }
             }
 
@@ -1762,12 +1766,12 @@ namespace Bricker.Game
                 {
                     for (int y = 1; y <= 20; y++)
                     {
-                        if (_matrix[x, y] > 0)
+                        if (_matrix[x, y].IsSolid())
                         {
                             double spaceX = (((x - 1) * 33) + 2) + ((_renderer.FrameWidth - 333) / 2) - 1;
                             double spaceY = (((y - 1) * 33) + 2) + ((_renderer.FrameHeight - 663) / 2) - 1;
-                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.BrickToColor(_matrix[x, y])));
-                            _matrix[x, y] = 0;
+                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.SpaceToColor(_matrix[x, y])));
+                            _matrix[x, y] = Space.Empty;
                         }
                     }
                 }

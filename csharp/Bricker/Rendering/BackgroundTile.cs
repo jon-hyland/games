@@ -33,7 +33,7 @@ namespace Bricker.Rendering
             _x = _random.NextDouble() * 1200;
             _y = _random.NextDouble() * 700;
             _size = (_random.NextDouble() * 150) + 50;
-            _color = Brick.BrickToColor((byte)(_random.Next(8) + 1));
+            _color = Brick.SpaceToColor((Space)(_random.Next(7) + 1));
             _color = new SKColor(_color.Red, _color.Green, _color.Blue, 50);
             _xVelocity = (_random.NextDouble() * 100) + 10;
             _yVelocity = (_random.NextDouble() * 100) + 10;
