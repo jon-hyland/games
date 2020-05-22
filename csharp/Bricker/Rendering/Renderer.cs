@@ -26,6 +26,7 @@ namespace Bricker.Rendering
         private double _frame_Width;
         private double _frame_Height;
         private double _displayScale;
+        private readonly Dictionary<byte, Surface> _bricks;
         private MenuProperties _menuProps;
         private SettingsProperties _settingProps;
         private InitialsEntryProperties _initialProps;
@@ -63,13 +64,6 @@ namespace Bricker.Rendering
         private readonly bool _fakeOpponent = false;
         private bool _menuUp => _menuProps != null || _initialProps != null || _messageProps != null || _lobbyProps != null;
         private SKColor _primaryWhite => !_menuUp ? Colors.White : Colors.DimWhite;
-        private Surface brick1;
-        private Surface brick2;
-        private Surface brick3;
-        private Surface brick4;
-        private Surface brick5;
-        private Surface brick6;
-        private Surface brick7;
 
         //public
         public double FrameWidth => _frame_Width;
@@ -91,6 +85,7 @@ namespace Bricker.Rendering
             _window = window;
             _config = config;
             _displayScale = 1;
+            _bricks = new Dictionary<byte, Surface>();
             _menuProps = null;
             _initialProps = null;
             _messageProps = null;
@@ -241,6 +236,31 @@ namespace Bricker.Rendering
             }
         }
 
+        private Surface CreateBrickSurface(byte shape)
+        {
+            double size = 33;
+            double x = 0;
+            double y = 0;
+            SKColor color = Brick.BrickToColor(shape);
+            SKColor lighter = Colors.GetLighter(color);
+            SKColor darker = Colors.GetDarker(color);
+            Surface surface = new Surface(size, size, Colors.Transparent);
+            surface.DrawRect(color, x, y, size, size);
+            surface.DrawLine(lighter, x + 0, y + 0, x + size - 0, y + 0, 1);
+            surface.DrawLine(lighter, x + 1, y + 1, x + size - 1, y + 1, 1);
+            surface.DrawLine(lighter, x + 2, y + 2, x + size - 2, y + 2, 1);
+            surface.DrawLine(lighter, x + size - 0, y + 0, x + size - 0, y + size - 0, 1);
+            surface.DrawLine(lighter, x + size - 1, y + 1, x + size - 1, y + size - 1, 1);
+            surface.DrawLine(lighter, x + size - 2, y + 2, x + size - 2, y + size - 2, 1);
+            surface.DrawLine(darker, x + 0, y + size - 0, x + size - 0, y + size - 0, 1);
+            surface.DrawLine(darker, x + 1, y + size - 1, x + size - 1, y + size - 1, 1);
+            surface.DrawLine(darker, x + 2, y + size - 2, x + size - 2, y + size - 2, 1);
+            surface.DrawLine(darker, x + 0, y + 0, x + 0, y + size - 0, 1);
+            surface.DrawLine(darker, x + 1, y + 1, x + 1, y + size - 1, 1);
+            surface.DrawLine(darker, x + 2, y + 2, x + 2, y + size - 2, 1);
+            return surface;
+        }
+
         /// <summary>
         /// Draws the game matrix, once per frame.
         /// </summary>
@@ -260,24 +280,13 @@ namespace Bricker.Rendering
                     for (int y = 1; y < 22; y++)
                         if (grid[x, y] > 0)
                         {
-                            double leftX = ((x - 1) * 33) + 2;
-                            double topY = ((y - 1) * 33) + 2;
-                            SKColor color = Brick.BrickToColor(grid[x, y]);
-                            SKColor lighter = Colors.GetLighter(color);
-                            SKColor darker = Colors.GetDarker(color);
-                            surface.DrawRect(color, leftX, topY, 32, 32);
-                            surface.DrawLine(lighter, leftX + 0, topY + 0, leftX + 32 - 0, topY + 0, 1);
-                            surface.DrawLine(lighter, leftX + 1, topY + 1, leftX + 32 - 1, topY + 1, 1);
-                            surface.DrawLine(lighter, leftX + 2, topY + 2, leftX + 32 - 2, topY + 2, 1);
-                            surface.DrawLine(lighter, leftX + 32 - 0, topY + 0, leftX + 32 - 0, topY + 32 - 0, 1);
-                            surface.DrawLine(lighter, leftX + 32 - 1, topY + 1, leftX + 32 - 1, topY + 32 - 1, 1);
-                            surface.DrawLine(lighter, leftX + 32 - 2, topY + 2, leftX + 32 - 2, topY + 32 - 2, 1);
-                            surface.DrawLine(darker, leftX + 0, topY + 32 - 0, leftX + 32 - 0, topY + 32 - 0, 1);
-                            surface.DrawLine(darker, leftX + 1, topY + 32 - 1, leftX + 32 - 1, topY + 32 - 1, 1);
-                            surface.DrawLine(darker, leftX + 2, topY + 32 - 2, leftX + 32 - 2, topY + 32 - 2, 1);
-                            surface.DrawLine(darker, leftX + 0, topY + 0, leftX + 0, topY + 32 - 0, 1);
-                            surface.DrawLine(darker, leftX + 1, topY + 1, leftX + 1, topY + 32 - 1, 1);
-                            surface.DrawLine(darker, leftX + 2, topY + 2, leftX + 2, topY + 32 - 2, 1);
+                            byte shape = grid[x, y];
+                            if (!_bricks.ContainsKey(shape))
+                                _bricks.Add(shape, CreateBrickSurface(shape));
+                            Surface brick = _bricks[shape];
+                            double leftX = ((x - 1) * 33) + 1;
+                            double topY = ((y - 1) * 33) + 1;
+                            surface.Blit(brick, leftX, topY);
                         }
 
                 surface.DrawLine(_primaryWhite, 0, 0, 332, 0, 1);
