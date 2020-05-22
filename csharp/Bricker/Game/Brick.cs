@@ -3,6 +3,7 @@ using Common.Standard.Logging;
 using Common.Windows.Rendering;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Bricker.Game
@@ -13,6 +14,9 @@ namespace Bricker.Game
     /// </summary>
     public class Brick
     {
+        //const
+        private static readonly Dictionary<int, List<Point>> _antiCollisionPatterns = new Dictionary<int, List<Point>>();
+
         //private
         private readonly int _shapeNum;
         private readonly int _width;
@@ -121,6 +125,18 @@ namespace Bricker.Game
             _x = (12 - _width) / 2;
             _y = 1 - _topSpace;
             _lastDropTime = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Static constructor.
+        /// </summary>
+        static Brick()
+        {
+            lock (_antiCollisionPatterns)
+            {
+                if (_antiCollisionPatterns.Count == 0)
+                    _antiCollisionPatterns = GenerateAntiCollisionPatterns();
+            }
         }
 
         /// <summary>
@@ -365,51 +381,34 @@ namespace Bricker.Game
         /// </summary>
         private static void PreventCollision(byte[,] matrixGrid, byte[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
         {
-            int steps = 0;
-            while (Collision(matrixGrid, brickGrid, brickX, brickY))
+            int oX = brickX, oY = brickY;
+            try
             {
-                brickY++;
-                steps++;
-                if (steps >= maxSteps)
+                maxSteps = Math.Max(Math.Min(maxSteps, 5), 1);
+                List<Point> pattern;
+                lock (_antiCollisionPatterns)
                 {
-                    brickY -= maxSteps;
-                    break;
+                    pattern = _antiCollisionPatterns[maxSteps];
+                }
+
+                int newX, newY;
+                for (int i = 0; i < pattern.Count; i++)
+                {
+                    newX = brickX + pattern[i].X;
+                    newY = brickY + pattern[i].Y;
+                    if (!Collision(matrixGrid, brickGrid, newX, newY))
+                    {
+                        brickX = newX;
+                        brickY = newY;
+                        return;
+                    }
                 }
             }
-
-            steps = 0;
-            while (Collision(matrixGrid, brickGrid, brickX, brickY))
+            finally
             {
-                brickY--;
-                steps++;
-                if (steps >= maxSteps)
+                if ((brickX != oX) || (brickY != oY))
                 {
-                    brickY += maxSteps;
-                    break;
-                }
-            }
-
-            steps = 0;
-            while (Collision(matrixGrid, brickGrid, brickX, brickY))
-            {
-                brickX++;
-                steps++;
-                if (steps >= maxSteps)
-                {
-                    brickX -= maxSteps;
-                    break;
-                }
-            }
-
-            steps = 0;
-            while (Collision(matrixGrid, brickGrid, brickX, brickY))
-            {
-                brickX--;
-                steps++;
-                if (steps >= maxSteps)
-                {
-                    brickX += maxSteps;
-                    break;
+                    string foo = "";
                 }
             }
         }
@@ -455,6 +454,112 @@ namespace Bricker.Game
                     _lastDropTime = _lastDropTime
                 };
                 return brick;
+            }
+        }
+
+        /// <summary>
+        /// Pregenerates five anti-collion patterns, one for each 1-5 max steps.
+        /// </summary>
+        private static Dictionary<int, List<Point>> GenerateAntiCollisionPatterns()
+        {
+            Dictionary<int, List<Point>> patterns = new Dictionary<int, List<Point>>();
+            for (int maxSteps = 1; maxSteps <= 5; maxSteps++)
+            {
+                List<Point> pattern = GeneratePattern(maxSteps);
+                patterns.Add(maxSteps, pattern);
+            }
+            return patterns;
+        }
+
+        /// <summary>
+        /// Generstes an anti-collision pattern for specified number of max steps.
+        /// </summary>
+        private static List<Point> GeneratePattern(int maxSteps)
+        {
+            List<Point> pattern = new List<Point>();
+            pattern.Add(new Point(0, 0));
+
+            for (int s = 1; s <= maxSteps; s++)
+                pattern.Add(new Point(s, 0));
+            for (int s = 1; s <= maxSteps; s++)
+                pattern.Add(new Point(-s, 0));
+            for (int s = 1; s <= maxSteps; s++)
+                pattern.Add(new Point(0, s));
+            for (int s = 1; s <= maxSteps; s++)
+                pattern.Add(new Point(0, -s));
+
+            int x = 1, y = 0;
+            pattern.Add(new Point(x, y));
+
+            for (int maxStep = 1; maxStep <= maxSteps; maxStep++)
+            {
+                while (y < maxStep)
+                {
+                    y++;
+                    pattern.Add(new Point(x, y));
+                }
+                while (x > -maxStep)
+                {
+                    x--;
+                    pattern.Add(new Point(x, y));
+                }
+                while (y > -maxStep)
+                {
+                    y--;
+                    pattern.Add(new Point(x, y));
+                }
+                while (x < maxStep)
+                {
+                    x++;
+                    pattern.Add(new Point(x, y));
+                }
+                while (y <= -2)
+                {
+                    y++;
+                    pattern.Add(new Point(x, y));
+                }
+                x++;
+            }
+
+            pattern = pattern.Distinct().ToList();
+            return pattern;
+        }
+
+        /// <summary>
+        /// Represents an XY point.
+        /// </summary>
+        private struct Point
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+
+            public Point(int x, int y)
+            {
+                X = x;
+                Y = y;
+            }
+
+            public override string ToString()
+            {
+                return $"{X}, {Y}";
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hash = 17;
+                    hash = hash * 31 + X.GetHashCode();
+                    hash = hash * 31 + Y.GetHashCode();
+                    return hash;
+                }
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (!(obj is Point p))
+                    return false;
+                return GetHashCode() == p.GetHashCode();
             }
         }
 
