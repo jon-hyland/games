@@ -13,7 +13,8 @@ namespace Bricker.Rendering
         private static readonly Random _random = new Random();
         private double _x;
         private double _y;
-        private readonly double _size;
+        private readonly double _width;
+        private readonly double _height;
         private readonly SKColor _color;
         private double _xVelocity;
         private double _yVelocity;
@@ -22,7 +23,8 @@ namespace Bricker.Rendering
         //public
         public double X { get { return _x; } set { _x = value; } }
         public double Y { get { return _y; } set { _y = value; } }
-        public double Size => _size;
+        public double Width => _width;
+        public double Height => _height;
         public SKColor Color => _color;
 
         /// <summary>
@@ -32,11 +34,12 @@ namespace Bricker.Rendering
         {
             _x = _random.NextDouble() * 1200;
             _y = _random.NextDouble() * 700;
-            _size = (_random.NextDouble() * 150) + 50;
+            _width = (_random.NextDouble() * 150) + 100;
+            _height = (_random.NextDouble() * 150) + 100;
             _color = Brick.SpaceToColor((Space)(_random.Next(7) + 1));
             _color = new SKColor(_color.Red, _color.Green, _color.Blue, 50);
-            _xVelocity = (_random.NextDouble() * 100) + 10;
-            _yVelocity = (_random.NextDouble() * 100) + 10;
+            _xVelocity = (_random.NextDouble() * 75) + 5;
+            _yVelocity = (_random.NextDouble() * 75) + 5;
             if (_random.Next(2) == 1)
                 _xVelocity = -_xVelocity;
             if (_random.Next(2) == 1)
@@ -50,8 +53,8 @@ namespace Bricker.Rendering
         public void Move(DateTime now, double level)
         {
             TimeSpan elapsed = now - _lastMove;
-            _x += _xVelocity * level * elapsed.TotalSeconds;
-            _y += _yVelocity * level * elapsed.TotalSeconds;
+            _x += _xVelocity * (level * 0.75d) * elapsed.TotalSeconds;
+            _y += _yVelocity * (level * 0.75d) * elapsed.TotalSeconds;
             if ((_x < -100) || (_x > 1300))
                 _xVelocity = -_xVelocity;
             if ((_y < -100) || (_y > 800))

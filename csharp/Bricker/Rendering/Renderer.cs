@@ -981,9 +981,9 @@ namespace Bricker.Rendering
             foreach (BackgroundTile tile in _tiles)
             {
                 tile.Move(now, stats.Level);
-                using (Surface surface = new Surface(tile.Size, tile.Size, tile.Color))
+                using (Surface surface = new Surface(tile.Width, tile.Height, tile.Color))
                 {
-                    frame.Blit(surface, tile.X - (tile.Size / 2d), tile.Y - (tile.Size / 2d));
+                    frame.Blit(surface, tile.X - (tile.Width / 2d), tile.Y - (tile.Height / 2d));
                 }
             }
         }
