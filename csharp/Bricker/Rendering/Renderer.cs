@@ -63,6 +63,13 @@ namespace Bricker.Rendering
         private readonly bool _fakeOpponent = false;
         private bool _menuUp => _menuProps != null || _initialProps != null || _messageProps != null || _lobbyProps != null;
         private SKColor _primaryWhite => !_menuUp ? Colors.White : Colors.DimWhite;
+        private Surface brick1;
+        private Surface brick2;
+        private Surface brick3;
+        private Surface brick4;
+        private Surface brick5;
+        private Surface brick6;
+        private Surface brick7;
 
         //public
         public double FrameWidth => _frame_Width;
@@ -243,15 +250,35 @@ namespace Bricker.Rendering
             {
                 byte[,] grid = matrix.GetGrid(includeBrick: true);
 
-                for (int x = 1; x < 12; x++)
-                    for (int y = 1; y < 22; y++)
-                        if (grid[x, y] > 0)
-                            surface.DrawRect(Brick.BrickToColor(grid[x, y]), ((x - 1) * 33) + 2, ((y - 1) * 33) + 2, 32, 32);
 
                 for (int i = 1; i <= 10; i++)
                     surface.DrawLine(Colors.Gray, (i * 33) + 1, 2, (i * 33) + 1, 660, 1);
                 for (int i = 1; i <= 20; i++)
                     surface.DrawLine(Colors.Gray, 2, (i * 33) + 1, 330, (i * 33) + 1, 1);
+
+                for (int x = 1; x < 12; x++)
+                    for (int y = 1; y < 22; y++)
+                        if (grid[x, y] > 0)
+                        {
+                            double leftX = ((x - 1) * 33) + 2;
+                            double topY = ((y - 1) * 33) + 2;
+                            SKColor color = Brick.BrickToColor(grid[x, y]);
+                            SKColor lighter = Colors.GetLighter(color);
+                            SKColor darker = Colors.GetDarker(color);
+                            surface.DrawRect(color, leftX, topY, 32, 32);
+                            surface.DrawLine(lighter, leftX + 0, topY + 0, leftX + 32 - 0, topY + 0, 1);
+                            surface.DrawLine(lighter, leftX + 1, topY + 1, leftX + 32 - 1, topY + 1, 1);
+                            surface.DrawLine(lighter, leftX + 2, topY + 2, leftX + 32 - 2, topY + 2, 1);
+                            surface.DrawLine(lighter, leftX + 32 - 0, topY + 0, leftX + 32 - 0, topY + 32 - 0, 1);
+                            surface.DrawLine(lighter, leftX + 32 - 1, topY + 1, leftX + 32 - 1, topY + 32 - 1, 1);
+                            surface.DrawLine(lighter, leftX + 32 - 2, topY + 2, leftX + 32 - 2, topY + 32 - 2, 1);
+                            surface.DrawLine(darker, leftX + 0, topY + 32 - 0, leftX + 32 - 0, topY + 32 - 0, 1);
+                            surface.DrawLine(darker, leftX + 1, topY + 32 - 1, leftX + 32 - 1, topY + 32 - 1, 1);
+                            surface.DrawLine(darker, leftX + 2, topY + 32 - 2, leftX + 32 - 2, topY + 32 - 2, 1);
+                            surface.DrawLine(darker, leftX + 0, topY + 0, leftX + 0, topY + 32 - 0, 1);
+                            surface.DrawLine(darker, leftX + 1, topY + 1, leftX + 1, topY + 32 - 1, 1);
+                            surface.DrawLine(darker, leftX + 2, topY + 2, leftX + 2, topY + 32 - 2, 1);
+                        }
 
                 surface.DrawLine(_primaryWhite, 0, 0, 332, 0, 1);
                 surface.DrawLine(_primaryWhite, 0, 1, 332, 1, 1);
@@ -951,13 +978,32 @@ namespace Bricker.Rendering
 
             foreach (ExplodingSpace space in spaces)
             {
-                double x = space.X;
-                double y = space.Y;
-                frame.DrawRect(space.Color, x, y, 34, 34);
-                frame.DrawLine(Colors.Black, x, y, x + 34, y);
-                frame.DrawLine(Colors.Black, x, y + 34, x + 34, y + 34);
-                frame.DrawLine(Colors.Black, x, y, x, y + 34);
-                frame.DrawLine(Colors.Black, x + 34, y, x + 34, y + 34);
+                double leftX = space.X;
+                double topY = space.Y;
+                SKColor color = space.Color;
+                SKColor lighter = Colors.GetLighter(color);
+                SKColor darker = Colors.GetDarker(color);
+
+
+                frame.DrawRect(space.Color, leftX, topY, 32, 32);
+                frame.DrawLine(lighter, leftX + 0, topY + 0, leftX + 32 - 0, topY + 0, 1);
+                frame.DrawLine(lighter, leftX + 1, topY + 1, leftX + 32 - 1, topY + 1, 1);
+                frame.DrawLine(lighter, leftX + 2, topY + 2, leftX + 32 - 2, topY + 2, 1);
+                frame.DrawLine(lighter, leftX + 32 - 0, topY + 0, leftX + 32 - 0, topY + 32 - 0, 1);
+                frame.DrawLine(lighter, leftX + 32 - 1, topY + 1, leftX + 32 - 1, topY + 32 - 1, 1);
+                frame.DrawLine(lighter, leftX + 32 - 2, topY + 2, leftX + 32 - 2, topY + 32 - 2, 1);
+                frame.DrawLine(darker, leftX + 0, topY + 32 - 0, leftX + 32 - 0, topY + 32 - 0, 1);
+                frame.DrawLine(darker, leftX + 1, topY + 32 - 1, leftX + 32 - 1, topY + 32 - 1, 1);
+                frame.DrawLine(darker, leftX + 2, topY + 32 - 2, leftX + 32 - 2, topY + 32 - 2, 1);
+                frame.DrawLine(darker, leftX + 0, topY + 0, leftX + 0, topY + 32 - 0, 1);
+                frame.DrawLine(darker, leftX + 1, topY + 1, leftX + 1, topY + 32 - 1, 1);
+                frame.DrawLine(darker, leftX + 2, topY + 2, leftX + 2, topY + 32 - 2, 1);
+
+
+                //frame.DrawLine(Colors.Black, x, y, x + 34, y);
+                //frame.DrawLine(Colors.Black, x, y + 34, x + 34, y + 34);
+                //frame.DrawLine(Colors.Black, x, y, x, y + 34);
+                //frame.DrawLine(Colors.Black, x + 34, y, x + 34, y + 34);
             }
         }
 

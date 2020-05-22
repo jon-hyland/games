@@ -1,4 +1,6 @@
 ﻿using SkiaSharp;
+using System;
+using System.Collections.Generic;
 
 namespace Common.Windows.Rendering
 {
@@ -7,6 +9,10 @@ namespace Common.Windows.Rendering
     /// </summary>
     public static class Colors
     {
+        private static readonly object _lock = new object();
+        private static readonly Dictionary<SKColor, SKColor> _lighter = new Dictionary<SKColor, SKColor>();
+        private static readonly Dictionary<SKColor, SKColor> _darker = new Dictionary<SKColor, SKColor>();
+
         private static readonly SKColor _transparent;
         private static readonly SKColor _black;
         private static readonly SKColor _errorBlack;
@@ -80,6 +86,32 @@ namespace Common.Windows.Rendering
             _alphaBlack64 = new SKColor(0, 0, 0, 64);
             _alphaBlack128 = new SKColor(0, 0, 0, 128);
             _alphaBlack192 = new SKColor(0, 0, 0, 192);
+        }
+
+        public static SKColor GetLighter(SKColor color)
+        {
+            lock (_lock)
+            {
+                if (!_lighter.ContainsKey(color))
+                    _lighter.Add(color, new SKColor(Multiply(color.Red, 1.2), Multiply(color.Green, 1.2), Multiply(color.Blue, 1.2), color.Alpha));
+                return _lighter[color];
+            }
+        }
+
+        public static SKColor GetDarker(SKColor color)
+        {
+            lock (_lock)
+            {
+                if (!_darker.ContainsKey(color))
+                    _darker.Add(color, new SKColor(Multiply(color.Red, 0.8), Multiply(color.Green, 0.8), Multiply(color.Blue, 0.8)));
+                return _darker[color];
+            }
+        }
+
+        private static byte Multiply(byte value, double multiplier)
+        {
+            double result = value * multiplier;
+            return (byte)Math.Min(Math.Max(result, 0), 255);
         }
 
     }
