@@ -52,7 +52,7 @@ namespace Bricker.Game
             _shapeNum = shapeNum;
             switch (shapeNum)
             {
-                case 1:
+                case 1: // I
                     _width = 4;
                     _height = 4;
                     _grid = new byte[_width, _height];
@@ -62,7 +62,7 @@ namespace Bricker.Game
                     _grid[3, 2] = 1;
                     _color = BrickToColor(1);
                     break;
-                case 2:
+                case 2: // J
                     _width = 3;
                     _height = 3;
                     _grid = new byte[_width, _height];
@@ -72,7 +72,7 @@ namespace Bricker.Game
                     _grid[2, 2] = 2;
                     _color = BrickToColor(2);
                     break;
-                case 3:
+                case 3: // L
                     _width = 3;
                     _height = 3;
                     _grid = new byte[_width, _height];
@@ -82,7 +82,7 @@ namespace Bricker.Game
                     _grid[2, 2] = 3;
                     _color = BrickToColor(3);
                     break;
-                case 4:
+                case 4: // O
                     _width = 2;
                     _height = 2;
                     _grid = new byte[_width, _height];
@@ -92,7 +92,7 @@ namespace Bricker.Game
                     _grid[1, 1] = 4;
                     _color = BrickToColor(4);
                     break;
-                case 5:
+                case 5: // S
                     _width = 4;
                     _height = 4;
                     _grid = new byte[_width, _height];
@@ -102,7 +102,7 @@ namespace Bricker.Game
                     _grid[1, 1] = 5;
                     _color = BrickToColor(5);
                     break;
-                case 6:
+                case 6: // T
                     _width = 4;
                     _height = 4;
                     _grid = new byte[_width, _height];
@@ -112,7 +112,7 @@ namespace Bricker.Game
                     _grid[2, 2] = 6;
                     _color = BrickToColor(6);
                     break;
-                case 7:
+                case 7: // Z
                     _width = 4;
                     _height = 4;
                     _grid = new byte[_width, _height];
@@ -153,31 +153,31 @@ namespace Bricker.Game
                 case 0:
                     return Colors.Black;
 
-                //1
+                //1 - I
                 case 1:
                     return Colors.SilverPink;
 
-                //2
+                //2 - J
                 case 2:
                     return Colors.TuftsBlue;
 
-                //3
+                //3 - L
                 case 3:
                     return Colors.ChromeYellow;
 
-                //4
+                //4 - O
                 case 4:
                     return Colors.Independence;
 
-                //5
+                //5 - S
                 case 5:
                     return Colors.ForestGreen;
 
-                //6
+                //6 - T
                 case 6:
                     return Colors.Byzantine;
 
-                //7
+                //7 - Z
                 case 7:
                     return Colors.Coquelicot;
 

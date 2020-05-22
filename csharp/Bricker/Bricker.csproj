@@ -102,6 +102,7 @@
     </ApplicationDefinition>
     <Compile Include="Audio\Sounds.cs" />
     <Compile Include="Game\GameState.cs" />
+    <Compile Include="Game\Space.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
     <Compile Include="Logging\Logger.cs" />
