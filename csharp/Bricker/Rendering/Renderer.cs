@@ -146,8 +146,8 @@ namespace Bricker.Rendering
                 _frame_YCenter = _frame_Height / 2;
                 _player_XCenter = _frame_XCenter;
                 _player_YCenter = _frame_YCenter;
-                _player_Width = 333;
-                _player_Height = 663;
+                _player_Width = 324;
+                _player_Height = 644;
                 _next_Width = 132;
                 _next_Height = _player_Height;
                 _hold_Width = 132;
@@ -238,7 +238,7 @@ namespace Bricker.Rendering
 
         private Surface CreateBrickSurface(byte shape)
         {
-            double size = 33;
+            double size = 32;
             double x = 0;
             double y = 0;
             SKColor color = Brick.BrickToColor(shape);
@@ -269,36 +269,37 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
                 byte[,] grid = matrix.GetGrid(includeBrick: true);
-
-
-                for (int i = 1; i <= 10; i++)
-                    surface.DrawLine(Colors.Gray, (i * 33) + 1, 2, (i * 33) + 1, 660, 1);
-                for (int i = 1; i <= 20; i++)
-                    surface.DrawLine(Colors.Gray, 2, (i * 33) + 1, 330, (i * 33) + 1, 1);
-
+                for (int i = 0; i <= 10; i++)
+                    surface.DrawLine(Colors.Gray, (i * 32) + 2, 0, (i * 32) + 2, surface.Height, 1);
+                for (int i = 0; i <= 20; i++)
+                    surface.DrawLine(Colors.Gray, 0, (i * 32) + 2, surface.Width, (i * 32) + 2, 1);
                 for (int x = 1; x < 12; x++)
+                {
                     for (int y = 1; y < 22; y++)
-                        if (grid[x, y] > 0)
+                    {
+                        if ((grid[x, y] >= 1) && (grid[x, y] <= 7))
                         {
                             byte shape = grid[x, y];
                             if (!_bricks.ContainsKey(shape))
                                 _bricks.Add(shape, CreateBrickSurface(shape));
                             Surface brick = _bricks[shape];
-                            double leftX = ((x - 1) * 33) + 1;
-                            double topY = ((y - 1) * 33) + 1;
-                            surface.Blit(brick, leftX, topY);
+                            surface.Blit(brick, ((x - 1) * 32) + 2, ((y - 1) * 32) + 2);
                         }
-
-                surface.DrawLine(_primaryWhite, 0, 0, 332, 0, 1);
-                surface.DrawLine(_primaryWhite, 0, 1, 332, 1, 1);
-                surface.DrawLine(_primaryWhite, 0, 0, 0, 662, 1);
-                surface.DrawLine(_primaryWhite, 1, 0, 1, 662, 1);
-                surface.DrawLine(_primaryWhite, 0, 662, 332, 662, 1);
-                surface.DrawLine(_primaryWhite, 0, 661, 332, 661, 1);
-                surface.DrawLine(_primaryWhite, 332, 0, 332, 662, 1);
-                surface.DrawLine(_primaryWhite, 331, 0, 331, 662, 1);
-
-                frame.Blit(surface, _player_XCenter - (_player_Width / 2), _player_YCenter - (_player_Height / 2));
+                        else if (grid[x, y] == 9)
+                        {
+                            surface.DrawRect(Colors.DimWhite, ((x - 1) * 32) + 16, ((y - 1) * 32) + 16, 4, 4);
+                        }
+                    }
+                }
+                surface.DrawLine(_primaryWhite, 0, 0, surface.Width, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, surface.Width, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, surface.Height, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, surface.Height, 1);
+                surface.DrawLine(_primaryWhite, 0, surface.Height, surface.Width, surface.Height, 1);
+                surface.DrawLine(_primaryWhite, 0, surface.Height - 1, surface.Width, surface.Height - 1, 1);
+                surface.DrawLine(_primaryWhite, surface.Width, 0, surface.Width, surface.Height, 1);
+                surface.DrawLine(_primaryWhite, surface.Width - 1, 0, surface.Width - 1, surface.Height, 1);
+                frame.Blit(surface, _player_XCenter - (surface.Width / 2), _player_YCenter - (surface.Height / 2));
             }
         }
 
@@ -311,16 +312,16 @@ namespace Bricker.Rendering
             double brickArea = 80;
             using (Surface surface = new Surface(_hold_Width, _hold_Height, Colors.AlphaBlack192))
             {
-                surface.DrawLine(_primaryWhite, 0, 0, _hold_Width - 1, 0, 1);
-                surface.DrawLine(_primaryWhite, 0, 1, _hold_Width - 1, 1, 1);
-                surface.DrawLine(_primaryWhite, 0, _hold_Height - 2, _hold_Width - 1, _hold_Height - 2, 1);
-                surface.DrawLine(_primaryWhite, 0, _hold_Height - 1, _hold_Width - 1, _hold_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, 0, 0, 0, _hold_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, 1, 0, 1, _hold_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, _hold_Width - 2, 0, _hold_Width - 2, _hold_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, 0, 160, _hold_Width - 1, 160, 1);
-                surface.DrawLine(_primaryWhite, 0, 161, _hold_Width - 1, 161, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, _hold_Width, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, _hold_Width, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, _hold_Height, _hold_Width, _hold_Height, 1);
+                surface.DrawLine(_primaryWhite, 0, _hold_Height - 1, _hold_Width, _hold_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, _hold_Height, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, _hold_Height, 1);
+                surface.DrawLine(_primaryWhite, _hold_Width, 0, _hold_Width, _hold_Height, 1);
+                surface.DrawLine(_primaryWhite, _hold_Width - 1, 0, _hold_Width - 1, _hold_Height, 1);
+                surface.DrawLine(_primaryWhite, 0, 158, _hold_Width, 158, 1);
+                surface.DrawLine(_primaryWhite, 0, 159, _hold_Width, 159, 1);
                 surface.DrawText_Centered(_primaryWhite, "hold", 28, 20);
 
                 Brick hold = matrix.GetHold();
@@ -357,14 +358,14 @@ namespace Bricker.Rendering
             Brick[] nextBricks = matrix.GetNextBricks();
             using (Surface surface = new Surface(_next_Width, _next_Height, Colors.AlphaBlack192))
             {
-                surface.DrawLine(_primaryWhite, 0, 0, _next_Width - 1, 0, 1);
-                surface.DrawLine(_primaryWhite, 0, 1, _next_Width - 1, 1, 1);
-                surface.DrawLine(_primaryWhite, 0, _next_Height - 2, _next_Width - 1, _next_Height - 2, 1);
-                surface.DrawLine(_primaryWhite, 0, _next_Height - 1, _next_Width - 1, _next_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, 0, 0, 0, _next_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, 1, 0, 1, _next_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, _next_Width - 2, 0, _next_Width - 2, _next_Height - 1, 1);
-                surface.DrawLine(_primaryWhite, _next_Width - 1, 0, _next_Width - 1, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, _next_Width, 0, 1);
+                surface.DrawLine(_primaryWhite, 0, 1, _next_Width, 1, 1);
+                surface.DrawLine(_primaryWhite, 0, _next_Height, _next_Width, _next_Height, 1);
+                surface.DrawLine(_primaryWhite, 0, _next_Height - 1, _next_Width, _next_Height - 1, 1);
+                surface.DrawLine(_primaryWhite, 0, 0, 0, _next_Height, 1);
+                surface.DrawLine(_primaryWhite, 1, 0, 1, _next_Height, 1);
+                surface.DrawLine(_primaryWhite, _next_Width, 0, _next_Width, _next_Height, 1);
+                surface.DrawLine(_primaryWhite, _next_Width - 1, 0, _next_Width - 1, _next_Height, 1);
                 surface.DrawText_Centered(_primaryWhite, "next", 28, 20);
 
                 for (int i = 0; i < nextBricks.Length; i++)

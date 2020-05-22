@@ -15,9 +15,6 @@ namespace Common.Windows.Rendering
         private readonly double _height;
         private readonly SKBitmap _bitmap;
         private readonly SKCanvas _canvas;
-        //private static SKPaint _linePaint;
-        //private static SKPaint _rectPaint;
-        //private static SKPaint _textPaint;
 
         //public
         public double Width => _width;
@@ -165,6 +162,14 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawText_Centered(SKColor color, string text, double size, double y)
         {
+            double offset = size > 18 ? size / 12d : 0;
+            if (offset > 0)
+            {
+                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+                {
+                    Blit(surface, (_width - surface.Width) / 2 - (offset * 1.2), y + (offset * 0.8));
+                }
+            }
             using (Surface surface = RenderText(color, text, size))
             {
                 Blit(surface, (_width - surface.Width) / 2, y);
@@ -176,6 +181,14 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawText_Left(SKColor color, string text, double size, double y, double xSpacing = 0)
         {
+            double offset = size > 18 ? size / 12d : 0;
+            if (offset > 0)
+            {
+                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+                {
+                    Blit(surface, xSpacing - (offset * 1.2), y + (offset * 0.8));
+                }
+            }
             using (Surface surface = RenderText(color, text, size))
             {
                 Blit(surface, xSpacing, y);
@@ -187,6 +200,14 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawText_Right(SKColor color, string text, double size, double y, double xSpacing = 0)
         {
+            double offset = size > 18 ? size / 12d : 0;
+            if (offset > 0)
+            {
+                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+                {
+                    Blit(surface, (_width - surface.Width) - xSpacing - (offset * 1.2), y + (offset * 0.8));
+                }
+            }
             using (Surface surface = RenderText(color, text, size))
             {
                 Blit(surface, (_width - surface.Width) - xSpacing, y);

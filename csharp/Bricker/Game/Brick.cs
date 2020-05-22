@@ -26,6 +26,7 @@ namespace Bricker.Game
         private byte[,] _grid;
         private int _x;
         private int _y;
+        private int _yGhost;
         private int _topSpace;
         private int _bottomSpace;
         private DateTime _lastDropTime;
@@ -38,6 +39,7 @@ namespace Bricker.Game
         public byte[,] Grid => _grid;
         public int X => _x;
         public int Y => _y;
+        public int YGhost => _yGhost;
         public int TopSpace => _topSpace;
         public int BottomSpace => _bottomSpace;
         public DateTime LastDropTime => _lastDropTime;
@@ -125,6 +127,7 @@ namespace Bricker.Game
             _bottomSpace = CalculateBottomSpace();
             _x = (12 - _width) / 2;
             _y = 1 - _topSpace;
+            _yGhost = _y;  //fix
             _lastDropTime = DateTime.Now;
         }
 
@@ -245,43 +248,45 @@ namespace Bricker.Game
         /// <summary>
         /// Moves the brick left, unless collision.
         /// </summary>
-        public void MoveLeft(byte[,] matrix, out bool moved, out bool resting)
+        public void MoveLeft(byte[,] matrixGrid, out bool moved, out bool resting)
         {
             lock (this)
             {
                 _x--;
                 moved = true;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                 {
                     _x++;
                     moved = false;
                 }
-                resting = Resting(matrix, _grid, _x, _y);
+                resting = Resting(matrixGrid, _grid, _x, _y);
+                _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
             }
         }
 
         /// <summary>
         /// Moves the brick right, unless collision.
         /// </summary>
-        public void MoveRight(byte[,] matrix, out bool moved, out bool resting)
+        public void MoveRight(byte[,] matrixGrid, out bool moved, out bool resting)
         {
             lock (this)
             {
                 _x++;
                 moved = true;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                 {
                     _x--;
                     moved = false;
                 }
-                resting = Resting(matrix, _grid, _x, _y);
+                resting = Resting(matrixGrid, _grid, _x, _y);
+                _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
             }
         }
 
         /// <summary>
         /// Moves the brick down, unless collision.
         /// </summary>
-        public void MoveDown(byte[,] matrix, out bool hit, out bool resting)
+        public void MoveDown(byte[,] matrixGrid, out bool hit, out bool resting)
         {
             lock (this)
             {
@@ -289,15 +294,16 @@ namespace Bricker.Game
                 resting = false;
                 _lastDropTime = DateTime.Now;
                 _y++;
-                if (Collision(matrix, _grid, _x, _y))
+                if (Collision(matrixGrid, _grid, _x, _y))
                 {
                     _y--;
                     hit = true;
                 }
-                if (Resting(matrix, _grid, _x, _y))
+                if (Resting(matrixGrid, _grid, _x, _y))
                 {
                     resting = true;
                 }
+                _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
             }
         }
 
@@ -329,6 +335,7 @@ namespace Bricker.Game
                 }
                 resting = Resting(matrixGrid, _grid, _x, _y);
 
+                _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
                 _topSpace = CalculateTopSpace();
                 _bottomSpace = CalculateBottomSpace();
             }
@@ -428,35 +435,24 @@ namespace Bricker.Game
         /// </summary>
         private static void PreventCollision(byte[,] matrixGrid, byte[,] brickGrid, ref int brickX, ref int brickY, int maxSteps)
         {
-            //int oX = brickX, oY = brickY;
-            try
+            maxSteps = Math.Max(Math.Min(maxSteps, 5), 1);
+            List<Point> pattern;
+            lock (_antiCollisionPatterns)
             {
-                maxSteps = Math.Max(Math.Min(maxSteps, 5), 1);
-                List<Point> pattern;
-                lock (_antiCollisionPatterns)
-                {
-                    pattern = _antiCollisionPatterns[maxSteps];
-                }
-
-                int newX, newY;
-                for (int i = 0; i < pattern.Count; i++)
-                {
-                    newX = brickX + pattern[i].X;
-                    newY = brickY + pattern[i].Y;
-                    if (!Collision(matrixGrid, brickGrid, newX, newY))
-                    {
-                        brickX = newX;
-                        brickY = newY;
-                        return;
-                    }
-                }
+                pattern = _antiCollisionPatterns[maxSteps];
             }
-            finally
+
+            int newX, newY;
+            for (int i = 0; i < pattern.Count; i++)
             {
-                //if ((brickX != oX) || (brickY != oY))
-                //{
-                //    string foo = "";
-                //}
+                newX = brickX + pattern[i].X;
+                newY = brickY + pattern[i].Y;
+                if (!Collision(matrixGrid, brickGrid, newX, newY))
+                {
+                    brickX = newX;
+                    brickY = newY;
+                    return;
+                }
             }
         }
 
@@ -473,15 +469,33 @@ namespace Bricker.Game
                     _x = x;
                     _y = y;
                 }
+                _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
             }
         }
 
         /// <summary>
-        /// Called when spawned onto the matrix, used to reset last drop time, etc.
+        /// Calculates Y ghost (y of brick at rest).
         /// </summary>
-        public void Spawned()
+        private static int GetYGhost(byte[,] matrixGrid, byte[,] brickGrid, int brickX, int brickY)
+        {
+            int lastGoodY = brickY;
+            for (int y = brickY; y < matrixGrid.GetLength(1); y++)
+            {
+                if (!Collision(matrixGrid, brickGrid, brickX, y))
+                    lastGoodY = y;
+                else
+                    break;
+            }
+            return lastGoodY;
+        }
+
+        /// <summary>
+        /// Called when spawned onto the matrix, used to reset last drop time, calculate ghost, etc.
+        /// </summary>
+        public void Spawned(byte[,] matrixGrid)
         {
             _lastDropTime = DateTime.Now;
+            _yGhost = GetYGhost(matrixGrid, _grid, _x, _y);
         }
 
         /// <summary>

@@ -380,7 +380,13 @@ namespace Bricker.Game
                     //quit program
                     else if (selection == MenuSelection.Quit)
                     {
-                        ExplodeSpaces();
+                        if ((_gameState == GameState.GameLive) || (_gameState == GameState.GamePaused))
+                        {
+                            DateTime start = DateTime.Now;
+                            ExplodeSpaces();
+                            TimeSpan elapsed = DateTime.Now - start;
+                            Thread.Sleep(1600 - (int)elapsed.TotalMilliseconds);
+                        }
                         break;
                     }
                 }
