@@ -474,7 +474,6 @@ namespace Bricker.Game
                         bool restingBefore = resting;
                         MoveBrickLeft(out bool moved, out resting);
                         moveAfterResting = moved && restingBefore;
-                        _renderer.Resting = resting;
                     }
 
                     //right
@@ -484,7 +483,6 @@ namespace Bricker.Game
                         bool restingBefore = resting;
                         MoveBrickRight(out bool moved, out resting);
                         moveAfterResting = moved && restingBefore;
-                        _renderer.Resting = resting;
                     }
 
                     //down
@@ -493,7 +491,6 @@ namespace Bricker.Game
                         Sounds.Play(Sound.Click1);
                         moveAfterResting = resting;
                         MoveBrickDown(out hit, out resting);
-                        _renderer.Resting = resting;
                     }
 
                     //rotate
@@ -502,7 +499,6 @@ namespace Bricker.Game
                         Sounds.Play(Sound.Click1);
                         moveAfterResting = resting;
                         RotateBrick(out resting);
-                        _renderer.Resting = resting;
                     }
 
                     //drop
@@ -516,7 +512,6 @@ namespace Bricker.Game
                     else if (key == Key.C)
                     {
                         HoldBrick(out collision, out resting);
-                        _renderer.Resting = resting;
                     }
 
                     //menu
@@ -558,7 +553,6 @@ namespace Bricker.Game
                 {
                     moveAfterResting = false;
                     MoveBrickDown(out hit, out resting);
-                    _renderer.Resting = resting;
                 }
 
                 //hit bottom?
@@ -1302,13 +1296,12 @@ namespace Bricker.Game
         private byte[] GameStatusToBytes(Matrix matrix, GameStats stats)
         {
             //copy matrix, add live brick
-            Space[,] sgrid = matrix.GetGrid(includeBrick: true);
-            byte[,] grid = new byte[sgrid.GetLength(0), sgrid.GetLength(1)];
-            Buffer.BlockCopy(sgrid, 0, grid, 0, sgrid.Length);
+            Space[,] matrixGrid = matrix.GetGrid(includeBrick: true);
+            byte[,] matrixBytes = Matrix.SpacesToBytes(matrixGrid);
 
             //serialize data                
             PacketBuilder builder = new PacketBuilder();
-            builder.AddBytes2D(grid);
+            builder.AddBytes2D(matrixBytes);
             builder.AddUInt16((ushort)stats.Level);
             builder.AddUInt16((ushort)stats.Lines);
             builder.AddUInt16((ushort)stats.Score);
@@ -1353,16 +1346,15 @@ namespace Bricker.Game
 
                 //deserialize data
                 PacketParser parser = new PacketParser(bytes);
-                byte[,] bmatrix = parser.GetBytes2D();
-                Space[,] matrix = new Space[bmatrix.GetLength(0), bmatrix.GetLength(1)];
-                Buffer.BlockCopy(bmatrix, 0, matrix, 0, bmatrix.Length);
+                byte[,] matrixBytes = parser.GetBytes2D();
+                Space[,] matrixGrid = Matrix.BytesToSpaces(matrixBytes);
                 int level = parser.GetUInt16();
                 int lines = parser.GetUInt16();
                 int score = parser.GetUInt16();
                 int linesSent = parser.GetUInt16();
 
                 //update opponent
-                opponent.UpdateOpponent(matrix, level, lines, score, linesSent);
+                opponent.UpdateOpponent(matrixGrid, level, lines, score, linesSent);
             }
             catch (Exception ex)
             {

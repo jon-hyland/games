@@ -5,7 +5,6 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Shapes;
 
 namespace Bricker.Game
 {
@@ -169,19 +168,19 @@ namespace Bricker.Game
                 case Space.Edge:
                     return Colors.Transparent;
                 case Space.I_White_Ghost:
-                    return Colors.GetDarker(Colors.SilverPink);
+                    return Colors.GetMuchDarker(Colors.SilverPink);
                 case Space.J_Blue_Ghost:
-                    return Colors.GetDarker(Colors.TuftsBlue);
+                    return Colors.GetMuchDarker(Colors.TuftsBlue);
                 case Space.L_Yellow_Ghost:
-                    return Colors.GetDarker(Colors.ChromeYellow);
+                    return Colors.GetMuchDarker(Colors.ChromeYellow);
                 case Space.O_Gray_Ghost:
-                    return Colors.GetDarker(Colors.Independence);
+                    return Colors.GetMuchDarker(Colors.Independence);
                 case Space.S_Green_Ghost:
-                    return Colors.GetDarker(Colors.ForestGreen);
+                    return Colors.GetMuchDarker(Colors.ForestGreen);
                 case Space.T_Purple_Ghost:
-                    return Colors.GetDarker(Colors.Byzantine);
+                    return Colors.GetMuchDarker(Colors.Byzantine);
                 case Space.Z_Red_Ghost:
-                    return Colors.GetDarker(Colors.Coquelicot);
+                    return Colors.GetMuchDarker(Colors.Coquelicot);
                 default:
                     return Colors.Transparent;
             }
@@ -367,7 +366,7 @@ namespace Bricker.Game
                     Buffer.BlockCopy(matrixGrid, 0, mg, 0, mg.Length);
                     Space[] bg = new Space[brickGrid.GetLength(0) * brickGrid.GetLength(1)];
                     Buffer.BlockCopy(brickGrid, 0, bg, 0, bg.Length);
-                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => ((byte)x).ToString() ))}, bg: {String.Join("", bg.Select(x => ((byte)x).ToString()))}");
+                    Log.Write($"bx: {brickX}, by: {brickY}, mg: {String.Join("", mg.Select(x => ((byte)x).ToString()))}, bg: {String.Join("", bg.Select(x => ((byte)x).ToString()))}");
                     ErrorHandler.LogError(ex);
                 }
                 catch

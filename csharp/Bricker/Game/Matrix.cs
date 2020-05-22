@@ -110,7 +110,7 @@ namespace Bricker.Game
         {
             lock (this)
             {
-                Buffer.BlockCopy(Enumerable.Repeat((byte)0, 12 * 22).ToArray(), 0, _grid, 0, 12 * 22);
+                ClearSpaces(_grid);
                 for (int x = 0; x < 12; x++)
                 {
                     _grid[x, 0] = Space.Edge;
@@ -287,6 +287,107 @@ namespace Bricker.Game
                 }
                 return rowsToErase;
             }
+        }
+
+        ///// <summary>
+        ///// Converts 1D array of bytes to 2D array of spaces.
+        ///// </summary>
+        //public static Space[,] Bytes1DToSpaces(byte[] bytes, int width)
+        //{
+        //    if ((bytes.Length % width) != 0)
+        //        throw new Exception("Invalid array length");
+        //    int height = bytes.Length / width;
+        //    Space[,] grid = new Space[width, height];
+        //    Bytes1DToSpaces(bytes, grid);
+        //    return grid;
+        //}
+
+        ///// <summary>
+        ///// Converts 1D array of bytes to 2D array of spaces.
+        ///// </summary>
+        //public static void Bytes1DToSpaces(byte[] bytes, Space[,] grid)
+        //{
+        //    if (bytes.Length != grid.Length)
+        //        throw new Exception("Invalid array length");
+        //    for (int x = 0; x < grid.GetLength(0); x++)
+        //        for (int y = 0; y < grid.GetLength(1); y++)
+        //            grid[x, y] = (Space)bytes[x * y];
+        //}
+
+        ///// <summary>
+        ///// Converts 2D array of spaces to 1D array of bytes.
+        ///// </summary>
+        //public static byte[] SpacesToBytes1D(Space[,] grid)
+        //{
+        //    byte[] bytes = new byte[grid.Length];
+        //    SpacesToBytes1D(grid, bytes);
+        //    return bytes;
+        //}
+
+        ///// <summary>
+        ///// Converts 2D array of spaces to 1D array of bytes.
+        ///// </summary>
+        //public static void SpacesToBytes1D(Space[,] grid, byte[] bytes)
+        //{
+        //    if (bytes.Length != grid.Length)
+        //        throw new Exception("Invalid array length");
+        //    for (int x = 0; x < grid.GetLength(0); x++)
+        //        for (int y = 0; y < grid.GetLength(1); y++)
+        //            bytes[x * y] = (byte)grid[x, y];
+        //}
+
+        /// <summary>
+        /// Fills grid with empty spaces.
+        /// </summary>
+        public static void ClearSpaces(Space[,] grid)
+        {
+            for (int x = 0; x < grid.GetLength(0); x++)
+                for (int y = 0; y < grid.GetLength(1); y++)
+                    grid[x, y] = Space.Empty;
+        }
+
+        /// <summary>
+        /// Converts 2D array of spaces to 2D array of bytes.
+        /// </summary>
+        public static byte[,] SpacesToBytes(Space[,] grid)
+        {
+            byte[,] bytes = new byte[grid.GetLength(0), grid.GetLength(1)];
+            SpacesToBytes(grid, bytes);
+            return bytes;
+        }
+
+        /// <summary>
+        /// Converts 2D array of spaces to 2D array of bytes.
+        /// </summary>
+        public static void SpacesToBytes(Space[,] grid, byte[,] bytes)
+        {
+            if ((bytes.GetLength(0) != grid.GetLength(0)) || (bytes.GetLength(1) != grid.GetLength(1)))
+                throw new Exception("Invalid array length");
+            for (int x = 0; x < grid.GetLength(0); x++)
+                for (int y = 0; y < grid.GetLength(1); y++)
+                    bytes[x, y] = (byte)grid[x, y];
+        }
+
+        /// <summary>
+        /// Converts 2D array of bytes to 2D array of spaces.
+        /// </summary>
+        public static Space[,] BytesToSpaces(byte[,] bytes)
+        {
+            Space[,] grid = new Space[bytes.GetLength(0), bytes.GetLength(1)];
+            BytesToSpaces(bytes, grid);
+            return grid;
+        }
+
+        /// <summary>
+        /// Converts 2D array of bytes to 2D array of spaces.
+        /// </summary>
+        public static void BytesToSpaces(byte[,] bytes, Space[,] grid)
+        {
+            if ((bytes.GetLength(0) != grid.GetLength(0)) || (bytes.GetLength(1) != grid.GetLength(1)))
+                throw new Exception("Invalid array length");
+            for (int x = 0; x < bytes.GetLength(0); x++)
+                for (int y = 0; y < bytes.GetLength(1); y++)
+                    grid[x, y] = (Space)bytes[x, y];
         }
 
     }

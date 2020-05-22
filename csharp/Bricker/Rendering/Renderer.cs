@@ -26,7 +26,7 @@ namespace Bricker.Rendering
         private double _frame_Width;
         private double _frame_Height;
         private double _displayScale;
-        private readonly Dictionary<Space, Surface> _spaces;
+        private readonly Dictionary<int, Dictionary<Space, Surface>> _spaces;
         private MenuProperties _menuProps;
         private SettingsProperties _settingProps;
         private InitialsEntryProperties _initialProps;
@@ -74,9 +74,6 @@ namespace Bricker.Rendering
         public MessageProperties MessageProps { get => _messageProps; set => _messageProps = value; }
         public LobbyProperties LobbyProps { get => _lobbyProps; set => _lobbyProps = value; }
 
-        //remove this
-        public bool Resting { get; set; }
-
         /// <summary>
         /// Class constructor.
         /// </summary>
@@ -85,7 +82,8 @@ namespace Bricker.Rendering
             _window = window;
             _config = config;
             _displayScale = 1;
-            _spaces = new Dictionary<Space, Surface>();
+            _spaces = new Dictionary<int, Dictionary<Space, Surface>>();
+            _spaces.Add(32, new Dictionary<Space, Surface>());
             _menuProps = null;
             _initialProps = null;
             _messageProps = null;
@@ -239,28 +237,50 @@ namespace Bricker.Rendering
         /// <summary>
         /// Generates a prerendered surface to repesent each type of space (small colored square).
         /// </summary>
-        private Surface CreateBrickSurface(Space space)
+        private Surface CreateBrickSurface32(Space space)
         {
-            double size = 32;
+            int size = 32;
             double x = 0;
             double y = 0;
-            SKColor color = Brick.SpaceToColor(space);
-            SKColor lighter = Colors.GetLighter(color);
-            SKColor darker = Colors.GetDarker(color);
             Surface surface = new Surface(size, size, Colors.Transparent);
-            surface.DrawRect(color, x, y, size, size);
-            surface.DrawLine(lighter, x + 0, y + 0, x + size - 0, y + 0, 1);
-            surface.DrawLine(lighter, x + 1, y + 1, x + size - 1, y + 1, 1);
-            surface.DrawLine(lighter, x + 2, y + 2, x + size - 2, y + 2, 1);
-            surface.DrawLine(lighter, x + size - 0, y + 0, x + size - 0, y + size - 0, 1);
-            surface.DrawLine(lighter, x + size - 1, y + 1, x + size - 1, y + size - 1, 1);
-            surface.DrawLine(lighter, x + size - 2, y + 2, x + size - 2, y + size - 2, 1);
-            surface.DrawLine(darker, x + 0, y + size - 0, x + size - 0, y + size - 0, 1);
-            surface.DrawLine(darker, x + 1, y + size - 1, x + size - 1, y + size - 1, 1);
-            surface.DrawLine(darker, x + 2, y + size - 2, x + size - 2, y + size - 2, 1);
-            surface.DrawLine(darker, x + 0, y + 0, x + 0, y + size - 0, 1);
-            surface.DrawLine(darker, x + 1, y + 1, x + 1, y + size - 1, 1);
-            surface.DrawLine(darker, x + 2, y + 2, x + 2, y + size - 2, 1);
+            if (space.IsStandard())
+            {
+                SKColor color = Brick.SpaceToColor(space);
+                SKColor lighter = Colors.GetLighter(color);
+                SKColor darker = Colors.GetDarker(color);
+                surface.DrawRect(color, x, y, size, size);
+                surface.DrawLine(lighter, x + 0, y + 0, x + size - 0, y + 0, 1);
+                surface.DrawLine(lighter, x + 1, y + 1, x + size - 1, y + 1, 1);
+                surface.DrawLine(lighter, x + 2, y + 2, x + size - 2, y + 2, 1);
+                surface.DrawLine(lighter, x + size - 0, y + 0, x + size - 0, y + size - 0, 1);
+                surface.DrawLine(lighter, x + size - 1, y + 1, x + size - 1, y + size - 1, 1);
+                surface.DrawLine(lighter, x + size - 2, y + 2, x + size - 2, y + size - 2, 1);
+                surface.DrawLine(darker, x + 0, y + size - 0, x + size - 0, y + size - 0, 1);
+                surface.DrawLine(darker, x + 1, y + size - 1, x + size - 1, y + size - 1, 1);
+                surface.DrawLine(darker, x + 2, y + size - 2, x + size - 2, y + size - 2, 1);
+                surface.DrawLine(darker, x + 0, y + 0, x + 0, y + size - 0, 1);
+                surface.DrawLine(darker, x + 1, y + 1, x + 1, y + size - 1, 1);
+                surface.DrawLine(darker, x + 2, y + 2, x + 2, y + size - 2, 1);
+            }
+            else if (space.IsGhost())
+            {
+                SKColor color = Brick.SpaceToColor(space);
+                SKColor lighter = Colors.GetLighter(color);
+                SKColor darker = Colors.GetDarker(color);
+                surface.DrawRect(color, x, y, size, size);
+                surface.DrawLine(lighter, x + 0, y + 0, x + size - 0, y + 0, 1);
+                surface.DrawLine(lighter, x + 1, y + 1, x + size - 1, y + 1, 1);
+                surface.DrawLine(lighter, x + 2, y + 2, x + size - 2, y + 2, 1);
+                surface.DrawLine(lighter, x + size - 0, y + 0, x + size - 0, y + size - 0, 1);
+                surface.DrawLine(lighter, x + size - 1, y + 1, x + size - 1, y + size - 1, 1);
+                surface.DrawLine(lighter, x + size - 2, y + 2, x + size - 2, y + size - 2, 1);
+                surface.DrawLine(darker, x + 0, y + size - 0, x + size - 0, y + size - 0, 1);
+                surface.DrawLine(darker, x + 1, y + size - 1, x + size - 1, y + size - 1, 1);
+                surface.DrawLine(darker, x + 2, y + size - 2, x + size - 2, y + size - 2, 1);
+                surface.DrawLine(darker, x + 0, y + 0, x + 0, y + size - 0, 1);
+                surface.DrawLine(darker, x + 1, y + 1, x + 1, y + size - 1, 1);
+                surface.DrawLine(darker, x + 2, y + 2, x + 2, y + size - 2, 1);
+            }
             return surface;
         }
 
@@ -280,17 +300,13 @@ namespace Bricker.Rendering
                 {
                     for (int y = 1; y < 22; y++)
                     {
-                        if (grid[x, y].IsStandard())
+                        if (grid[x, y].Exists())
                         {
                             Space space = grid[x, y];
-                            if (!_spaces.ContainsKey(space))
-                                _spaces.Add(space, CreateBrickSurface(space));
-                            Surface brick = _spaces[space];
+                            if (!_spaces[32].ContainsKey(space))
+                                _spaces[32].Add(space, CreateBrickSurface32(space));
+                            Surface brick = _spaces[32][space];
                             surface.Blit(brick, ((x - 1) * 32) + 2, ((y - 1) * 32) + 2);
-                        }
-                        else if (grid[x, y].IsGhost())
-                        {
-                            surface.DrawRect(Colors.DimWhite, ((x - 1) * 32) + 16, ((y - 1) * 32) + 16, 4, 4);
                         }
                     }
                 }
@@ -339,7 +355,7 @@ namespace Bricker.Rendering
                         {
                             for (int x = 0; x < grid.GetLength(0); x++)
                                 for (int y = 0; y < grid.GetLength(1); y++)
-                                    if (grid[x, y] > 0)
+                                    if (grid[x, y].IsSolid())
                                         brick.DrawRect(Brick.SpaceToColor(grid[x, y]), x * 25, y * 25, 24, 24);
                             container.Blit(brick, (brickArea - swidth) / 2, (brickArea - sheight) / 2);
                         }
@@ -431,7 +447,7 @@ namespace Bricker.Rendering
                 {
                     for (int x = 1; x < 12; x++)
                         for (int y = 1; y < 22; y++)
-                            if (matrix[x, y] > 0)
+                            if (matrix[x, y].IsSolid())
                                 matrixSurface.DrawRect(Brick.SpaceToColor(matrix[x, y]), ((x - 1d) * (brickSize + 1d)) + 1.5d, ((y - 1d) * (brickSize + 1)) + 1.5d, brickSize, brickSize);
                     matrixSurface.DrawLine(_primaryWhite, 0.5d, 0.5d, matrixWidth - 1.5d, 0.5d, 2d);
                     matrixSurface.DrawLine(_primaryWhite, matrixWidth - 1.5d, 0.5d, matrixWidth - 1.5d, matrixHeight - 1.5d, 2d);
@@ -670,15 +686,7 @@ namespace Bricker.Rendering
             if ((props.Width is Double.NaN) || (props.Height is Double.NaN) || (props.CalculatedHeight is Double.NaN))
             {
                 double maxWidth = 0, totalHeight = 0;
-                double /*headerLineHeight = 0, */itemLineHeight = 0;
-                //foreach (string header in props.Header)
-                //{
-                //    Surface.MeasureText(header, props.HeaderSize, out double w, out double h);
-                //    if (w > maxWidth)
-                //        maxWidth = w;
-                //    totalHeight += h;
-                //    headerLineHeight = h;
-                //}
+                double itemLineHeight = 0;
                 foreach (SettingsItem item in props.Items)
                 {
                     Surface.MeasureText(item.OffCaption, props.FontSize, out double w, out double h);
@@ -688,10 +696,8 @@ namespace Bricker.Rendering
                     itemLineHeight = h;
                 }
                 props.Width = props.Width is Double.NaN ? (2 + horizSpacing + maxWidth + horizSpacing + 2) : props.Width;
-                //double headerHeight = props.Header.Length > 0 ? vertSpacing : 0;
-                props.CalculatedHeight = 2 + totalHeight + vertSpacing + /*headerHeight +*/ (itemSpacing * (props.Items.Length - 1)) + vertSpacing + 2;
+                props.CalculatedHeight = 2 + totalHeight + vertSpacing + (itemSpacing * (props.Items.Length - 1)) + vertSpacing + 2;
                 props.Height = Math.Max(props.Height is Double.NaN ? props.CalculatedHeight : props.Height, props.CalculatedHeight);
-                //props.HeaderLineHeight = headerLineHeight;
                 props.ItemLineHeight = itemLineHeight;
             }
 
@@ -708,25 +714,12 @@ namespace Bricker.Rendering
                 surface.DrawLine(Colors.White, width - 2, 0, width - 2, height - 1, 1);
                 surface.DrawLine(Colors.White, width - 1, 0, width - 1, height - 1, 1);
 
-                //if (props.Header.Length > 0)
-                //{
-                //    for (int i = 0; i < props.Header.Length; i++)
-                //    {
-                //        string header = props.Header[i];
-                //        surface.DrawText_Centered(Colors.White, header, props.HeaderSize, y);
-                //        y += props.HeaderLineHeight;
-                //    }
-                //    y += vertSpacing;
-                //}
-
                 for (int i = 0; i < props.Items.Length; i++)
                 {
                     if (i > 0)
                         y += itemSpacing;
                     string item = props.Items[i].Caption;
                     SKColor color = i == props.SelectedIndex ? Colors.FluorescentOrange : Colors.White;
-                    //if (!props.EnabledItems[i])
-                    //    color = Colors.Gray;
                     surface.DrawText_Centered(color, item, props.FontSize, y);
                     y += props.ItemLineHeight;
                 }
@@ -775,17 +768,11 @@ namespace Bricker.Rendering
                 using (Surface initials = new Surface(charWidth * 3, charHeight))
                 {
                     using (Surface char1 = Surface.RenderText(Colors.FluorescentOrange, inits[0].ToString(), 64))
-                    {
                         initials.Blit(char1, ((charWidth - char1.Width) / 2) + (charWidth * 0), (charHeight - char1.Height) / 2);
-                    }
                     using (Surface char2 = Surface.RenderText(Colors.FluorescentOrange, inits[1].ToString(), 64))
-                    {
                         initials.Blit(char2, ((charWidth - char2.Width) / 2) + (charWidth * 1), (charHeight - char2.Height) / 2);
-                    }
                     using (Surface char3 = Surface.RenderText(Colors.FluorescentOrange, inits[2].ToString(), 64))
-                    {
                         initials.Blit(char3, ((charWidth - char3.Width) / 2) + (charWidth * 2), (charHeight - char3.Height) / 2);
-                    }
                     surface.Blit(initials, (surface.Width - initials.Width) / 2, charY);
                 }
 
@@ -946,16 +933,11 @@ namespace Bricker.Rendering
                 lines.Add($"com_state:   {communications.ConnectionState}");
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
-            lines.Add($"resting:   {(Resting ? "1" : "0")}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
             {
                 frame.Blit(surface, 35, 25);
             }
-
-            ////TODO: REMOVE THIS!!
-            //if (RenderProps.Debug)
-            //    Log.Write($"Heartbeat ms: {(long)communications.TimeSinceLastHeartbeatReceived.TotalMilliseconds}");
         }
 
         /// <summary>
@@ -1011,12 +993,6 @@ namespace Bricker.Rendering
                 frame.DrawLine(darker, leftX + 0, topY + 0, leftX + 0, topY + 32 - 0, 1);
                 frame.DrawLine(darker, leftX + 1, topY + 1, leftX + 1, topY + 32 - 1, 1);
                 frame.DrawLine(darker, leftX + 2, topY + 2, leftX + 2, topY + 32 - 2, 1);
-
-
-                //frame.DrawLine(Colors.Black, x, y, x + 34, y);
-                //frame.DrawLine(Colors.Black, x, y + 34, x + 34, y + 34);
-                //frame.DrawLine(Colors.Black, x, y, x, y + 34);
-                //frame.DrawLine(Colors.Black, x + 34, y, x + 34, y + 34);
             }
         }
 

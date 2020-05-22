@@ -21,7 +21,7 @@
         T_Purple_Ghost = 13,
         Z_Red_Ghost = 14,
         Sent = 15,
-        Edge = 16   // formally 8
+        Edge = 16
     }
 
     /// <summary>
@@ -34,15 +34,15 @@
         /// </summary>
         public static bool IsSolid(this Space s)
         {
-            return ((s >= Space.I_White) && (s <= Space.Z_Red)) || (s == Space.Edge) || (s == Space.Sent);
+            return ((s >= Space.I_White) && (s <= Space.Z_Red)) || (s == Space.Sent) || (s == Space.Edge);
         }
 
         /// <summary>
-        /// Returns true if space is standard (1-7).
+        /// Returns true if space is standard (1-7, or 15).
         /// </summary>
         public static bool IsStandard(this Space s)
         {
-            return (s >= Space.I_White) && (s <= Space.Z_Red);
+            return ((s >= Space.I_White) && (s <= Space.Z_Red)) || (s == Space.Sent);
         }
 
         /// <summary>
@@ -51,6 +51,14 @@
         public static bool IsGhost(this Space s)
         {
             return (s >= Space.I_White_Ghost) && (s <= Space.Z_Red_Ghost);
+        }
+
+        /// <summary>
+        /// Returns true if space is not empty.
+        /// </summary>
+        public static bool Exists(this Space s)
+        {
+            return s != Space.Empty;
         }
     }
 }

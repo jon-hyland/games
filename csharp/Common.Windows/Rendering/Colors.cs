@@ -113,9 +113,9 @@ namespace Common.Windows.Rendering
         {
             lock (_lock)
             {
-                if (!_darker.ContainsKey(color))
-                    _darker.Add(color, new SKColor(Multiply(color.Red, 0.25), Multiply(color.Green, 0.25), Multiply(color.Blue, 0.25)));
-                return _darker[color];
+                if (!_muchDarker.ContainsKey(color))
+                    _muchDarker.Add(color, new SKColor(Multiply(color.Red, 0.25), Multiply(color.Green, 0.25), Multiply(color.Blue, 0.25)));
+                return _muchDarker[color];
             }
         }
 
