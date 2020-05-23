@@ -53,7 +53,7 @@ namespace Bricker.Game
         /// <summary>
         /// Returns copy of grid.
         /// </summary>
-        public Space[,] GetGrid(bool includeBrick)
+        public Space[,] GetGrid(bool includeBrick, bool includeGhost)
         {
             lock (this)
             {
@@ -69,7 +69,7 @@ namespace Bricker.Game
                                 int gx = x + _brick.X;
                                 int gy = y + _brick.Y;
                                 int gyg = y + _brick.YGhost;
-                                if ((gx >= 0) && (gx <= 11) && (gyg >= 0) && (gyg <= 21))
+                                if ((includeGhost) && (gx >= 0) && (gx <= 11) && (gyg >= 0) && (gyg <= 21))
                                     grid[gx, gyg] = (Space)((byte)_brick.Grid[x, y] + 7);
                                 if ((gx >= 0) && (gx <= 11) && (gy >= 0) && (gy <= 21))
                                     grid[gx, gy] = _brick.Grid[x, y];

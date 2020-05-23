@@ -1,5 +1,5 @@
 ﻿using Bricker.Game;
-using Common.Windows.Rendering;
+using Common.Standard.Configuration;
 using System;
 using System.Windows;
 using System.Windows.Threading;
@@ -45,11 +45,11 @@ namespace Bricker
         /// </summary>
         private void Timer_Callback(object s, EventArgs e)
         {
-            if (RenderProps.HighFrameRate != _highFrameRate)
+            if (GameConfig.Instance.HighFrameRate != _highFrameRate)
             {
-                _highFrameRate = RenderProps.HighFrameRate;
+                _highFrameRate = GameConfig.Instance.HighFrameRate;
                 _timer.Stop();
-                _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(RenderProps.HighFrameRate ? 15 : 45), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
+                _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(GameConfig.Instance.HighFrameRate ? 15 : 45), DispatcherPriority.Background, Timer_Callback, _skia.Dispatcher);
             }
             _skia.InvalidateVisual();
         }

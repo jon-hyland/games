@@ -2,6 +2,7 @@
 using Bricker.Game;
 using Bricker.Rendering.Properties;
 using Bricker.Rendering.Tiles;
+using Common.Standard.Configuration;
 using Common.Standard.Error;
 using Common.Standard.Game;
 using Common.Standard.Networking;
@@ -135,7 +136,7 @@ namespace Bricker.Rendering
                 if ((_fakeOpponent) && (opponent == null))
                 {
                     opponent = new Opponent(new Player(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
-                    Space[,] m = matrix.GetGrid(includeBrick: true);
+                    Space[,] m = matrix.GetGrid(includeBrick: true, includeGhost: GameConfig.Instance.Ghost);
                     opponent.UpdateOpponent(m, 3, 144, 12434, 7);
                 }
 
@@ -296,7 +297,7 @@ namespace Bricker.Rendering
         {
             using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
-                Space[,] grid = matrix.GetGrid(includeBrick: true);
+                Space[,] grid = matrix.GetGrid(includeBrick: true, includeGhost: GameConfig.Instance.Ghost);
                 for (int i = 0; i <= 10; i++)
                     surface.DrawLine(Colors.Gray, (i * 32) + 2, 0, (i * 32) + 2, surface.Height, 1);
                 for (int i = 0; i <= 20; i++)
@@ -499,7 +500,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawTitle(Surface frame)
         {
-            if (RenderProps.Debug)
+            if (GameConfig.Instance.Debug)
                 return;
 
             double titleHeight = 86;
@@ -510,7 +511,7 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Centered(_primaryWhite, "bricker", 52, 0);
+                surface.DrawText_Centered(Colors.FluorescentOrange, "bricker", 52, 0);
                 surface.DrawText_Centered(_primaryWhite, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
@@ -953,7 +954,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState)
         {
-            if (!RenderProps.Debug)
+            if (!GameConfig.Instance.Debug)
                 return;
 
             List<string> lines = new List<string>();
@@ -978,7 +979,7 @@ namespace Bricker.Rendering
         /// </summary>
         private void DrawBackground(Surface frame, GameStats stats)
         {
-            if (!RenderProps.Background)
+            if (!GameConfig.Instance.Background)
                 return;
 
             DateTime now = DateTime.Now;

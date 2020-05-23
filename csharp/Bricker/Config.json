@@ -1,16 +1,20 @@
 ﻿{
-  "antiAlias": 1,
-  "highFrameRate": 1,
-  "background": 1,
-  "debug": 0,
   "audio": {
       "music": 1,
       "effects": 1
   },
-  "ghost": 1,
-  "imageFolder": "./Images",
   "multiplayer": {
     "server": "hyland.one",
-    "port": 8780
-  }
+    "port": 8780 
+  },
+  "performance": {
+    "highFrameRate": 1,
+    "antiAlias": 1
+  },
+  "display": {
+    "ghost": 1,
+    "background": 1,
+    "imageFolder": "./Images",
+  },
+  "debug": 0,
 }

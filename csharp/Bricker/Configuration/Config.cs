@@ -17,6 +17,9 @@ namespace Bricker.Configuration
         public Version GameVersion { get; }
         public string DisplayVersion { get; }
         public IPAddress LocalIP { get; }
+        public IPAddress ServerIP { get; }
+        public ushort ServerPort { get; }
+
         public string ApplicationFolder { get; }
         public string AudioSampleFolder { get; }
         public string ImageFolder { get; }
@@ -26,51 +29,47 @@ namespace Bricker.Configuration
         public string HighScoreFile { get; }
         public string InitialsFile { get; }
         public string RemoteInstanceFile { get; }
-        public bool AntiAlias { get; }
-        public bool HighFrameRate { get; }
-        public bool Background { get; }
-        public bool Debug { get; }
-        public bool Music { get; }
-        public bool SoundEffects { get; }
-        public IPAddress ServerIP { get; }
-        public ushort ServerPort { get; }
+
+        public bool Music { get; set; }
+        public bool SoundEffects { get; set; }
+        public bool Ghost { get; set; }
+        public bool AntiAlias { get; set; }
+        public bool HighFrameRate { get; set; }
+        public bool Background { get; set; }
+        public bool Debug { get; set; }
         public string Initials { get; private set; }
 
         public Config()
         {
+            ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
+            dynamic data = JsonParse.Deserialize(File.ReadAllText(ConfigFile));
             GameTitle = "Bricker";
             GameVersion = GetVersion();
             DisplayVersion = $"{GameVersion.Major}.{GameVersion.Minor}.{GameVersion.Build}";
             LocalIP = InterfaceDiscovery.GetLocalIP();
-            ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            ServerIP = JsonParse.GetIPAddress(data.multiplayer.server) ?? DnsHelper.ResolveHost(JsonParse.GetString(data.multiplayer.server));
+            ServerPort = JsonParse.GetUShort(data.multiplayer.port);
+
             AudioSampleFolder = Path.Combine(ApplicationFolder, "Samples");
             ImageFolder = Path.Combine(ApplicationFolder, "Images");
-            ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             LogFile = Path.Combine(ApplicationFolder, "LogFile.txt");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
             HighScoreFile = Path.Combine(ApplicationFolder, "HighScores.txt");
             InitialsFile = Path.Combine(ApplicationFolder, "Initials.txt");
             RemoteInstanceFile = Path.Combine(ApplicationFolder, "RemoteInstances.txt");
 
-            dynamic data = JsonSerialization.Deserialize(File.ReadAllText(ConfigFile));
-            AntiAlias = data.antiAlias == 1;
-            HighFrameRate = data.highFrameRate == 1;
-            Background = data.background == 1;
-            Debug = data.debug == 1;
-            Music = data.audio.music == 1;
-            SoundEffects = data.audio.effects == 1;
-            ImageFolder = data.imageFolder != null ? (string)data.imageFolder : ImageFolder;
+            Music = JsonParse.GetBoolean(data.audio.music);
+            SoundEffects = JsonParse.GetBoolean(data.audio.effects);
+            Ghost = JsonParse.GetBoolean(data.display.ghost);
+            Background = JsonParse.GetBoolean(data.display.background);
+            HighFrameRate = JsonParse.GetBoolean(data.performance.highFrameRate);
+            AntiAlias = JsonParse.GetBoolean(data.performance.antiAlias);
+            ImageFolder = JsonParse.GetString(data.display.imageFolder, null) ?? ImageFolder;
             if (ImageFolder.StartsWith("./"))
                 ImageFolder = Path.Combine(ApplicationFolder, ImageFolder.Substring(2));
-            try
-            {
-                ServerIP = IPAddress.Parse((string)data.multiplayer.server);
-            }
-            catch
-            {
-                ServerIP = DnsHelper.ResolveHost((string)data.multiplayer.server);
-            }
-            ServerPort = (ushort)data.multiplayer.port;
+            Debug = JsonParse.GetBoolean(data.debug);
+
             Initials = LoadInitials();
         }
 

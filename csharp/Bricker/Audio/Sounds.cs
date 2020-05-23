@@ -99,9 +99,9 @@ namespace Bricker.Audio
         /// </summary>
         public static void Play(SoundSample sound)
         {
-            if ((sound.IsMusic) && (!AudioProps.Music))
+            if ((sound.IsMusic) && (!GameConfig.Instance.Music))
                 return;
-            if ((!sound.IsMusic) && (!AudioProps.SoundEffects))
+            if ((!sound.IsMusic) && (!GameConfig.Instance.SoundEffects))
                 return;
 
             _manager?.PlaySound(sound.ID);
@@ -120,9 +120,9 @@ namespace Bricker.Audio
             else
                 _musicMode = MusicMode.None;
 
-            if ((sound.IsMusic) && (!AudioProps.Music))
+            if ((sound.IsMusic) && (!GameConfig.Instance.Music))
                 return;
-            if ((!sound.IsMusic) && (!AudioProps.SoundEffects))
+            if ((!sound.IsMusic) && (!GameConfig.Instance.SoundEffects))
                 return;
 
             _manager?.PlayLoop(id: sound.ID, stopOtherLoops: true, position: position);
@@ -157,7 +157,7 @@ namespace Bricker.Audio
         /// </summary>
         public static void Reset()
         {
-            if (AudioProps.Music)
+            if (GameConfig.Instance.Music)
             {
                 if (_musicMode == MusicMode.Music1)
                     Loop(Sound.Music1, Main.MusicPosition);

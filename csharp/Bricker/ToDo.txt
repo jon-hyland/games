@@ -49,6 +49,7 @@ X   * Accept timeout not working right
 - Allow reset of high scores from settings.
 - Improve config reader.
 - Allow initials change.
+- Move menu loops into library class?
 
 
 

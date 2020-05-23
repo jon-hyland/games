@@ -1,4 +1,5 @@
 ﻿using Common.Rendering;
+using Common.Standard.Configuration;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace Common.Windows.Rendering
             _height = height;
             _bitmap = new SKBitmap((int)Math.Round(_width * RenderProps.DisplayScale), (int)Math.Round(_height * RenderProps.DisplayScale));
             _canvas = new SKCanvas(_bitmap);
-            _canvas.Clear(color ?? (!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack1));
+            _canvas.Clear(color ?? (!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack1));
         }
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void Clear(SKColor? color = null)
         {
-            _canvas.Clear(color ?? (!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack1));
+            _canvas.Clear(color ?? (!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack1));
         }
 
         /// <summary>
@@ -124,7 +125,7 @@ namespace Common.Windows.Rendering
             float y = (float)((size + (size * 0.05)) * RenderProps.DisplayScale);
 
             Surface surface = new Surface(width, height);
-            surface._canvas.Clear(!RenderProps.Debug ? Colors.Transparent : Colors.DebugBlack2);
+            surface._canvas.Clear(!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack2);
             surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
             return surface;
         }

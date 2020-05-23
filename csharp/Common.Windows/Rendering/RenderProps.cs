@@ -1,4 +1,5 @@
 ﻿using Common.Standard.Configuration;
+using NAudio.MediaFoundation;
 using SkiaSharp;
 
 namespace Common.Windows.Rendering
@@ -6,7 +7,7 @@ namespace Common.Windows.Rendering
     public static class RenderProps
     {
         private static readonly object _lock = new object();
-        private static IGameConfig _config;
+        private static string _fontFile;
         private static SKTypeface _typeface;
         private static SKPaint _linePaint;
         private static SKPaint _rectPaint;
@@ -14,10 +15,6 @@ namespace Common.Windows.Rendering
         private static double _displayScale;
         private static bool _scaleSet;
 
-        public static bool AntiAlias { get; set; }
-        public static bool HighFrameRate { get; set; }
-        public static bool Background { get; set; }
-        public static bool Debug { get; set; }
         public static double DisplayScale { get { return _displayScale; } set { _displayScale = value; _scaleSet = true; } }
         public static bool ScaleSet => _scaleSet;
 
@@ -28,7 +25,7 @@ namespace Common.Windows.Rendering
                 lock (_lock)
                 {
                     if (_typeface == null)
-                        _typeface = SKTypeface.FromFile(_config.FontFile);
+                        _typeface = SKTypeface.FromFile(_fontFile);
                     return _typeface;
                 }
             }
@@ -53,7 +50,7 @@ namespace Common.Windows.Rendering
                             StrokeCap = SKStrokeCap.Square,
                             StrokeJoin = SKStrokeJoin.Bevel,
                             StrokeWidth = (float)(2 * DisplayScale),
-                            IsAntialias = AntiAlias
+                            IsAntialias = GameConfig.Instance.AntiAlias
                         };
                     return _linePaint;
                 }
@@ -78,7 +75,7 @@ namespace Common.Windows.Rendering
                             Style = SKPaintStyle.StrokeAndFill,
                             StrokeCap = SKStrokeCap.Square,
                             StrokeJoin = SKStrokeJoin.Bevel,
-                            IsAntialias = AntiAlias
+                            IsAntialias = GameConfig.Instance.AntiAlias
                         };
                     return _rectPaint;
                 }
@@ -103,7 +100,7 @@ namespace Common.Windows.Rendering
                             Typeface = Typeface,
                             TextSize = (float)(12 * DisplayScale),
                             IsStroke = false,
-                            IsAntialias = AntiAlias
+                            IsAntialias = GameConfig.Instance.AntiAlias
                         };
                     return _textPaint;
                 }
@@ -117,11 +114,7 @@ namespace Common.Windows.Rendering
 
         public static void Initialize(IGameConfig config)
         {
-            _config = config;
-            AntiAlias = config.AntiAlias;
-            HighFrameRate = config.HighFrameRate;
-            Background = config.Background;
-            Debug = config.Debug;
+            _fontFile = config.FontFile;
             _displayScale = 1d;
         }
 
@@ -137,7 +130,7 @@ namespace Common.Windows.Rendering
                 _linePaint = null;
                 _rectPaint = null;
                 _textPaint = null;
-                _typeface = SKTypeface.FromFile(_config.FontFile);
+                _typeface = SKTypeface.FromFile(_fontFile);
                 _linePaint = new SKPaint()
                 {
                     Color = Colors.White,
@@ -145,7 +138,7 @@ namespace Common.Windows.Rendering
                     StrokeCap = SKStrokeCap.Square,
                     StrokeJoin = SKStrokeJoin.Bevel,
                     StrokeWidth = (float)(2 * DisplayScale),
-                    IsAntialias = AntiAlias
+                    IsAntialias = GameConfig.Instance.AntiAlias
                 };
                 _rectPaint = new SKPaint()
                 {
@@ -153,7 +146,7 @@ namespace Common.Windows.Rendering
                     Style = SKPaintStyle.StrokeAndFill,
                     StrokeCap = SKStrokeCap.Square,
                     StrokeJoin = SKStrokeJoin.Bevel,
-                    IsAntialias = AntiAlias
+                    IsAntialias = GameConfig.Instance.AntiAlias
                 };
                 _textPaint = _textPaint ?? new SKPaint()
                 {
@@ -161,7 +154,7 @@ namespace Common.Windows.Rendering
                     Typeface = _typeface,
                     TextSize = (float)(12 * DisplayScale),
                     IsStroke = false,
-                    IsAntialias = AntiAlias
+                    IsAntialias = GameConfig.Instance.AntiAlias
                 };
             }
         }

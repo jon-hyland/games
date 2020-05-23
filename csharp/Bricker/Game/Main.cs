@@ -3,7 +3,7 @@ using Bricker.Configuration;
 using Bricker.Logging;
 using Bricker.Rendering;
 using Bricker.Rendering.Properties;
-using Common.Audio;
+using Common.Standard.Configuration;
 using Common.Standard.Error;
 using Common.Standard.Extensions;
 using Common.Standard.Game;
@@ -77,15 +77,14 @@ namespace Bricker.Game
             _gameState = GameState.NotPlaying;
             _sessionEnded = false;
 
-            //initialize
-            RenderProps.Initialize(_config);
-            AudioProps.Initialize(_config);
-            Log.Initiallize(_logger);
-            ErrorHandler.Initialize(_logger);
-            Sounds.Initialize(_config);
-
             //ui
             _window.Title = $"Bricker v{_config.DisplayVersion}";
+
+            //initialize
+            GameConfig.Initialize(_config);
+            RenderProps.Initialize(_config);
+            Log.Initiallize(_logger);
+            ErrorHandler.Initialize(_logger);
 
             //events
             _communications.OpponentInviteReceived += (o) =>
@@ -145,11 +144,14 @@ namespace Bricker.Game
         /// </summary>
         public void StartProgramLoop()
         {
+            //start program thread
             _programLoopThread = new Thread(ProgramLoop)
             {
                 IsBackground = true
             };
             _programLoopThread.Start();
+
+            //start status thread
             _sendStatusThread = new Thread(SendStatus_Thread)
             {
                 IsBackground = true
@@ -162,6 +164,29 @@ namespace Bricker.Game
         #region Program Loop
 
         /// <summary>
+        /// Late loads certain resources.
+        /// </summary>
+        private void LateLoad()
+        {
+            //load resources
+            try
+            {
+                //show message
+                _renderer.MessageProps = new MessageProperties(
+                    line: new TextLine("loading..", 48, Colors.White),
+                    buttons: MessageButtons.None);
+
+                //load stuff
+                Sounds.Initialize(_config);
+            }
+            finally
+            {
+                //clear message
+                _renderer.MessageProps = null;
+            }
+        }
+
+        /// <summary>
         /// Runs main game logic.
         /// </summary>
         private void ProgramLoop()
@@ -171,70 +196,14 @@ namespace Bricker.Game
                 //set flag
                 _gameState = GameState.NotPlaying;
 
+                //late load resources
+                LateLoad();              
+
                 //play loop
                 Sounds.Loop(Sound.Music2);
 
                 //start game communications
                 _communications.Start();
-
-                ////todo: remove!!
-                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
-                //MessageBoxLoop(new MessageProperties("This is a test.", MessageButtons.OK));
-                //MessageBoxLoop(new MessageProperties("This is a test with much more words and different buttons.", MessageButtons.CancelOK));
-                //MessageBoxLoop(new MessageProperties("Message with no buttons", MessageButtons.None));
-                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line" }, MessageButtons.OK));
-                //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
-                //MessageBoxLoop(new MessageProperties(new TextLine[] { new TextLine("Message with text line one"), new TextLine("and also text line two") }, MessageButtons.NoYes));
-                //MessageBoxLoop(new MessageProperties(new TextLine[] {
-                //    new TextLine(
-                //        text:"Message with text line one plus bottom margin",
-                //        color: Colors.Coquelicot,
-                //        size: 32,
-                //        bottomMargin: 20),
-                //    new TextLine(
-                //        text:"Message with text line one plus top margin",
-                //        color: Colors.ForestGreen,
-                //        size: 18,
-                //        topMargin: 10,
-                //        alignment: Alignment.Right) }));
-                //SettingsLoop(new SettingsProperties(
-                //    items: new SettingsItem[] {
-                //        new SettingsItem(
-                //            onCaption: "Anti-Alias On",
-                //            offCaption: "Anti-Alias Off",
-                //            RenderProps.AntiAlias),
-                //        new SettingsItem(
-                //            onCaption: "High Frame Rate On",
-                //            offCaption: "High Frame Rate Off",
-                //            RenderProps.HighFrameRate),
-                //        new SettingsItem(
-                //            onCaption: "Background Animation On",
-                //            offCaption: "Background Animation Off",
-                //            RenderProps.Background),
-                //        new SettingsItem(
-                //            onCaption: "Debug Mode On",
-                //            offCaption: "Debug Mode Off",
-                //            RenderProps.Debug) },
-                //    fontSize: 42),
-                //    toggleFunc: (i, v) =>
-                //    {
-                //        switch (i)
-                //        {
-                //            case 0:
-                //                RenderProps.AntiAlias = v;
-                //                RenderProps.ResetSkia();
-                //                break;
-                //            case 1:
-                //                RenderProps.HighFrameRate = v;
-                //                break;
-                //            case 2:
-                //                RenderProps.Background = v;
-                //                break;
-                //            case 3:
-                //                RenderProps.Debug = v;
-                //                break;
-                //        }
-                //    });
 
                 //get player initials
                 if (String.IsNullOrWhiteSpace(_config.Initials))
@@ -332,52 +301,53 @@ namespace Bricker.Game
                         SettingsLoop(new SettingsProperties(
                         items: new SettingsItem[] {
                             new SettingsItem(
-                                onCaption: "Ghost On",
-                                offCaption: "Ghost Off",
-                                AudioProps.Music),
-                            new SettingsItem(
                                 onCaption: "Music On",
                                 offCaption: "Music Off",
-                                AudioProps.Music),
+                                _config.Music),
                             new SettingsItem(
                                 onCaption: "Sound Effects On",
                                 offCaption: "Sound Effects Off",
-                                AudioProps.SoundEffects),
+                                _config.SoundEffects),
                             new SettingsItem(
-                                onCaption: "High Frame Rate On",
-                                offCaption: "High Frame Rate Off",
-                                RenderProps.HighFrameRate),
+                                onCaption: "Ghost On",
+                                offCaption: "Ghost Off",
+                                _config.Music),
+                            new SettingsItem(
+                                onCaption: "Frame Rate High",
+                                offCaption: "Frame Rate Low",
+                                _config.HighFrameRate),
                             new SettingsItem(
                                 onCaption: "Background On",
                                 offCaption: "Background Off",
-                                RenderProps.Background),
+                                _config.Background),
                             new SettingsItem(
                                 onCaption: "Debug Mode On",
                                 offCaption: "Debug Mode Off",
-                                RenderProps.Debug) },
+                                _config.Debug) },
                         fontSize: 32),
                         toggleFunc: (i, v) =>
                         {
                             switch (i)
                             {
                                 case 0:
+                                    _config.Music = v;
+                                    Sounds.Reset();
                                     break;
                                 case 1:
-                                    AudioProps.Music = v;
+                                    _config.SoundEffects = v;
                                     Sounds.Reset();
                                     break;
                                 case 2:
-                                    AudioProps.SoundEffects = v;
-                                    Sounds.Reset();
+                                    _config.Ghost = v;
                                     break;
                                 case 3:
-                                    RenderProps.HighFrameRate = v;
+                                    _config.HighFrameRate = v;
                                     break;
                                 case 4:
-                                    RenderProps.Background = v;
+                                    _config.Background = v;
                                     break;
                                 case 5:
-                                    RenderProps.Debug = v;
+                                    _config.Debug = v;
                                     break;
                             }
                         });
@@ -527,14 +497,14 @@ namespace Bricker.Game
                     }
 
                     //level up
-                    else if ((key == Key.PageUp) && (RenderProps.Debug))
+                    else if ((key == Key.PageUp) && (_config.Debug))
                     {
                         Sounds.Play(Sound.LevelUp1);
                         _stats.SetLevel(_stats.Level + 1);
                     }
 
                     //level down
-                    else if ((key == Key.PageDown) && (RenderProps.Debug))
+                    else if ((key == Key.PageDown) && (_config.Debug))
                     {
                         Sounds.Play(Sound.LevelUp1);
                         _stats.SetLevel(_stats.Level - 1);
@@ -543,13 +513,13 @@ namespace Bricker.Game
                     //background
                     else if (key == Key.B)
                     {
-                        RenderProps.Background = !RenderProps.Background;
+                        _config.Background = !_config.Background;
                     }
 
                     //debug
                     else if (key == Key.D)
                     {
-                        RenderProps.Debug = !RenderProps.Debug;
+                        _config.Debug = !_config.Debug;
                     }
                 }
 
@@ -731,13 +701,13 @@ namespace Bricker.Game
                     //background
                     else if (key == Key.B)
                     {
-                        RenderProps.Background = !RenderProps.Background;
+                        _config.Background = !_config.Background;
                     }
 
                     //debug
                     else if (key == Key.D)
                     {
-                        RenderProps.Debug = !RenderProps.Debug;
+                        _config.Debug = !_config.Debug;
                     }
                 }
             }
@@ -813,13 +783,13 @@ namespace Bricker.Game
                     //background
                     else if (key == Key.B)
                     {
-                        RenderProps.Background = !RenderProps.Background;
+                        _config.Background = !_config.Background;
                     }
 
                     //debug
                     else if (key == Key.D)
                     {
-                        RenderProps.Debug = !RenderProps.Debug;
+                        _config.Debug = !_config.Debug;
                     }
                 }
             }
@@ -993,7 +963,7 @@ namespace Bricker.Game
 
                     //debug toggle
                     else if (key == Key.D)
-                        RenderProps.Debug = !RenderProps.Debug;
+                        _config.Debug = !_config.Debug;
                 }
             }
             finally
@@ -1299,7 +1269,7 @@ namespace Bricker.Game
         private byte[] GameStatusToBytes(Matrix matrix, GameStats stats)
         {
             //copy matrix, add live brick
-            Space[,] matrixGrid = matrix.GetGrid(includeBrick: true);
+            Space[,] matrixGrid = matrix.GetGrid(includeBrick: true, includeGhost: _config.Ghost);
             byte[,] matrixBytes = Matrix.SpacesToBytes(matrixGrid);
 
             //serialize data                
@@ -1584,6 +1554,8 @@ namespace Bricker.Game
                         linesToSend = 0;
                         break;
                 }
+                if (!_config.Ghost)
+                    points = (int)(points * 1.2);
 
                 //increment score
                 _stats.IncrementScore(points);
@@ -1798,6 +1770,9 @@ namespace Bricker.Game
 
         #region Testing & Misc
 
+        /// <summary>
+        /// Called on startup to test menus, etc.
+        /// </summary>
         private void RunTests()
         {
             //byte[,] matrix = new byte[10, 20];
@@ -1814,6 +1789,65 @@ namespace Bricker.Game
             //int k = MenuLoop(new MenuProperties(
             //    options: new string[] { "resume", "new game", "two player", "quit" },
             //    width: 400));
+
+            ////todo: remove!!
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties("This is a test.", MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties("This is a test with much more words and different buttons.", MessageButtons.CancelOK));
+            //MessageBoxLoop(new MessageProperties("Message with no buttons", MessageButtons.None));
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties(new string[] { "Message with one line", "and another line", "plus another third line" }, MessageButtons.OK));
+            //MessageBoxLoop(new MessageProperties(new TextLine[] { new TextLine("Message with text line one"), new TextLine("and also text line two") }, MessageButtons.NoYes));
+            //MessageBoxLoop(new MessageProperties(new TextLine[] {
+            //    new TextLine(
+            //        text:"Message with text line one plus bottom margin",
+            //        color: Colors.Coquelicot,
+            //        size: 32,
+            //        bottomMargin: 20),
+            //    new TextLine(
+            //        text:"Message with text line one plus top margin",
+            //        color: Colors.ForestGreen,
+            //        size: 18,
+            //        topMargin: 10,
+            //        alignment: Alignment.Right) }));
+            //SettingsLoop(new SettingsProperties(
+            //    items: new SettingsItem[] {
+            //        new SettingsItem(
+            //            onCaption: "Anti-Alias On",
+            //            offCaption: "Anti-Alias Off",
+            //            RenderProps.AntiAlias),
+            //        new SettingsItem(
+            //            onCaption: "High Frame Rate On",
+            //            offCaption: "High Frame Rate Off",
+            //            RenderProps.HighFrameRate),
+            //        new SettingsItem(
+            //            onCaption: "Background Animation On",
+            //            offCaption: "Background Animation Off",
+            //            RenderProps.Background),
+            //        new SettingsItem(
+            //            onCaption: "Debug Mode On",
+            //            offCaption: "Debug Mode Off",
+            //            RenderProps.Debug) },
+            //    fontSize: 42),
+            //    toggleFunc: (i, v) =>
+            //    {
+            //        switch (i)
+            //        {
+            //            case 0:
+            //                RenderProps.AntiAlias = v;
+            //                RenderProps.ResetSkia();
+            //                break;
+            //            case 1:
+            //                RenderProps.HighFrameRate = v;
+            //                break;
+            //            case 2:
+            //                RenderProps.Background = v;
+            //                break;
+            //            case 3:
+            //                RenderProps.Debug = v;
+            //                break;
+            //        }
+            //    });
         }
 
         #endregion

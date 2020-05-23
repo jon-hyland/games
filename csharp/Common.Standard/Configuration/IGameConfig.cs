@@ -9,17 +9,20 @@ namespace Common.Standard.Configuration
         Version GameVersion { get; }
         string DisplayVersion { get; }
         IPAddress LocalIP { get; }
+        IPAddress ServerIP { get; }
+        ushort ServerPort { get; }
+
         string ApplicationFolder { get; }
         string AudioSampleFolder { get; }
         string ConfigFile { get; }
         string FontFile { get; }
-        bool AntiAlias { get; }
-        bool HighFrameRate { get; }
-        bool Background { get; }
-        bool Debug { get; }
-        bool Music { get; }
-        bool SoundEffects { get; }
-        IPAddress ServerIP { get; }
-        ushort ServerPort { get; }
+
+        bool Music { get; set; }
+        bool SoundEffects { get; set; }
+        bool Ghost { get; set; }
+        bool Background { get; set; }
+        bool HighFrameRate { get; set; }
+        bool AntiAlias { get; set; }
+        bool Debug { get; set; }
     }
 }
