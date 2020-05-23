@@ -15,16 +15,18 @@ then
     apt-get install git
 fi
 
-git config --global credential.helper "cache --timeout=3600"
-mkdir -p /home/pi/git/
+sudo -u pi git config --global credential.helper "cache --timeout=3600"
+sudo -u pi git config --global user.name "John Hyland"
+sudo -u pi git config --global user.email "jonhyland@hotmail.com"
+sudo -u pi mkdir -p /home/pi/git/
 
 if [ ! -d "/home/pi/git/games" ]
 then
     echo "Cloning repository.."
-    git clone "https://github.com/jon-hyland/games.git" "/home/pi/git/games/"
+    sudo -u pi git clone "https://github.com/jon-hyland/games.git" "/home/pi/git/games/"
 else
     echo "Pulling repository.."
-    git -C "/home/pi/git/games" pull
+    sudo -u pi git -C "/home/pi/git/games" pull
 fi
 
 if systemctl list-units | grep -Fq 'gameserver.service'
@@ -37,8 +39,8 @@ echo "Building Game Server.."
 dotnet publish --output /usr/share/gameserver/ /home/pi/git/games/csharp/GameServer/GameServer.csproj
 
 echo "Creating symbolic links.."
-ln -sf /usr/share/gameserver /home/pi/gameserver
-ln -sf /usr/share/gameserver/LogFile.txt /home/pi/log_file.txt
+sudo -u pi ln -sf /usr/share/gameserver /home/pi/gameserver
+sudo -u pi ln -sf /usr/share/gameserver/LogFile.txt /home/pi/log_file.txt
 
 echo "Creating service file.."
 rm -f /etc/systemd/system/gameserver.service
