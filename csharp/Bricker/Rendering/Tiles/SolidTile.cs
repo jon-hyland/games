@@ -2,27 +2,27 @@
 using SkiaSharp;
 using System;
 
-namespace Bricker.Rendering
+namespace Bricker.Rendering.Tiles
 {
     /// <summary>
-    /// Represents an exploding matrix space, used on game over.
+    /// A solid color background tile.
     /// </summary>
-    public class BackgroundTile
+    public class SolidTile : ITile
     {
         //private
         private static readonly Random _random = new Random();
         private double _x;
         private double _y;
-        private readonly double _width;
-        private readonly double _height;
-        private readonly SKColor _color;
+        private double _width;
+        private double _height;
+        private SKColor _color;
         private double _xVelocity;
         private double _yVelocity;
         private DateTime _lastMove;
 
         //public
-        public double X { get { return _x; } set { _x = value; } }
-        public double Y { get { return _y; } set { _y = value; } }
+        public double X => _x;
+        public double Y => _y;
         public double Width => _width;
         public double Height => _height;
         public SKColor Color => _color;
@@ -30,12 +30,12 @@ namespace Bricker.Rendering
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public BackgroundTile()
+        public SolidTile()
         {
             _x = _random.NextDouble() * 1200;
             _y = _random.NextDouble() * 700;
-            _width = (_random.NextDouble() * 150) + 100;
-            _height = (_random.NextDouble() * 150) + 100;
+            _width = (_random.NextDouble() * 150) + 50;
+            _height = (_random.NextDouble() * 150) + 50;
             _color = Brick.SpaceToColor((Space)(_random.Next(7) + 1));
             _color = new SKColor(_color.Red, _color.Green, _color.Blue, 50);
             _xVelocity = (_random.NextDouble() * 75) + 5;
@@ -55,11 +55,27 @@ namespace Bricker.Rendering
             TimeSpan elapsed = now - _lastMove;
             _x += _xVelocity * (level * 0.75d) * elapsed.TotalSeconds;
             _y += _yVelocity * (level * 0.75d) * elapsed.TotalSeconds;
-            if ((_x < -100) || (_x > 1300))
+            if ((_x < -150) || (_x > 1350))
+            {
                 _xVelocity = -_xVelocity;
-            if ((_y < -100) || (_y > 800))
+                _width = (_random.NextDouble() * 150) + 50;
+                _height = (_random.NextDouble() * 150) + 50;
+                _color = Brick.SpaceToColor((Space)(_random.Next(7) + 1));
+                _color = new SKColor(_color.Red, _color.Green, _color.Blue, 50);
+            }
+            if ((_y < -150) || (_y > 850))
+            {
                 _yVelocity = -_yVelocity;
+                _width = (_random.NextDouble() * 150) + 50;
+                _height = (_random.NextDouble() * 150) + 50;
+                _color = Brick.SpaceToColor((Space)(_random.Next(7) + 1));
+                _color = new SKColor(_color.Red, _color.Green, _color.Blue, 50);
+            }
             _lastMove = now;
         }
+
+
+
+
     }
 }

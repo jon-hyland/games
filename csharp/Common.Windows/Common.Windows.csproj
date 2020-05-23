@@ -81,6 +81,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rendering\Colors.cs" />
+    <Compile Include="Rendering\Image.cs" />
     <Compile Include="Rendering\RenderProps.cs" />
     <Compile Include="Rendering\Surface.cs" />
   </ItemGroup>

@@ -106,8 +106,10 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
     <Compile Include="Logging\Logger.cs" />
-    <Compile Include="Rendering\BackgroundTile.cs" />
+    <Compile Include="Rendering\Tiles\ImageTile.cs" />
+    <Compile Include="Rendering\Tiles\SolidTile.cs" />
     <Compile Include="Rendering\ExplodingSpace.cs" />
+    <Compile Include="Rendering\Images.cs" />
     <Compile Include="Rendering\Properties\InitialsEntryProperties.cs" />
     <Compile Include="Rendering\Properties\LobbyProperties.cs" />
     <Compile Include="Rendering\Properties\MenuProperties.cs" />
@@ -115,6 +117,7 @@
     <Compile Include="Rendering\Properties\SettingsProperties.cs" />
     <Compile Include="Rendering\Renderer.cs" />
     <Compile Include="Rendering\TextLine.cs" />
+    <Compile Include="Rendering\Tiles\ITile.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -11,12 +11,15 @@ namespace Common.Windows.Rendering
         private static SKPaint _linePaint;
         private static SKPaint _rectPaint;
         private static SKPaint _textPaint;
+        private static double _displayScale;
+        private static bool _scaleSet;
 
         public static bool AntiAlias { get; set; }
         public static bool HighFrameRate { get; set; }
         public static bool Background { get; set; }
         public static bool Debug { get; set; }
-        public static double DisplayScale { get; set; }
+        public static double DisplayScale { get { return _displayScale; } set { _displayScale = value; _scaleSet = true; } }
+        public static bool ScaleSet => _scaleSet;
 
         public static SKTypeface Typeface
         {
@@ -119,7 +122,7 @@ namespace Common.Windows.Rendering
             HighFrameRate = config.HighFrameRate;
             Background = config.Background;
             Debug = config.Debug;
-            DisplayScale = 1d;
+            _displayScale = 1d;
         }
 
         public static void ResetSkia()

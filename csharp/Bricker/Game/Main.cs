@@ -426,7 +426,6 @@ namespace Bricker.Game
                 _stats = new GameStats(_config);
                 _matrix.NewGame();
                 _opponent?.Reset();
-                _musicPosition = 0;
                 _sessionEnded = false;
             }
 

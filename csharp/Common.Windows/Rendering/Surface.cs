@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using Common.Rendering;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 
@@ -220,6 +221,14 @@ namespace Common.Windows.Rendering
         public void Blit(Surface surface, double x, double y)
         {
             _canvas.DrawBitmap(surface._bitmap, (float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale));
+        }
+
+        /// <summary>
+        /// Blits an image onto a surface.
+        /// </summary>
+        public void Blit(Image image, double x, double y)
+        {
+            _canvas.DrawImage(image.Bitmap, (float)(x * RenderProps.DisplayScale), (float)(y * RenderProps.DisplayScale));
         }
 
         /// <summary>

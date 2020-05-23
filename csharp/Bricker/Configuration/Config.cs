@@ -19,6 +19,7 @@ namespace Bricker.Configuration
         public IPAddress LocalIP { get; }
         public string ApplicationFolder { get; }
         public string AudioSampleFolder { get; }
+        public string ImageFolder { get; }
         public string ConfigFile { get; }
         public string LogFile { get; }
         public string FontFile { get; }
@@ -43,6 +44,7 @@ namespace Bricker.Configuration
             LocalIP = InterfaceDiscovery.GetLocalIP();
             ApplicationFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             AudioSampleFolder = Path.Combine(ApplicationFolder, "Samples");
+            ImageFolder = Path.Combine(ApplicationFolder, "Images");
             ConfigFile = Path.Combine(ApplicationFolder, "Config.json");
             LogFile = Path.Combine(ApplicationFolder, "LogFile.txt");
             FontFile = Path.Combine(ApplicationFolder, "Zorque.ttf");
@@ -57,6 +59,9 @@ namespace Bricker.Configuration
             Debug = data.debug == 1;
             Music = data.audio.music == 1;
             SoundEffects = data.audio.effects == 1;
+            ImageFolder = data.imageFolder != null ? (string)data.imageFolder : ImageFolder;
+            if (ImageFolder.StartsWith("./"))
+                ImageFolder = Path.Combine(ApplicationFolder, ImageFolder.Substring(2));
             try
             {
                 ServerIP = IPAddress.Parse((string)data.multiplayer.server);

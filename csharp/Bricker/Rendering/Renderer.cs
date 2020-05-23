@@ -1,6 +1,7 @@
 ﻿using Bricker.Configuration;
 using Bricker.Game;
 using Bricker.Rendering.Properties;
+using Bricker.Rendering.Tiles;
 using Common.Standard.Error;
 using Common.Standard.Game;
 using Common.Standard.Networking;
@@ -33,7 +34,8 @@ namespace Bricker.Rendering
         private MessageProperties _messageProps;
         private LobbyProperties _lobbyProps;
         private readonly CpsCalculator _fps;
-        private readonly List<BackgroundTile> _tiles;
+        private readonly Images _images;
+        private readonly List<ITile> _tiles;
         private double _frame_XCenter;
         private double _frame_YCenter;
         private double _player_XCenter;
@@ -61,7 +63,7 @@ namespace Bricker.Rendering
         private double _score_YCenter;
         private double _highScores_XCenter;
         private double _highScores_YCenter;
-        private readonly bool _fakeOpponent = true;
+        private readonly bool _fakeOpponent = false;
         private bool _menuUp => _menuProps != null || _initialProps != null || _messageProps != null || _lobbyProps != null;
         private SKColor _primaryWhite => !_menuUp ? Colors.White : Colors.DimWhite;
 
@@ -89,7 +91,13 @@ namespace Bricker.Rendering
             _initialProps = null;
             _messageProps = null;
             _fps = new CpsCalculator(1);
-            _tiles = new List<BackgroundTile>();
+            _images = new Images(config);
+            _tiles = new List<ITile>();
+            for (int i = 0; i < 50; i++)
+                _tiles.Add(new SolidTile());
+            if (_images.FileCount > 0)
+                for (int i = 0; i < 3; i++)
+                    _tiles.Add(new ImageTile(_images));
         }
 
         /// <summary>
@@ -973,16 +981,14 @@ namespace Bricker.Rendering
             if (!RenderProps.Background)
                 return;
 
-            if (_tiles.Count == 0)
-                for (int i = 0; i < 50; i++)
-                    _tiles.Add(new BackgroundTile());
-
             DateTime now = DateTime.Now;
-            foreach (BackgroundTile tile in _tiles)
+            foreach (ITile tile in _tiles)
             {
                 tile.Move(now, stats.Level);
                 using (Surface surface = new Surface(tile.Width, tile.Height, tile.Color))
                 {
+                    if ((tile is ImageTile t) && (t.Image != null))
+                        surface.Blit(t.Image, 0, 0);
                     frame.Blit(surface, tile.X - (tile.Width / 2d), tile.Y - (tile.Height / 2d));
                 }
             }
@@ -1003,7 +1009,6 @@ namespace Bricker.Rendering
                 SKColor color = space.Color;
                 SKColor lighter = Colors.GetLighter(color);
                 SKColor darker = Colors.GetDarker(color);
-
 
                 frame.DrawRect(space.Color, leftX, topY, 32, 32);
                 frame.DrawLine(lighter, leftX + 0, topY + 0, leftX + 32 - 0, topY + 0, 1);
