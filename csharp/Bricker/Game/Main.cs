@@ -332,6 +332,10 @@ namespace Bricker.Game
                         SettingsLoop(new SettingsProperties(
                         items: new SettingsItem[] {
                             new SettingsItem(
+                                onCaption: "Ghost On",
+                                offCaption: "Ghost Off",
+                                AudioProps.Music),
+                            new SettingsItem(
                                 onCaption: "Music On",
                                 offCaption: "Music Off",
                                 AudioProps.Music),
@@ -344,33 +348,35 @@ namespace Bricker.Game
                                 offCaption: "High Frame Rate Off",
                                 RenderProps.HighFrameRate),
                             new SettingsItem(
-                                onCaption: "Background Animation On",
-                                offCaption: "Background Animation Off",
+                                onCaption: "Background On",
+                                offCaption: "Background Off",
                                 RenderProps.Background),
                             new SettingsItem(
                                 onCaption: "Debug Mode On",
                                 offCaption: "Debug Mode Off",
                                 RenderProps.Debug) },
-                        fontSize: 42),
+                        fontSize: 32),
                         toggleFunc: (i, v) =>
                         {
                             switch (i)
                             {
                                 case 0:
+                                    break;
+                                case 1:
                                     AudioProps.Music = v;
                                     Sounds.Reset();
                                     break;
-                                case 1:
+                                case 2:
                                     AudioProps.SoundEffects = v;
                                     Sounds.Reset();
                                     break;
-                                case 2:
+                                case 3:
                                     RenderProps.HighFrameRate = v;
                                     break;
-                                case 3:
+                                case 4:
                                     RenderProps.Background = v;
                                     break;
-                                case 4:
+                                case 5:
                                     RenderProps.Debug = v;
                                     break;
                             }
