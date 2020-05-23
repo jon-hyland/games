@@ -173,7 +173,7 @@ namespace Bricker.Game
             {
                 //show message
                 _renderer.MessageProps = new MessageProperties(
-                    line: new TextLine("loading..", 48, Colors.White),
+                    line: new TextLine(text: "loading...", size: 52, color: Colors.White, alignment: Alignment.Center),
                     buttons: MessageButtons.None);
 
                 //load stuff

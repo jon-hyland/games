@@ -504,6 +504,7 @@ namespace Bricker.Rendering
                 return;
 
             double titleHeight = 86;
+            double charWidth = 42;
             double space = -28;
             double copyrightHeight = 16;
             double width = 280;
@@ -511,6 +512,48 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
+                ////using Surface b = new S
+                
+                //using (Surface title = new Surface(charWidth * 7, titleHeight))
+                //{
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "b", 52, 0);
+                //        title.Blit(b, 42 * 0, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "r", 52, 0);
+                //        title.Blit(b, 42 * 1, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "i", 52, 0);
+                //        title.Blit(b, 42 * 2, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "c", 52, 0);
+                //        title.Blit(b, 42 * 3, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "k", 52, 0);
+                //        title.Blit(b, 42 * 4, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "e", 52, 0);
+                //        title.Blit(b, 42 * 5, 0);
+                //    }
+                //    using (Surface b = new Surface(charWidth, titleHeight))
+                //    {
+                //        b.DrawText_Centered(Colors.White, "r", 52, 0);
+                //        title.Blit(b, 42 * 6, 0);
+                //    }
+                //    surface.Blit(title, 26, 0);
+                //}
+
                 surface.DrawText_Centered(Colors.FluorescentOrange, "bricker", 52, 0);
                 surface.DrawText_Centered(_primaryWhite, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
