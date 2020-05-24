@@ -1,0 +1,13 @@
+=============
+ GAME SERVER
+=============
+
+- GameServer is a .NET Core 3.1 console application and generally configured to
+  run as a Linux service.  It was designed for the Raspberry Pi 2 and above, 
+  but has been tested on Windows and should run on most any OS.
+- GameServer provides multi-player support for the Bricker game, and any future
+  game written using this framework.
+- GameServer listens for TCP connections on port 8780.
+- For external access, configure internet router to forward incoming TCP port
+  8780 to the GameServer's IP.
+- Games are configured (by default) to connect to host 'hyland.one'.
