@@ -10,14 +10,17 @@ fi
 # break on error
 set -e
 
+# vars
+HOME="/home/pi"
+
 # clone (or pull) 'games' repo
-if [ ! -d "/home/pi/git/games" ]
+if [ ! -d "$HOME/git/games" ]
 then
     echo "Cloning 'games' repository.."
-    sudo -u pi git clone "https://github.com/jon-hyland/games.git" "/home/pi/git/games/"
+    sudo -u pi git clone "https://github.com/jon-hyland/games.git" "$HOME/git/games/"
 else
     echo "Pulling 'games' repository.."
-    sudo -u pi git -C "/home/pi/git/games" pull
+    sudo -u pi git -C "$HOME/git/games" pull
 fi
 
 # stop 'gameserver' service
@@ -29,12 +32,21 @@ fi
 
 # build and publish 'gameserver' project
 echo "Building and publishing Game Server.."
-dotnet publish --output /usr/share/gameserver/ /home/pi/git/games/csharp/GameServer/GameServer.csproj
+dotnet publish --output /usr/share/gameserver/ $HOME/git/games/csharp/GameServer/GameServer.csproj
+
+# copy control scripts
+echo "Copying control scripts.."
+rm -f $HOME/publish_gameserver.sh
+sudo -u pi git $HOME/git/games/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
+rm -f $HOME/restart_gameserver.sh
+sudo -u pi git $HOME/git/games/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
 
 # create symbolic links
 echo "Creating symbolic links.."
-sudo -u pi ln -sf /usr/share/gameserver /home/pi/gameserver
-sudo -u pi ln -sf /usr/share/gameserver/LogFile.txt /home/pi/log_file.txt
+rm -f $HOME/gameserver
+sudo -u pi ln -sf /usr/share/gameserver $HOME/gameserver
+rm -f $HOME/log_file.txt
+sudo -u pi ln -sf /usr/share/gameserver/LogFile.txt $HOME/log_file.txt
 
 # create service file
 echo "Creating service file.."
