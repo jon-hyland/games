@@ -287,7 +287,7 @@ namespace Bricker.Game
                             new SettingsItem(
                                 onCaption: "Ghost On",
                                 offCaption: "Ghost Off",
-                                _config.Music),
+                                _config.Ghost),
                             new SettingsItem(
                                 onCaption: "Frame Rate High",
                                 offCaption: "Frame Rate Low",
