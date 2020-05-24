@@ -127,7 +127,8 @@ namespace Bricker.Game
         {
             lock (_keyQueue)
             {
-                _keyQueue.Enqueue(key);
+                if (_keyQueue.Count < 3)
+                    _keyQueue.Enqueue(key);
             }
         }
 
@@ -197,7 +198,7 @@ namespace Bricker.Game
                 _gameState = GameState.NotPlaying;
 
                 //late load resources
-                LateLoad();              
+                LateLoad();
 
                 //play loop
                 Sounds.Loop(Sound.Music2);

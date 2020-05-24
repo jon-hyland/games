@@ -125,7 +125,17 @@ namespace Common.Windows.Rendering
             float y = (float)((size + (size * 0.05)) * RenderProps.DisplayScale);
 
             Surface surface = new Surface(width, height);
-            surface._canvas.Clear(!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack2);
+            //surface._canvas.Clear(!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack2);
+
+            //double offset = size > 18 ? size / 12d : 0;
+            //if (offset > 0)
+            //{
+            //    using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+            //    {
+            //        Blit(surface, (_width - surface.Width) / 2 - (offset * 1.2), y + (offset * 0.8));
+            //    }
+            //}
+
             surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
             return surface;
         }

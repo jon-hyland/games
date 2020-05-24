@@ -512,49 +512,35 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                ////using Surface b = new S
-                
-                //using (Surface title = new Surface(charWidth * 7, titleHeight))
-                //{
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "b", 52, 0);
-                //        title.Blit(b, 42 * 0, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "r", 52, 0);
-                //        title.Blit(b, 42 * 1, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "i", 52, 0);
-                //        title.Blit(b, 42 * 2, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "c", 52, 0);
-                //        title.Blit(b, 42 * 3, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "k", 52, 0);
-                //        title.Blit(b, 42 * 4, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "e", 52, 0);
-                //        title.Blit(b, 42 * 5, 0);
-                //    }
-                //    using (Surface b = new Surface(charWidth, titleHeight))
-                //    {
-                //        b.DrawText_Centered(Colors.White, "r", 52, 0);
-                //        title.Blit(b, 42 * 6, 0);
-                //    }
-                //    surface.Blit(title, 26, 0);
-                //}
+                Surface b = null, r = null, i = null, c = null, k = null, e = null;
+                try
+                {
+                    b = Surface.RenderText(Colors.White, "b", 54);
+                    r = Surface.RenderText(Colors.White, "r", 54);
+                    i = Surface.RenderText(Colors.White, "i", 54);
+                    c = Surface.RenderText(Colors.White, "c", 54);
+                    k = Surface.RenderText(Colors.White, "k", 54);
+                    e = Surface.RenderText(Colors.White, "e", 54);
+                    double titleWidth = b.Width + r.Width + i.Width + c.Width + k.Width + e.Width + r.Width;
+                    using (Surface title = new Surface(titleWidth, titleHeight))
+                    {
+                        double x = 0;
+                        title.Blit(b, x, 0); x += b.Width;
+                        title.Blit(r, x, 0); x += r.Width;
+                        title.Blit(i, x, 0); x += i.Width;
+                        title.Blit(c, x, 0); x += c.Width;
+                        title.Blit(k, x, 0); x += k.Width;
+                        title.Blit(e, x, 0); x += e.Width;
+                        title.Blit(r, x, 0); x += r.Width;
+                        surface.Blit(title, 26, 0);
+                    }
+                }
+                finally
+                {
+                    b?.Dispose(); r?.Dispose(); i?.Dispose(); c?.Dispose(); k?.Dispose(); e?.Dispose();
+                }
 
-                surface.DrawText_Centered(Colors.FluorescentOrange, "bricker", 52, 0);
+                //surface.DrawText_Centered(Colors.FluorescentOrange, "bricker", 52, 0);
                 surface.DrawText_Centered(_primaryWhite, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
