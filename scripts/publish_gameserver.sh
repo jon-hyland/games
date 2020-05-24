@@ -45,11 +45,13 @@ echo "Granting execution on scripts.."
 sudo -u $USER chmod +x $HOME/scripts/*.sh
 
 # copy control scripts
-echo "Copying control scripts.."
+echo "Copying home resources.."
 rm -f $HOME/publish_gameserver.sh
 sudo -u $USER cp $HOME/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
 rm -f $HOME/restart_gameserver.sh
 sudo -u $USER cp $HOME/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
+rm -f $HOME/GAMESERVER_README
+sudo -u $USER cp $HOME/scripts/GAMESERVER_README $HOME/GAMESERVER_README
 
 # create symbolic links
 echo "Creating symbolic links.."
