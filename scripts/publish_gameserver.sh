@@ -37,9 +37,9 @@ dotnet publish --output /usr/share/gameserver/ $HOME/git/games/csharp/GameServer
 # copy control scripts
 echo "Copying control scripts.."
 rm -f $HOME/publish_gameserver.sh
-sudo -u pi git $HOME/git/games/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
+sudo -u pi cp $HOME/git/games/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
 rm -f $HOME/restart_gameserver.sh
-sudo -u pi git $HOME/git/games/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
+sudo -u pi cp $HOME/git/games/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
 
 # create symbolic links
 echo "Creating symbolic links.."
