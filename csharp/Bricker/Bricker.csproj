@@ -155,6 +155,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <Resource Include="Colors.png" />
     <Content Include="Config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

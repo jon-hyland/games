@@ -504,7 +504,6 @@ namespace Bricker.Rendering
                 return;
 
             double titleHeight = 86;
-            double charWidth = 42;
             double space = -28;
             double copyrightHeight = 16;
             double width = 280;
@@ -512,15 +511,17 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                Surface b = null, r = null, i = null, c = null, k = null, e = null;
+                Surface b = null, r = null, i = null, c = null, k = null, e = null, rx = null;
                 try
                 {
-                    b = Surface.RenderText(Colors.White, "b", 54);
-                    r = Surface.RenderText(Colors.White, "r", 54);
-                    i = Surface.RenderText(Colors.White, "i", 54);
-                    c = Surface.RenderText(Colors.White, "c", 54);
-                    k = Surface.RenderText(Colors.White, "k", 54);
-                    e = Surface.RenderText(Colors.White, "e", 54);
+                    b = Surface.RenderText(Colors.GetDarker(Colors.TuftsBlue), "b", 54);
+                    r = Surface.RenderText(Colors.ForestGreen, "r", 54);
+                    i = Surface.RenderText(Colors.ChromeYellow, "i", 54);
+                    c = Surface.RenderText(Colors.Coquelicot, "c", 54);
+                    k = Surface.RenderText(Colors.PortlandOrange, "k", 54);
+                    e = Surface.RenderText(Colors.Independence, "e", 54);
+                    rx = Surface.RenderText(Colors.GetMuchDarker(Colors.SilverPink), "r", 54);
+
                     double titleWidth = b.Width + r.Width + i.Width + c.Width + k.Width + e.Width + r.Width;
                     using (Surface title = new Surface(titleWidth, titleHeight))
                     {
@@ -531,17 +532,17 @@ namespace Bricker.Rendering
                         title.Blit(c, x, 0); x += c.Width;
                         title.Blit(k, x, 0); x += k.Width;
                         title.Blit(e, x, 0); x += e.Width;
-                        title.Blit(r, x, 0); x += r.Width;
-                        surface.Blit(title, 26, 0);
+                        title.Blit(rx, x, 0); x += rx.Width;
+                        surface.Blit(title, 18, 0);
                     }
                 }
                 finally
                 {
-                    b?.Dispose(); r?.Dispose(); i?.Dispose(); c?.Dispose(); k?.Dispose(); e?.Dispose();
+                    b?.Dispose(); r?.Dispose(); i?.Dispose(); c?.Dispose(); k?.Dispose(); e?.Dispose(); rx?.Dispose();
                 }
-
-                //surface.DrawText_Centered(Colors.FluorescentOrange, "bricker", 52, 0);
-                surface.DrawText_Centered(_primaryWhite, $"v{_config.DisplayVersion}  © 2017-2020  john hyland", 10, titleHeight + space);
+                surface.DrawText_Left(Colors.White, $"v{_config.DisplayVersion}", 10, titleHeight + space, 30);
+                surface.DrawText_Centered(Colors.DimWhite, $"© 2017-2020", 10, titleHeight + space);
+                surface.DrawText_Right(Colors.DimWhite, $"john hyland", 10, titleHeight + space, 30);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
         }

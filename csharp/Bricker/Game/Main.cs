@@ -81,10 +81,11 @@ namespace Bricker.Game
             _window.Title = $"Bricker v{_config.DisplayVersion}";
 
             //initialize
-            GameConfig.Initialize(_config);
-            RenderProps.Initialize(_config);
             Log.Initiallize(_logger);
             ErrorHandler.Initialize(_logger);
+            GameConfig.Initialize(_config);
+            RenderProps.Initialize(_config);
+            Sounds.Initialize(_config);
 
             //events
             _communications.OpponentInviteReceived += (o) =>
@@ -165,29 +166,6 @@ namespace Bricker.Game
         #region Program Loop
 
         /// <summary>
-        /// Late loads certain resources.
-        /// </summary>
-        private void LateLoad()
-        {
-            //load resources
-            try
-            {
-                //show message
-                _renderer.MessageProps = new MessageProperties(
-                    line: new TextLine(text: "loading...", size: 52, color: Colors.White, alignment: Alignment.Center),
-                    buttons: MessageButtons.None);
-
-                //load stuff
-                Sounds.Initialize(_config);
-            }
-            finally
-            {
-                //clear message
-                _renderer.MessageProps = null;
-            }
-        }
-
-        /// <summary>
         /// Runs main game logic.
         /// </summary>
         private void ProgramLoop()
@@ -196,9 +174,6 @@ namespace Bricker.Game
             {
                 //set flag
                 _gameState = GameState.NotPlaying;
-
-                //late load resources
-                LateLoad();
 
                 //play loop
                 Sounds.Loop(Sound.Music2);
