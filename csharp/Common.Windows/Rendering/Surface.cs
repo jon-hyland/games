@@ -124,20 +124,26 @@ namespace Common.Windows.Rendering
             float x = (float)(2 * RenderProps.DisplayScale);
             float y = (float)((size + (size * 0.05)) * RenderProps.DisplayScale);
 
-            Surface surface = new Surface(width, height);
-            //surface._canvas.Clear(!GameConfig.Instance.Debug ? Colors.Transparent : Colors.DebugBlack2);
+            if (size > 18)
+            {
+                float xoffset = (float)(size / 12f) * 1.2f;
 
-            //double offset = size > 18 ? size / 12d : 0;
-            //if (offset > 0)
-            //{
-            //    using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
-            //    {
-            //        Blit(surface, (_width - surface.Width) / 2 - (offset * 1.2), y + (offset * 0.8));
-            //    }
-            //}
+                float yoffset = (float)(size / 12f) * 0.8f;
+                SKColor darkerColor = Colors.GetSlightlyDarker(color);
 
-            surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
-            return surface;
+                Surface surface = new Surface(width, height);
+                RenderProps.TextPaint.Color = darkerColor;
+                surface._canvas.DrawText(text, x - xoffset, y + yoffset, RenderProps.TextPaint);
+                RenderProps.TextPaint.Color = color;
+                surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
+                return surface;
+            }
+            else
+            {
+                Surface surface = new Surface(width, height);
+                surface._canvas.DrawText(text, x, y, RenderProps.TextPaint);
+                return surface;
+            }
         }
 
         /// <summary>
@@ -172,19 +178,19 @@ namespace Common.Windows.Rendering
         /// <summary>
         /// Draws text on this surface, horizontally (x) centered, at specified y.
         /// </summary>
-        public void DrawText_Centered(SKColor color, string text, double size, double y)
+        public void DrawText_Centered(SKColor color, string text, double size, double y, double xOffset = 0)
         {
-            double offset = size > 18 ? size / 12d : 0;
-            if (offset > 0)
-            {
-                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
-                {
-                    Blit(surface, (_width - surface.Width) / 2 - (offset * 1.2), y + (offset * 0.8));
-                }
-            }
+            //double offset = size > 18 ? size / 12d : 0;
+            //if (offset > 0)
+            //{
+            //    using (Surface surface = RenderText(Colors.GetSlightlyDarker(color), text, size))
+            //    {
+            //        Blit(surface, (_width - surface.Width) / 2 - (offset * 1.2) + xOffset, y + (offset * 0.8));
+            //    }
+            //}
             using (Surface surface = RenderText(color, text, size))
             {
-                Blit(surface, (_width - surface.Width) / 2, y);
+                Blit(surface, (_width - surface.Width) / 2 + xOffset, y);
             }
         }
 
@@ -193,14 +199,14 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawText_Left(SKColor color, string text, double size, double y, double xSpacing = 0)
         {
-            double offset = size > 18 ? size / 12d : 0;
-            if (offset > 0)
-            {
-                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
-                {
-                    Blit(surface, xSpacing - (offset * 1.2), y + (offset * 0.8));
-                }
-            }
+            //double offset = size > 18 ? size / 12d : 0;
+            //if (offset > 0)
+            //{
+            //    using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+            //    {
+            //        Blit(surface, xSpacing - (offset * 1.2), y + (offset * 0.8));
+            //    }
+            //}
             using (Surface surface = RenderText(color, text, size))
             {
                 Blit(surface, xSpacing, y);
@@ -212,14 +218,14 @@ namespace Common.Windows.Rendering
         /// </summary>
         public void DrawText_Right(SKColor color, string text, double size, double y, double xSpacing = 0)
         {
-            double offset = size > 18 ? size / 12d : 0;
-            if (offset > 0)
-            {
-                using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
-                {
-                    Blit(surface, (_width - surface.Width) - xSpacing - (offset * 1.2), y + (offset * 0.8));
-                }
-            }
+            //double offset = size > 18 ? size / 12d : 0;
+            //if (offset > 0)
+            //{
+            //    using (Surface surface = RenderText(Colors.GetMuchDarker(color), text, size))
+            //    {
+            //        Blit(surface, (_width - surface.Width) - xSpacing - (offset * 1.2), y + (offset * 0.8));
+            //    }
+            //}
             using (Surface surface = RenderText(color, text, size))
             {
                 Blit(surface, (_width - surface.Width) - xSpacing, y);

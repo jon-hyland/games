@@ -12,6 +12,7 @@ namespace Common.Windows.Rendering
         private static readonly object _lock = new object();
         private static readonly Dictionary<SKColor, SKColor> _lighter = new Dictionary<SKColor, SKColor>();
         private static readonly Dictionary<SKColor, SKColor> _darker = new Dictionary<SKColor, SKColor>();
+        private static readonly Dictionary<SKColor, SKColor> _slightlyDarker = new Dictionary<SKColor, SKColor>();
         private static readonly Dictionary<SKColor, SKColor> _muchDarker = new Dictionary<SKColor, SKColor>();
 
         private static readonly SKColor _transparent;
@@ -106,6 +107,16 @@ namespace Common.Windows.Rendering
                 if (!_darker.ContainsKey(color))
                     _darker.Add(color, new SKColor(Multiply(color.Red, 0.8), Multiply(color.Green, 0.8), Multiply(color.Blue, 0.8)));
                 return _darker[color];
+            }
+        }
+
+        public static SKColor GetSlightlyDarker(SKColor color)
+        {
+            lock (_lock)
+            {
+                if (!_slightlyDarker.ContainsKey(color))
+                    _slightlyDarker.Add(color, new SKColor(Multiply(color.Red, 0.4), Multiply(color.Green, 0.4), Multiply(color.Blue, 0.4)));
+                return _slightlyDarker[color];
             }
         }
 

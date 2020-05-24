@@ -540,9 +540,8 @@ namespace Bricker.Rendering
                 {
                     b?.Dispose(); r?.Dispose(); i?.Dispose(); c?.Dispose(); k?.Dispose(); e?.Dispose(); rx?.Dispose();
                 }
-                surface.DrawText_Left(Colors.White, $"v{_config.DisplayVersion}", 10, titleHeight + space, 30);
-                surface.DrawText_Centered(Colors.DimWhite, $"© 2017-2020", 10, titleHeight + space);
-                surface.DrawText_Right(Colors.DimWhite, $"john hyland", 10, titleHeight + space, 30);
+                surface.DrawText_Left(Colors.White, $"v{_config.DisplayVersion}", 14, titleHeight + space, 30);
+                surface.DrawText_Right(Colors.DimWhite, $"john hyland  2017-2020", 10, titleHeight + space + 4, 30);
                 frame.Blit(surface, _title_XCenter - (width / 2), _title_YCenter - (height / 2));
             }
         }
