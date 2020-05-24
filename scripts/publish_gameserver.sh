@@ -12,15 +12,16 @@ set -e
 
 # vars
 HOME="/home/pi"
+USER="pi"
 
 # clone (or pull) 'games' repo
 if [ ! -d "$HOME/git/games" ]
 then
     echo "Cloning 'games' repository.."
-    sudo -u pi git clone "https://github.com/jon-hyland/games.git" "$HOME/git/games/"
+    sudo -u $USER git clone "https://github.com/jon-hyland/games.git" "$HOME/git/games/"
 else
     echo "Pulling 'games' repository.."
-    sudo -u pi git -C "$HOME/git/games" pull
+    sudo -u $USER git -C "$HOME/git/games" pull
 fi
 
 # stop 'gameserver' service
@@ -34,19 +35,28 @@ fi
 echo "Building and publishing Game Server.."
 dotnet publish --output /usr/share/gameserver/ $HOME/git/games/csharp/GameServer/GameServer.csproj
 
+# copy scripts
+echo "Copying scripts.."
+sudo -u $USER mkdir -p $HOME/scripts/
+sudo -u $USER cp $HOME/git/games/scripts/*.sh $HOME/scripts/
+
+# grant execution on scripts
+echo "Granting execution on scripts.."
+sudo -u $USER chmod +x $HOME/scripts/*.sh
+
 # copy control scripts
 echo "Copying control scripts.."
 rm -f $HOME/publish_gameserver.sh
-sudo -u pi cp $HOME/git/games/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
+sudo -u $USER cp $HOME/scripts/publish_gameserver.sh $HOME/publish_gameserver.sh
 rm -f $HOME/restart_gameserver.sh
-sudo -u pi cp $HOME/git/games/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
+sudo -u $USER cp $HOME/scripts/restart_gameserver.sh $HOME/restart_gameserver.sh
 
 # create symbolic links
 echo "Creating symbolic links.."
 rm -f $HOME/gameserver
-sudo -u pi ln -sf /usr/share/gameserver $HOME/gameserver
+sudo -u $USER ln -sf /usr/share/gameserver $HOME/gameserver
 rm -f $HOME/log_file.txt
-sudo -u pi ln -sf /usr/share/gameserver/LogFile.txt $HOME/log_file.txt
+sudo -u $USER ln -sf /usr/share/gameserver/LogFile.txt $HOME/log_file.txt
 
 # create service file
 echo "Creating service file.."
