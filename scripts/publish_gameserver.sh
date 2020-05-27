@@ -38,7 +38,7 @@ dotnet publish --output /usr/share/gameserver/ $HOME/git/games/csharp/GameServer
 # copy scripts
 echo "Copying scripts.."
 sudo -u $USER mkdir -p $HOME/scripts/
-sudo -u $USER cp $HOME/git/games/scripts/*.sh $HOME/scripts/
+sudo -u $USER cp $HOME/git/games/scripts/* $HOME/scripts/
 
 # grant execution on scripts
 echo "Granting execution on scripts.."
