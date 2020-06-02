@@ -47,15 +47,18 @@ namespace Bricker.Game
         /// </summary>
         public void Reset()
         {
-            for (int x = 0; x < 12; x++)
-                for (int y = 0; y < 22; y++)
-                    _matrix[x, y] = Space.Empty;
-            _level = 1;
-            _lines = 0;
-            _score = 0;
-            _linesSent = 0;
-            _lastLinesSent = 0;
-            _gameOver = false;
+            lock (this)
+            {
+                for (int x = 0; x < 12; x++)
+                    for (int y = 0; y < 22; y++)
+                        _matrix[x, y] = Space.Empty;
+                _level = 1;
+                _lines = 0;
+                _score = 0;
+                _linesSent = 0;
+                _lastLinesSent = 0;
+                _gameOver = false;
+            }
         }
 
         /// <summary>
@@ -76,7 +79,10 @@ namespace Bricker.Game
         /// </summary>
         public void SetGameOver()
         {
-            _gameOver = true;
+            lock (this)
+            {
+                _gameOver = true;
+            }
         }
 
         /// <summary>
@@ -84,7 +90,10 @@ namespace Bricker.Game
         /// </summary>
         public void SetLastLinesSent(int value)
         {
-            _lastLinesSent = value;
+            lock (this)
+            {
+                _lastLinesSent = value;
+            }
         }
 
         /// <summary>
