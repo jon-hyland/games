@@ -181,6 +181,8 @@ namespace Bricker.Game
                     return Colors.GetMuchDarker(Colors.Byzantine);
                 case Space.Z_Red_Ghost:
                     return Colors.GetMuchDarker(Colors.Coquelicot);
+                case Space.Sent:
+                    return Colors.Gray;
                 default:
                     return Colors.Transparent;
             }
