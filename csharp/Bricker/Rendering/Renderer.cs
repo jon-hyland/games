@@ -233,7 +233,7 @@ namespace Bricker.Rendering
                 DrawLobbyMenu(frame);
 
                 //debug info
-                DrawDebugInfo(frame, communications, gameState);
+                DrawDebugInfo(frame, communications, gameState, stats, opponent);
             }
             catch (Exception ex)
             {
@@ -981,7 +981,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws fps readout.
         /// </summary>
-        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState)
+        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState, GameStats stats, Opponent opponent)
         {
             if (!GameConfig.Instance.Debug)
                 return;
@@ -998,6 +998,9 @@ namespace Bricker.Rendering
                 lines.Add($"com_state:   {communications.ConnectionState}");
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
+            lines.Add($"lines_sent:    {stats.LinesSent}");
+            lines.Add($"opp_last_lines_sent:    {opponent.LastLinesSent}");
+            lines.Add($"opp_lines_sent:    {opponent.LinesSent}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
                 frame.Blit(surface, 35, 25);
