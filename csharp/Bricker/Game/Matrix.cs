@@ -36,17 +36,11 @@ namespace Bricker.Game
         {
             get
             {
-                lock (this)
-                {
-                    return _grid[x, y];
-                }
+                return _grid[x, y];
             }
             set
             {
-                lock (this)
-                {
-                    _grid[x, y] = value;
-                }
+                _grid[x, y] = value;
             }
         }
 
@@ -55,30 +49,27 @@ namespace Bricker.Game
         /// </summary>
         public Space[,] GetGrid(bool includeBrick, bool includeGhost)
         {
-            lock (this)
+            Space[,] grid = (Space[,])_grid.Clone();
+            if ((includeBrick) && (_brick != null))
             {
-                Space[,] grid = (Space[,])_grid.Clone();
-                if ((includeBrick) && (_brick != null))
+                for (int x = 0; x < _brick.Width; x++)
                 {
-                    for (int x = 0; x < _brick.Width; x++)
+                    for (int y = 0; y < _brick.Height; y++)
                     {
-                        for (int y = 0; y < _brick.Height; y++)
+                        if (_brick.Grid[x, y].IsSolid())
                         {
-                            if (_brick.Grid[x, y].IsSolid())
-                            {
-                                int gx = x + _brick.X;
-                                int gy = y + _brick.Y;
-                                int gyg = y + _brick.YGhost;
-                                if ((includeGhost) && (gx >= 0) && (gx <= 11) && (gyg >= 0) && (gyg <= 21))
-                                    grid[gx, gyg] = (Space)((byte)_brick.Grid[x, y] + 7);
-                                if ((gx >= 0) && (gx <= 11) && (gy >= 0) && (gy <= 21))
-                                    grid[gx, gy] = _brick.Grid[x, y];
-                            }
+                            int gx = x + _brick.X;
+                            int gy = y + _brick.Y;
+                            int gyg = y + _brick.YGhost;
+                            if ((includeGhost) && (gx >= 0) && (gx <= 11) && (gyg >= 0) && (gyg <= 21))
+                                grid[gx, gyg] = (Space)((byte)_brick.Grid[x, y] + 7);
+                            if ((gx >= 0) && (gx <= 11) && (gy >= 0) && (gy <= 21))
+                                grid[gx, gy] = _brick.Grid[x, y];
                         }
                     }
                 }
-                return grid;
             }
+            return grid;
         }
 
         /// <summary>
@@ -86,10 +77,7 @@ namespace Bricker.Game
         /// </summary>
         public Brick GetBrick()
         {
-            lock (this)
-            {
-                return _brick?.Clone();
-            }
+            return _brick?.Clone();
         }
 
         /// <summary>
@@ -97,10 +85,7 @@ namespace Bricker.Game
         /// </summary>
         public Brick GetHold()
         {
-            lock (this)
-            {
-                return _hold?.Clone();
-            }
+            return _hold?.Clone();
         }
 
         /// <summary>
@@ -108,24 +93,21 @@ namespace Bricker.Game
         /// </summary>
         public void NewGame(bool spawnBrick = true)
         {
-            lock (this)
+            ClearSpaces(_grid);
+            for (int x = 0; x < 12; x++)
             {
-                ClearSpaces(_grid);
-                for (int x = 0; x < 12; x++)
-                {
-                    _grid[x, 0] = Space.Edge;
-                    _grid[x, 22 - 1] = Space.Edge;
-                }
-                for (int y = 0; y < 22; y++)
-                {
-                    _grid[0, y] = Space.Edge;
-                    _grid[12 - 1, y] = Space.Edge;
-                }
-                _brick = null;
-                _hold = null;
-                if (spawnBrick)
-                    SpawnBrick();
+                _grid[x, 0] = Space.Edge;
+                _grid[x, 22 - 1] = Space.Edge;
             }
+            for (int y = 0; y < 22; y++)
+            {
+                _grid[0, y] = Space.Edge;
+                _grid[12 - 1, y] = Space.Edge;
+            }
+            _brick = null;
+            _hold = null;
+            if (spawnBrick)
+                SpawnBrick();
         }
 
         /// <summary>
@@ -135,14 +117,11 @@ namespace Bricker.Game
         /// </summary>
         public bool SpawnBrick()
         {
-            lock (this)
-            {
-                while (_nextBricks.Count < 7)
-                    _nextBricks.Enqueue(new Brick((Space)(_random.Next(7) + 1)));
-                _brick = _nextBricks.Dequeue();
-                _brick.Spawned(_grid);
-                return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
-            }
+            while (_nextBricks.Count < 7)
+                _nextBricks.Enqueue(new Brick((Space)(_random.Next(7) + 1)));
+            _brick = _nextBricks.Dequeue();
+            _brick.Spawned(_grid);
+            return Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
         }
 
         /// <summary>
@@ -150,18 +129,15 @@ namespace Bricker.Game
         /// </summary>
         public void AddBrickToMatrix()
         {
-            lock (this)
-            {
-                if (_brick == null)
-                    return;
+            if (_brick == null)
+                return;
 
-                for (int x = 0; x < _brick.Width; x++)
-                    for (int y = 0; y < _brick.Height; y++)
-                        if (_brick.Grid[x, y].IsSolid())
-                            _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
+            for (int x = 0; x < _brick.Width; x++)
+                for (int y = 0; y < _brick.Height; y++)
+                    if (_brick.Grid[x, y].IsSolid())
+                        _grid[x + _brick.X, y + _brick.Y] = _brick.Grid[x, y];
 
-                _brick = null;
-            }
+            _brick = null;
         }
 
         /// <summary>
@@ -169,10 +145,7 @@ namespace Bricker.Game
         /// </summary>
         public Brick[] GetNextBricks()
         {
-            lock (this)
-            {
-                return _nextBricks.Take(6).ToArray();
-            }
+            return _nextBricks.Take(6).ToArray();
         }
 
         /// <summary>
@@ -180,13 +153,10 @@ namespace Bricker.Game
         /// </summary>
         public void MoveBrickLeft(out bool moved, out bool resting)
         {
-            lock (this)
-            {
-                moved = false;
-                resting = false;
-                if (_brick != null)
-                    _brick.MoveLeft(_grid, out moved, out resting);
-            }
+            moved = false;
+            resting = false;
+            if (_brick != null)
+                _brick.MoveLeft(_grid, out moved, out resting);
         }
 
         /// <summary>
@@ -194,13 +164,10 @@ namespace Bricker.Game
         /// </summary>
         public void MoveBrickRight(out bool moved, out bool resting)
         {
-            lock (this)
-            {
-                moved = false;
-                resting = false;
-                if (_brick != null)
-                    _brick.MoveRight(_grid, out moved, out resting);
-            }
+            moved = false;
+            resting = false;
+            if (_brick != null)
+                _brick.MoveRight(_grid, out moved, out resting);
         }
 
         /// <summary>
@@ -208,13 +175,10 @@ namespace Bricker.Game
         /// </summary>
         public void MoveBrickDown(out bool hit, out bool resting)
         {
-            lock (this)
-            {
-                hit = false;
-                resting = false;
-                if (_brick != null)
-                    _brick.MoveDown(_grid, out hit, out resting);
-            }
+            hit = false;
+            resting = false;
+            if (_brick != null)
+                _brick.MoveDown(_grid, out hit, out resting);
         }
 
         /// <summary>
@@ -222,12 +186,9 @@ namespace Bricker.Game
         /// </summary>
         public void RotateBrick(out bool resting)
         {
-            lock (this)
-            {
-                resting = false;
-                if (_brick != null)
-                    _brick.Rotate(_grid, out resting);
-            }
+            resting = false;
+            if (_brick != null)
+                _brick.Rotate(_grid, out resting);
         }
 
         /// <summary>
@@ -236,35 +197,32 @@ namespace Bricker.Game
         /// </summary>
         public void HoldBrick(out bool collision, out bool resting)
         {
-            lock (this)
+            collision = false;
+            resting = false;
+            if (_brick == null)
+                return;
+
+            int oX = _brick.X;
+            int oY = _brick.Y;
+
+            if (_hold == null)
             {
-                collision = false;
-                resting = false;
-                if (_brick == null)
-                    return;
-
-                int oX = _brick.X;
-                int oY = _brick.Y;
-
-                if (_hold == null)
-                {
-                    _hold = _brick;
-                    SpawnBrick();
-                    _brick.SetXY(oX, oY, _grid);
-                    collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
-                    resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
-                    return;
-                }
-                else
-                {
-                    Brick temp = _hold;
-                    _hold = _brick;
-                    _brick = temp;
-                    _brick.SetXY(oX, oY, _grid);
-                    collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
-                    resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
-                    return;
-                }
+                _hold = _brick;
+                SpawnBrick();
+                _brick.SetXY(oX, oY, _grid);
+                collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
+                return;
+            }
+            else
+            {
+                Brick temp = _hold;
+                _hold = _brick;
+                _brick = temp;
+                _brick.SetXY(oX, oY, _grid);
+                collision = Brick.Collision(_grid, _brick.Grid, _brick.X, _brick.Y);
+                resting = Brick.Resting(_grid, _brick.Grid, _brick.X, _brick.Y);
+                return;
             }
         }
 
@@ -273,68 +231,18 @@ namespace Bricker.Game
         /// </summary>
         public List<int> IdentifySolidRows()
         {
-            lock (this)
+            List<int> rowsToErase = new List<int>();
+            for (int y = 1; y < 21; y++)
             {
-                List<int> rowsToErase = new List<int>();
-                for (int y = 1; y < 21; y++)
-                {
-                    bool solid = true;
-                    for (int x = 1; x < 11; x++)
-                        if (!_grid[x, y].IsSolid())
-                            solid = false;
-                    if (solid)
-                        rowsToErase.Add(y);
-                }
-                return rowsToErase;
+                bool solid = true;
+                for (int x = 1; x < 11; x++)
+                    if (!_grid[x, y].IsSolid())
+                        solid = false;
+                if (solid)
+                    rowsToErase.Add(y);
             }
+            return rowsToErase;
         }
-
-        ///// <summary>
-        ///// Converts 1D array of bytes to 2D array of spaces.
-        ///// </summary>
-        //public static Space[,] Bytes1DToSpaces(byte[] bytes, int width)
-        //{
-        //    if ((bytes.Length % width) != 0)
-        //        throw new Exception("Invalid array length");
-        //    int height = bytes.Length / width;
-        //    Space[,] grid = new Space[width, height];
-        //    Bytes1DToSpaces(bytes, grid);
-        //    return grid;
-        //}
-
-        ///// <summary>
-        ///// Converts 1D array of bytes to 2D array of spaces.
-        ///// </summary>
-        //public static void Bytes1DToSpaces(byte[] bytes, Space[,] grid)
-        //{
-        //    if (bytes.Length != grid.Length)
-        //        throw new Exception("Invalid array length");
-        //    for (int x = 0; x < grid.GetLength(0); x++)
-        //        for (int y = 0; y < grid.GetLength(1); y++)
-        //            grid[x, y] = (Space)bytes[x * y];
-        //}
-
-        ///// <summary>
-        ///// Converts 2D array of spaces to 1D array of bytes.
-        ///// </summary>
-        //public static byte[] SpacesToBytes1D(Space[,] grid)
-        //{
-        //    byte[] bytes = new byte[grid.Length];
-        //    SpacesToBytes1D(grid, bytes);
-        //    return bytes;
-        //}
-
-        ///// <summary>
-        ///// Converts 2D array of spaces to 1D array of bytes.
-        ///// </summary>
-        //public static void SpacesToBytes1D(Space[,] grid, byte[] bytes)
-        //{
-        //    if (bytes.Length != grid.Length)
-        //        throw new Exception("Invalid array length");
-        //    for (int x = 0; x < grid.GetLength(0); x++)
-        //        for (int y = 0; y < grid.GetLength(1); y++)
-        //            bytes[x * y] = (byte)grid[x, y];
-        //}
 
         /// <summary>
         /// Fills grid with empty spaces.

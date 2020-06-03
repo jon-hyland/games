@@ -1,7 +1,6 @@
 ﻿using Common.Standard.Configuration;
 using Common.Standard.Error;
 using Common.Standard.Extensions;
-using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking.Packets;
 using Common.Standard.Threading;
@@ -21,7 +20,7 @@ namespace Common.Standard.Networking
 
         //private
         private readonly IGameConfig _config = null;
-        private readonly Player _localPlayer = null;
+        private readonly NetworkPlayer _localPlayer = null;
         private readonly Client _client = null;
         private readonly CommandManager _commandManager = new CommandManager();
         private readonly SimpleTimer _maintenanceTimer = null;
@@ -47,7 +46,7 @@ namespace Common.Standard.Networking
         public string GameTitle => _config.GameTitle;
         public Version GameVersion => _config.GameVersion;
         public IPAddress LocalIP => _config.LocalIP;
-        public Player LocalPlayer => _localPlayer;
+        public NetworkPlayer LocalPlayer => _localPlayer;
         public ConnectionState ConnectionState => _connectionState;
         public long HeartbeatsSent => _heartbeatsSent;
         public long DataSent => _dataSent;
@@ -58,8 +57,8 @@ namespace Common.Standard.Networking
         public long CommandResponsesReceived => _commandResponsesReceived;
 
         //events
-        public event Action<Player> OpponentConnected;
-        public event Action<Player> OpponentInviteReceived;
+        public event Action<NetworkPlayer> OpponentConnected;
+        public event Action<NetworkPlayer> OpponentInviteReceived;
         public event Action<CommandRequestPacket> CommandRequestPacketReceived;
         public event Action<CommandResponsePacket> CommandResponsePacketReceived;
         public event Action<DataPacket> DataPacketReceived;
@@ -73,7 +72,7 @@ namespace Common.Standard.Networking
             {
                 //vars
                 _config = config;
-                _localPlayer = new Player(config.LocalIP, config.GameTitle, config.GameVersion, playerName);
+                _localPlayer = new NetworkPlayer(config.LocalIP, config.GameTitle, config.GameVersion, playerName);
                 _client = new Client(config.ServerIP, config.ServerPort);
                 _maintenanceTimer = new SimpleTimer(MaintenanceTimer_Callback, 15, false);
                 _incomingPacketThread = new Thread(IncomingPacket_Thread);
@@ -161,20 +160,20 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Returns list of most recent discovered players, for this game version.
         /// </summary>
-        public IReadOnlyList<Player> GetPlayers(int top = 5)
+        public IReadOnlyList<NetworkPlayer> GetPlayers(int top = 5)
         {
             try
             {
                 CommandResult result = SendCommandRequest(_config.ServerIP, CommandType.GetPlayers, null, TimeSpan.FromMilliseconds(750));
                 if ((result.Code == ResultCode.Accept) && (result.ResponsePacket != null))
                 {
-                    List<Player> players = new List<Player>();
+                    List<NetworkPlayer> players = new List<NetworkPlayer>();
                     PacketParser parser = new PacketParser(result.ResponsePacket.Data);
                     ushort count = parser.GetUInt16();
                     for (int i = 0; i < count; i++)
                     {
                         byte[] bytes = parser.GetBytes();
-                        Player player = Player.FromBytes(bytes);
+                        NetworkPlayer player = NetworkPlayer.FromBytes(bytes);
                         if (player != null)
                         {
                             players.Add(player);
@@ -190,7 +189,7 @@ namespace Common.Standard.Networking
                 Log.Write("GetPlayers: Error fetching player list from server");
                 ErrorHandler.LogError(ex);
             }
-            return new List<Player>();
+            return new List<NetworkPlayer>();
         }
 
         #endregion
@@ -200,7 +199,7 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Sends invite request to opponent, waits for response or timeout.
         /// </summary>
-        public CommandResult InviteOpponent(Player opponent)
+        public CommandResult InviteOpponent(NetworkPlayer opponent)
         {
             CommandResult result = new CommandResult(ResultCode.Unspecified);
             try
@@ -228,7 +227,7 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Accepts an invite from a remote opponent.
         /// </summary>
-        public bool AcceptInvite(Player opponent)
+        public bool AcceptInvite(NetworkPlayer opponent)
         {
             try
             {
@@ -254,7 +253,7 @@ namespace Common.Standard.Networking
         /// <summary>
         /// Sends rejection response to server.
         /// </summary>
-        public bool RejectInvite(Player opponent)
+        public bool RejectInvite(NetworkPlayer opponent)
         {
             try
             {
@@ -470,7 +469,7 @@ namespace Common.Standard.Networking
                     _commandRequestsReceived++;
                     PacketParser parser = new PacketParser(p1.Data);
                     string playerName = parser.GetString();
-                    Player pendingOpponent = new Player(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
+                    NetworkPlayer pendingOpponent = new NetworkPlayer(p1.SourceIP, p1.GameTitle, p1.GameVersion, playerName, p1.Sequence);
                     OpponentInviteReceived?.InvokeFromTask(pendingOpponent);
                     return;
                 }

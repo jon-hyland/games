@@ -1,4 +1,4 @@
-﻿using Common.Standard.Game;
+﻿using Common.Standard.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace Bricker.Rendering.Properties
     public class LobbyProperties
     {
         //private
-        private readonly List<Player> _players = new List<Player>();
+        private readonly List<NetworkPlayer> _players = new List<NetworkPlayer>();
         private int _playerIndex = -1;
         private int _buttonIndex = 0;
         private DateTime _lastPlayerUpdate = DateTime.MinValue;
@@ -32,7 +32,7 @@ namespace Bricker.Rendering.Properties
         /// <summary>
         /// Updates player list.
         /// </summary>
-        public void UpdatePlayers(IEnumerable<Player> players)
+        public void UpdatePlayers(IEnumerable<NetworkPlayer> players)
         {
             lock (this)
             {
@@ -53,7 +53,7 @@ namespace Bricker.Rendering.Properties
         /// <summary>
         /// Gets copy of player list.
         /// </summary>
-        public IReadOnlyList<Player> GetPlayers()
+        public IReadOnlyList<NetworkPlayer> GetPlayers()
         {
             lock (this)
             {

@@ -6,7 +6,6 @@ using Bricker.Rendering.Properties;
 using Common.Standard.Configuration;
 using Common.Standard.Error;
 using Common.Standard.Extensions;
-using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
@@ -40,13 +39,15 @@ namespace Bricker.Game
         private readonly Matrix _matrix;
         private readonly Random _random;
         private GameStats _stats;
-        private List<ExplodingSpace> _spaces;
+        private List<ExplodingSpace> _explodingSpaces;
         private readonly double[] _levelDropIntervals;
-        private Player _pendingOpponent;
+        private NetworkPlayer _pendingOpponent;
         private Opponent _opponent;
         private GameState _gameState;
         private bool _sessionEnded;
         private static long _musicPosition;
+        private readonly object _playerLock;
+        private readonly object _opponentLock;
 
         //public
         public Config Config => _config;
@@ -70,12 +71,15 @@ namespace Bricker.Game
             _matrix = new Matrix();
             _random = new Random();
             _stats = new GameStats(_config);
-            _spaces = null;
+            _explodingSpaces = null;
             _levelDropIntervals = new double[10];
             _pendingOpponent = null;
             _opponent = null;
             _gameState = GameState.NotPlaying;
             _sessionEnded = false;
+            _musicPosition = 0;
+            _playerLock = new object();
+            _opponentLock = new object();
 
             //ui
             _window.Title = $"Bricker v{_config.DisplayVersion}";
@@ -138,7 +142,17 @@ namespace Bricker.Game
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            _renderer.DrawFrame(e, _matrix, _stats, _spaces, _communications, _opponent, _gameState);
+            Space[,] matrixGrid;
+            Brick holdBrick;
+            Brick[] nextBricks;
+            lock (_playerLock)
+            {
+                matrixGrid = _matrix.GetGrid(includeBrick: true, includeGhost: GameConfig.Instance.Ghost);
+                holdBrick = _matrix.GetHold();
+                nextBricks = _matrix.GetNextBricks();
+            }
+
+            _renderer.DrawFrame(e, matrixGrid, holdBrick, nextBricks, _stats, _explodingSpaces, _communications, _opponent, _gameState);
         }
 
         /// <summary>
@@ -248,7 +262,7 @@ namespace Bricker.Game
                     else if (selection == MenuSelection.TwoPlayer)
                     {
                         //select discovered player from lobby
-                        Player player = PlayerLobbyLoop();
+                        NetworkPlayer player = PlayerLobbyLoop();
                         if (player == null)
                             continue;
 
@@ -258,16 +272,22 @@ namespace Bricker.Game
                         //accept?
                         if ((result.Code == ResultCode.Accept) && (opponent != null))
                         {
-                            _pendingOpponent = null;
-                            _opponent = opponent;
+                            lock (_opponentLock)
+                            {
+                                _pendingOpponent = null;
+                                _opponent = opponent;
+                            }
                             GameLoop(newGame: true);
                         }
 
                         //reject or timeout
                         else
                         {
-                            _pendingOpponent = null;
-                            _opponent = null;
+                            lock (_opponentLock)
+                            {
+                                _pendingOpponent = null;
+                                _opponent = null;
+                            }
                         }
                     }
 
@@ -375,10 +395,16 @@ namespace Bricker.Game
             //new game?
             if (newGame)
             {
-                _stats = new GameStats(_config);
-                _matrix.NewGame();
-                _opponent?.Reset();
-                _sessionEnded = false;
+                lock (_playerLock)
+                {
+                    _stats = new GameStats(_config);
+                    _matrix.NewGame();
+                    lock (_opponentLock)
+                    {
+                        _opponent?.Reset();
+                    }
+                    _sessionEnded = false;
+                }
             }
 
             //set flag
@@ -390,8 +416,11 @@ namespace Bricker.Game
             //event loop
             while (true)
             {
-                //get opponent reference (thread safety)
-                opponent = _opponent;
+                //get opponent (thread safe snapshot)
+                lock (_opponentLock)
+                {
+                    opponent = _opponent?.Clone();
+                }
 
                 //return if opponent invite
                 if (_pendingOpponent != null)
@@ -956,13 +985,13 @@ namespace Bricker.Game
         /// <summary>
         /// Discovered player selection loop.
         /// </summary>
-        private Player PlayerLobbyLoop()
+        private NetworkPlayer PlayerLobbyLoop()
         {
             try
             {
                 //vars
                 LobbyProperties props = new LobbyProperties();
-                IReadOnlyList<Player> players = new List<Player>();
+                IReadOnlyList<NetworkPlayer> players = new List<NetworkPlayer>();
 
                 //push properties to renderer
                 _renderer.LobbyProps = props;
@@ -1047,7 +1076,7 @@ namespace Bricker.Game
         /// <summary>
         /// Sends invite to server, waits for opponent response, returns result.
         /// </summary>
-        private CommandResult OpponentInviteLoop(Player player, out Opponent opponent)
+        private CommandResult OpponentInviteLoop(NetworkPlayer player, out Opponent opponent)
         {
             CommandResult result = new CommandResult(ResultCode.Unspecified);
             opponent = null;
@@ -1096,7 +1125,7 @@ namespace Bricker.Game
         private void OpponentResponseLoop()
         {
             //return if no pending oppponent
-            Player pendingOpponent = _pendingOpponent;
+            NetworkPlayer pendingOpponent = _pendingOpponent;
             if (pendingOpponent == null)
                 return;
 
@@ -1162,7 +1191,7 @@ namespace Bricker.Game
                     byte[] bytes = GameStatusToBytes(_matrix, _stats);
 
                     //send game-over command request
-                    result = _communications.SendCommandRequest(opponent.Player.IP, CommandType.GameOver, bytes, TimeSpan.FromSeconds(1));
+                    result = _communications.SendCommandRequest(opponent.NetworkPlayer.IP, CommandType.GameOver, bytes, TimeSpan.FromSeconds(1));
                     if (result.Code != ResultCode.Accept)
                         continue;
 
@@ -1223,7 +1252,7 @@ namespace Bricker.Game
             try
             {
                 //return if no opponent
-                IPAddress destinationIP = _opponent?.Player?.IP;
+                IPAddress destinationIP = _opponent?.NetworkPlayer?.IP;
                 if (destinationIP == null)
                     return;
 
@@ -1330,7 +1359,7 @@ namespace Bricker.Game
                             bytes: packet.Data);
                         _opponent?.SetGameOver();
                         _communications.SendCommandResponse(
-                            destinationIP: opponent1.Player.IP,
+                            destinationIP: opponent1.NetworkPlayer.IP,
                             type: CommandType.GameOver,
                             sequence: packet.Sequence,
                             code: ResultCode.Accept,
@@ -1718,7 +1747,7 @@ namespace Bricker.Game
                         }
                     }
                 }
-                _spaces = spaces;
+                _explodingSpaces = spaces;
 
                 DateTime start = DateTime.Now;
                 bool haveSpaces = true;
@@ -1726,7 +1755,7 @@ namespace Bricker.Game
                 {
                     TimeSpan elapsed = DateTime.Now - start;
                     haveSpaces = false;
-                    foreach (ExplodingSpace space in _spaces)
+                    foreach (ExplodingSpace space in _explodingSpaces)
                     {
                         space.X += space.XVelocity * elapsed.TotalSeconds;
                         space.Y += space.YVelocity * elapsed.TotalSeconds;
@@ -1738,7 +1767,7 @@ namespace Bricker.Game
             }
             finally
             {
-                _spaces = null;
+                _explodingSpaces = null;
             }
         }
 

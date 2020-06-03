@@ -1,14 +1,13 @@
-﻿using Common.Standard.Networking;
-using Common.Standard.Networking.Packets;
+﻿using Common.Standard.Networking.Packets;
 using System;
 using System.Net;
 
-namespace Common.Standard.Game
+namespace Common.Standard.Networking
 {
     /// <summary>
     /// Represents a player, aka game instance (remote ip + game + game version).
     /// </summary>
-    public class Player
+    public class NetworkPlayer
     {
         //public
         public IPAddress IP { get; }
@@ -25,7 +24,7 @@ namespace Common.Standard.Game
         /// <summary>
         /// Class constructor.
         /// </summary>
-        public Player(IPAddress ip, string gameTitle, Version gameVersion, string name, int inviteSequence = 0)
+        public NetworkPlayer(IPAddress ip, string gameTitle, Version gameVersion, string name, int inviteSequence = 0)
         {
             IP = ip;
             GameTitle = gameTitle;
@@ -41,9 +40,9 @@ namespace Common.Standard.Game
         /// <summary>
         /// Creates discovered player from packet.
         /// </summary>
-        public static Player FromPacket(PacketBase packet)
+        public static NetworkPlayer FromPacket(PacketBase packet)
         {
-            return new Player(packet.SourceIP, packet.GameTitle, packet.GameVersion, packet.PlayerName, 0);
+            return new NetworkPlayer(packet.SourceIP, packet.GameTitle, packet.GameVersion, packet.PlayerName, 0);
         }
 
         /// <summary>
@@ -62,10 +61,10 @@ namespace Common.Standard.Game
         /// <summary>
         /// Player from simple string.
         /// </summary>
-        public static Player FromBytes(byte[] bytes)
+        public static NetworkPlayer FromBytes(byte[] bytes)
         {
             PacketParser parser = new PacketParser(bytes);
-            return new Player(
+            return new NetworkPlayer(
                 ip: parser.GetIPAddress(),
                 gameTitle: parser.GetString(),
                 gameVersion: parser.GetVersion(),

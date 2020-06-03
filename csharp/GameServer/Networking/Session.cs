@@ -1,4 +1,4 @@
-﻿using Common.Standard.Game;
+﻿using Common.Standard.Networking;
 using System;
 
 namespace GameServer.Networking
@@ -10,13 +10,13 @@ namespace GameServer.Networking
     /// </summary>
     public class Session
     {
-        public Player Player1 { get; }
-        public Player Player2 { get; }
+        public NetworkPlayer Player1 { get; }
+        public NetworkPlayer Player2 { get; }
         public bool IsConfirmed { get; private set; }
         public DateTime CreateTime { get; set; }
         public TimeSpan TimeSinceCreated => DateTime.Now - CreateTime;
 
-        public Session(Player player1, Player player2)
+        public Session(NetworkPlayer player1, NetworkPlayer player2)
         {
             Player1 = player1;
             Player2 = player2;
@@ -29,7 +29,7 @@ namespace GameServer.Networking
             IsConfirmed = true;
         }
 
-        public bool ContainsPlayer(Player player)
+        public bool ContainsPlayer(NetworkPlayer player)
         {
             if (Player1.UniqueKey == player.UniqueKey)
                 return true;
@@ -47,7 +47,7 @@ namespace GameServer.Networking
             return false;
         }
 
-        public bool ContainsBothPlayers(Player player1, Player player2)
+        public bool ContainsBothPlayers(NetworkPlayer player1, NetworkPlayer player2)
         {
             return ContainsPlayer(player1) && ContainsPlayer(player2);
         }
@@ -57,7 +57,7 @@ namespace GameServer.Networking
             return ContainsPlayer(player1Key) && ContainsPlayer(player2Key);
         }
 
-        public bool ContainsEitherPlayer(Player player1, Player player2)
+        public bool ContainsEitherPlayer(NetworkPlayer player1, NetworkPlayer player2)
         {
             return ContainsPlayer(player1) || ContainsPlayer(player2);
         }
@@ -67,19 +67,19 @@ namespace GameServer.Networking
             return ContainsPlayer(player1Key) || ContainsPlayer(player2Key);
         }
 
-        public Player GetTimedoutPlayer(int timeoutMs)
+        public NetworkPlayer GetTimedoutPlayer(int timeoutMs)
         {
             if (Player1.QuitGame)
                 return Player1;
             if (Player2.QuitGame)
                 return Player2;
-            Player lastToCheckIn = Player1.TimeSinceLastHeartbeat.TotalMilliseconds >= Player2.TimeSinceLastHeartbeat.TotalMilliseconds ? Player1 : Player2;
+            NetworkPlayer lastToCheckIn = Player1.TimeSinceLastHeartbeat.TotalMilliseconds >= Player2.TimeSinceLastHeartbeat.TotalMilliseconds ? Player1 : Player2;
             if (lastToCheckIn.TimeSinceLastHeartbeat.TotalMilliseconds > timeoutMs)
                 return lastToCheckIn;
             return null;
         }
 
-        public Player GetOpponent(Player player)
+        public NetworkPlayer GetOpponent(NetworkPlayer player)
         {
             if (player.UniqueKey != Player2.UniqueKey)
                 return Player1;

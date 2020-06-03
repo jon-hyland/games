@@ -1,6 +1,5 @@
 ﻿using Common.Standard.Error;
 using Common.Standard.Extensions;
-using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
@@ -21,7 +20,7 @@ namespace GameServer.Networking
         private readonly int _port;
         private readonly TcpListener _listener;
         private readonly List<Client> _clients;
-        private readonly List<Player> _players;
+        private readonly List<NetworkPlayer> _players;
         private readonly Dictionary<int, Client> _clientsByPlayerKey;
         private readonly List<Session> _sessions;
         private readonly CommandManager _commandManager;
@@ -40,7 +39,7 @@ namespace GameServer.Networking
             _port = port;
             _listener = new TcpListener(ip, port);
             _clients = new List<Client>();
-            _players = new List<Player>();
+            _players = new List<NetworkPlayer>();
             _clientsByPlayerKey = new Dictionary<int, Client>();
             _sessions = new List<Session>();
             _commandManager = new CommandManager();
@@ -101,7 +100,7 @@ namespace GameServer.Networking
         /// <summary>
         /// Returns list of matching players.
         /// </summary>
-        private List<Player> GetMatchingPlayers(string gameTitle, Version gameVersion)
+        private List<NetworkPlayer> GetMatchingPlayers(string gameTitle, Version gameVersion)
         {
             lock (_players)
             {
@@ -117,11 +116,11 @@ namespace GameServer.Networking
         /// <summary>
         /// Returns player with matching key, or null if not found.
         /// </summary>
-        private Player GetPlayerByKey(int key)
+        private NetworkPlayer GetPlayerByKey(int key)
         {
             lock (_players)
             {
-                Player existing = _players
+                NetworkPlayer existing = _players
                     .Where(p => p.UniqueKey == key)
                     .FirstOrDefault();
                 return existing;
@@ -131,11 +130,11 @@ namespace GameServer.Networking
         /// <summary>
         /// Adds or updates a discovered player.
         /// </summary>
-        private void AddOrUpdatePlayer(Player player, Client client)
+        private void AddOrUpdatePlayer(NetworkPlayer player, Client client)
         {
             lock (_players)
             {
-                Player existing = GetPlayerByKey(player.UniqueKey);
+                NetworkPlayer existing = GetPlayerByKey(player.UniqueKey);
 
                 if (existing != null)
                 {
@@ -172,10 +171,10 @@ namespace GameServer.Networking
         {
             lock (_players)
             {
-                List<Player> expired = _players
+                List<NetworkPlayer> expired = _players
                     .Where(p => (p.TimeSinceLastHeartbeat.TotalMinutes > 1) || (p.QuitGame))
                     .ToList();
-                foreach (Player p in expired)
+                foreach (NetworkPlayer p in expired)
                 {
                     Log.Write($"Removing disconnected player '{p.Name}' at '{p.IP}'");
                     _players.Remove(p);
@@ -186,7 +185,7 @@ namespace GameServer.Networking
         /// <summary>
         /// Returns matching player, or null.
         /// </summary>
-        private Player GetMatchingPlayer(IPAddress ip, string gameTitle, Version gameVersion)
+        private NetworkPlayer GetMatchingPlayer(IPAddress ip, string gameTitle, Version gameVersion)
         {
             lock (_players)
             {
@@ -202,7 +201,7 @@ namespace GameServer.Networking
         /// Gets TCP client last associated with specified player.
         /// Client can change if the player disconnects/reconnects, etc.
         /// </summary>
-        private Client GetClientByPlayer(Player player)
+        private Client GetClientByPlayer(NetworkPlayer player)
         {
             lock (_clientsByPlayerKey)
             {
@@ -224,10 +223,10 @@ namespace GameServer.Networking
             lock (_sessions)
             {
                 //get players
-                Player player1 = GetPlayerByKey(playerKey1);
+                NetworkPlayer player1 = GetPlayerByKey(playerKey1);
                 if (player1 == null)
                     Log.Write($"Cannot create session.. player '{player1.IP}' does not exist or match");
-                Player player2 = GetPlayerByKey(playerKey2);
+                NetworkPlayer player2 = GetPlayerByKey(playerKey2);
                 if (player2 == null)
                     Log.Write($"Cannot create session.. player '{player2.IP}' does not exist or match");
 
@@ -292,7 +291,7 @@ namespace GameServer.Networking
                     List<Session> expired = new List<Session>();
                     foreach (Session session in _sessions)
                     {
-                        Player expiredPlayer = session.GetTimedoutPlayer(timeoutMs: 10000);
+                        NetworkPlayer expiredPlayer = session.GetTimedoutPlayer(timeoutMs: 10000);
                         if (expiredPlayer != null)
                         {
                             if (!expiredPlayer.QuitGame)
@@ -325,7 +324,7 @@ namespace GameServer.Networking
         /// Sends 'EndSession' command to client to inform them of opponent disconnect.
         /// Waits for client acknowledgment, but doesn't do anything with it.
         /// </summary>
-        private void SendEndSessionCommand(Client client, Player player)
+        private void SendEndSessionCommand(Client client, NetworkPlayer player)
         {
             try
             {
@@ -391,7 +390,7 @@ namespace GameServer.Networking
                 //heartbeat
                 if (packet is HeartbeatPacket hp)
                 {
-                    Player player = Player.FromPacket(hp);
+                    NetworkPlayer player = NetworkPlayer.FromPacket(hp);
                     if (player != null)
                         AddOrUpdatePlayer(player, client);
                 }
@@ -448,10 +447,10 @@ namespace GameServer.Networking
             try
             {
                 //get source player
-                Player player = Player.FromPacket(packet);
+                NetworkPlayer player = NetworkPlayer.FromPacket(packet);
 
                 //get list of connected players (not source player)
-                List<Player> otherPlayers = GetMatchingPlayers(player.GameTitle, player.GameVersion)
+                List<NetworkPlayer> otherPlayers = GetMatchingPlayers(player.GameTitle, player.GameVersion)
                     .Where(p => p.UniqueKey != player.UniqueKey)
                     .ToList();
 
@@ -461,7 +460,7 @@ namespace GameServer.Networking
                 //serialize list to bytes
                 PacketBuilder builder = new PacketBuilder();
                 builder.AddUInt16((ushort)otherPlayers.Count);
-                foreach (Player p in otherPlayers)
+                foreach (NetworkPlayer p in otherPlayers)
                     builder.AddBytes(p.ToBytes());
 
                 //create packet
@@ -494,7 +493,7 @@ namespace GameServer.Networking
             try
             {
                 //get source player
-                Player player = Player.FromPacket(packet);
+                NetworkPlayer player = NetworkPlayer.FromPacket(packet);
                 player = GetPlayerByKey(player.UniqueKey);
 
                 //set quit flag
@@ -538,14 +537,14 @@ namespace GameServer.Networking
         private void Passthrough_Command(Client sourceClient, CommandRequestPacket requestPacket)
         {
             CommandResult result = new CommandResult(ResultCode.Unspecified);
-            Player sourcePlayer = null;
-            Player destinationPlayer = null;
+            NetworkPlayer sourcePlayer = null;
+            NetworkPlayer destinationPlayer = null;
             bool sessionEnded = false;
 
             try
             {
                 //get source player
-                sourcePlayer = Player.FromPacket(requestPacket);
+                sourcePlayer = NetworkPlayer.FromPacket(requestPacket);
                 if (sourcePlayer == null)
                 {
                     Log.Write($"Passthrough_Command: Unable to parse packet");
@@ -673,14 +672,14 @@ namespace GameServer.Networking
         /// </summary>
         private void Passthrough_Data(Client sourceClient, DataPacket dataPacket)
         {
-            Player sourcePlayer = null;
-            Player destinationPlayer;
+            NetworkPlayer sourcePlayer = null;
+            NetworkPlayer destinationPlayer;
             bool sessionEnded = false;
 
             try
             {
                 //get source player
-                sourcePlayer = Player.FromPacket(dataPacket);
+                sourcePlayer = NetworkPlayer.FromPacket(dataPacket);
                 if (sourcePlayer == null)
                 {
                     Log.Write($"Passthrough_Data: Unable to parse packet");
