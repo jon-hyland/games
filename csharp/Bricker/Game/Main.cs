@@ -558,7 +558,7 @@ namespace Bricker.Game
                         Sounds.Play(Sound.Send1);
                         int newLines = opponent.LinesSent - opponent.LastLinesSent;
                         opponent.SetLastLinesSent(opponent.LinesSent);
-                        bool gameOver = AddSentLines(newLines);
+                        bool gameOver = _player.AddSentLines(newLines);
                         if (gameOver)
                         {
                             _gameState = GameState.GameOver;
@@ -1580,7 +1580,7 @@ namespace Bricker.Game
 
                 //animation + matrix change
                 //todo: add send lines animations
-                EraseFilledRows(rows);
+                _player.EraseFilledRows(rows);
                 DropGrid();
 
                 //increment sent lines?
@@ -1597,139 +1597,13 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Animates erasure of filled rows.
-        /// </summary>
-        private void EraseFilledRows(List<int> rowsToErase)
-        {
-            DateTime start = DateTime.Now;
-            double xPerSecond = 50;
-            int x = 0;
-            while (x < 10)
-            {
-                Thread.Sleep(5);
-                TimeSpan elapsed = DateTime.Now - start;
-                int expectedX = (int)Math.Round(xPerSecond * elapsed.TotalSeconds);
-                while (x < expectedX)
-                {
-                    x++;
-                    if ((x < 1) || (x > 10))
-                        break;
-                    foreach (int y in rowsToErase)
-                        _player[x, y] = Space.Empty;
-                }
-            }
-        }
-
-        /// <summary>
         /// Drops hanging pieces to resting place.
         /// </summary>
         private void DropGrid()
         {
             Thread.Sleep(15);
-            while (DropGridOnce())
+            while (_player.DropGridOnce())
                 continue;
-        }
-
-        /// <summary>
-        /// Drops hanging pieces, bottom-most row.
-        /// </summary>
-        private bool DropGridOnce()
-        {
-            int topFilledRow = 0;
-            for (int row = 1; row <= 20; row++)
-            {
-                bool empty = true;
-                for (int x = 1; x <= 10; x++)
-                {
-                    if (_player[x, row].IsSolid())
-                    {
-                        empty = false;
-                        break;
-                    }
-                }
-                if (!empty)
-                {
-                    topFilledRow = row;
-                    break;
-                }
-            }
-            if (topFilledRow == 0)
-                return false;
-            int bottomEmptyRow = 0;
-            for (int row = 20; row > (topFilledRow - 1); row--)
-            {
-                bool empty = true;
-                for (int x = 1; x <= 10; x++)
-                {
-                    if (_player[x, row].IsSolid())
-                    {
-                        empty = false;
-                        break;
-                    }
-                }
-                if (empty)
-                {
-                    bottomEmptyRow = row;
-                    break;
-                }
-            }
-            if (bottomEmptyRow == 0)
-                return false;
-            for (int y = bottomEmptyRow; y > 1; y--)
-                for (int x = 1; x <= 10; x++)
-                    _player[x, y] = _player[x, y - 1];
-            for (int x = 1; x <= 10; x++)
-                _player[x, 1] = Space.Empty;
-            return true;
-        }
-
-        /// <summary>
-        /// Adds lines sent by opponent.
-        /// </summary>
-        private bool AddSentLines(int newLines)
-        {
-            //vars
-            int gapIndex = _random.Next(10) + 1;
-
-            //move lines up
-            bool outBounds = false;
-            for (int y = 1; y <= 20; y++)
-            {
-                for (int x = 1; x <= 10; x++)
-                {
-                    if (_player[x, y].IsSolid())
-                    {
-                        int newY = y - newLines;
-                        if (newY > 0)
-                            _player[x, newY] = _player[x, y];
-                        else
-                            outBounds = true;
-                        _player[x, y] = Space.Sent;
-                    }
-                }
-            }
-
-            //add lines (animated)
-            DateTime start = DateTime.Now;
-            double xPerSecond = 50;
-            int xx = 0;
-            while (xx < 10)
-            {
-                Thread.Sleep(5);
-                TimeSpan elapsed = DateTime.Now - start;
-                int expectedX = (int)Math.Round(xPerSecond * elapsed.TotalSeconds);
-                while (xx < expectedX)
-                {
-                    xx++;
-                    if ((xx < 1) || (xx > 10))
-                        break;
-                    for (int y = 20; y > 20 - newLines; y--)
-                        _player[xx, y] = (xx != gapIndex ? Space.Sent : Space.Empty);
-                }
-            }
-
-            //return
-            return outBounds;
         }
 
         #endregion

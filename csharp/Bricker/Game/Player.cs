@@ -3,6 +3,7 @@ using Common.Standard.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Bricker.Game
 {
@@ -23,7 +24,7 @@ namespace Bricker.Game
 
         //public
         public PlayerStats Stats => _stats;
-        public Space this[int x, int y] { get => _grid[x, y]; set => _grid[x, y] = value; }
+        public Space this[int x, int y] { get { lock (this) { return _grid[x, y]; } } set { lock (this) { _grid[x, y] = value; } } }
 
         #region Constructor / Reset
 
@@ -139,6 +140,144 @@ namespace Bricker.Game
                 }
                 return rowsToErase;
             }
+        }
+
+        /// <summary>
+        /// Animates erasure of filled rows.
+        /// </summary>
+        public void EraseFilledRows(IEnumerable<int> rowsToErase)
+        {
+            DateTime start = DateTime.Now;
+            double xPerSecond = 50;
+            int x = 0;
+            while (x < 10)
+            {
+                Thread.Sleep(5);
+                lock (this)
+                {
+                    TimeSpan elapsed = DateTime.Now - start;
+                    int expectedX = (int)Math.Round(xPerSecond * elapsed.TotalSeconds);
+                    while (x < expectedX)
+                    {
+                        x++;
+                        if ((x < 1) || (x > 10))
+                            break;
+                        foreach (int y in rowsToErase)
+                            _grid[x, y] = Space.Empty;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Drops hanging pieces, bottom-most row.
+        /// </summary>
+        public bool DropGridOnce()
+        {
+            lock (this)
+            {
+                int topFilledRow = 0;
+                for (int row = 1; row <= 20; row++)
+                {
+                    bool empty = true;
+                    for (int x = 1; x <= 10; x++)
+                    {
+                        if (_grid[x, row].IsSolid())
+                        {
+                            empty = false;
+                            break;
+                        }
+                    }
+                    if (!empty)
+                    {
+                        topFilledRow = row;
+                        break;
+                    }
+                }
+                if (topFilledRow == 0)
+                    return false;
+                int bottomEmptyRow = 0;
+                for (int row = 20; row > (topFilledRow - 1); row--)
+                {
+                    bool empty = true;
+                    for (int x = 1; x <= 10; x++)
+                    {
+                        if (_grid[x, row].IsSolid())
+                        {
+                            empty = false;
+                            break;
+                        }
+                    }
+                    if (empty)
+                    {
+                        bottomEmptyRow = row;
+                        break;
+                    }
+                }
+                if (bottomEmptyRow == 0)
+                    return false;
+                for (int y = bottomEmptyRow; y > 1; y--)
+                    for (int x = 1; x <= 10; x++)
+                        _grid[x, y] = _grid[x, y - 1];
+                for (int x = 1; x <= 10; x++)
+                    _grid[x, 1] = Space.Empty;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Adds lines sent by opponent.
+        /// </summary>
+        public bool AddSentLines(int newLines)
+        {
+            //vars
+            int gapIndex = _random.Next(10) + 1;
+            bool outBounds = false;
+
+            //move lines up
+            lock (this)
+            {
+                for (int y = 1; y <= 20; y++)
+                {
+                    for (int x = 1; x <= 10; x++)
+                    {
+                        if (_grid[x, y].IsSolid())
+                        {
+                            int newY = y - newLines;
+                            if (newY > 0)
+                                _grid[x, newY] = _grid[x, y];
+                            else
+                                outBounds = true;
+                            _grid[x, y] = Space.Sent;
+                        }
+                    }
+                }
+            }
+
+            //add lines (animated)
+            DateTime start = DateTime.Now;
+            double xPerSecond = 50;
+            int xx = 0;
+            while (xx < 10)
+            {
+                Thread.Sleep(5);
+                lock (this)
+                {
+                    TimeSpan elapsed = DateTime.Now - start;
+                    int expectedX = (int)Math.Round(xPerSecond * elapsed.TotalSeconds);
+                    while (xx < expectedX)
+                    {
+                        xx++;
+                        if ((xx < 1) || (xx > 10))
+                            break;
+                        for (int y = 20; y > 20 - newLines; y--)
+                            _grid[xx, y] = (xx != gapIndex ? Space.Sent : Space.Empty);
+                    }
+                }
+            }
+
+            //return
+            return outBounds;
         }
 
         #endregion
