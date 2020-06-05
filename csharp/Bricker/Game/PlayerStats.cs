@@ -6,9 +6,9 @@
     public class PlayerStats
     {
         //public
-        public int Score { get; private set; }
-        public int Lines { get; private set; }
         public int Level { get; private set; }
+        public int Lines { get; private set; }
+        public int Score { get; private set; }
         public int LinesSent { get; private set; }
         public int LastLinesSent { get; private set; }
 
@@ -17,9 +17,9 @@
         /// </summary>
         public PlayerStats()
         {
-            Score = 0;
-            Lines = 0;
             Level = 1;
+            Lines = 0;
+            Score = 0;
             LinesSent = 0;
             LastLinesSent = 0;
         }
@@ -29,11 +29,66 @@
         /// </summary>
         public void Reset()
         {
-            Score = 0;
-            Lines = 0;
             Level = 1;
+            Lines = 0;
+            Score = 0;
             LinesSent = 0;
             LastLinesSent = 0;
+        }
+
+        /// <summary>
+        /// Sets the current level.
+        /// </summary>
+        public bool SetLevel(int value)
+        {
+            if (value > 10)
+                value = 10;
+            if (value < 1)
+                value = 1;
+            if (value != Level)
+            {
+                Level = value;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Increments the current level by value.
+        /// </summary>
+        public bool IncrementLevel(int value)
+        {
+            int level = Level + value;
+            return SetLevel(level);
+        }
+
+        /// <summary>
+        /// Sets lines to specified value.
+        /// </summary>
+        public void SetLines(int value)
+        {
+            Lines += value;
+        }
+
+        /// <summary>
+        /// Increments cleared line count, and sets level.
+        /// Returns true if level increased.
+        /// </summary>
+        public bool IncrementLinesAndLevel(int value)
+        {
+            Lines += value;
+            int newLevel = (Lines / 25) + 1;
+            if (newLevel > Lines)
+                return SetLevel(newLevel);
+            return false;
+        }
+
+        /// <summary>
+        /// Sets score to specified value.
+        /// </summary>
+        public void SetScore(int value)
+        {
+            Score = value;
         }
 
         /// <summary>
@@ -45,33 +100,11 @@
         }
 
         /// <summary>
-        /// Increments cleared line count, and sets level.
-        /// Returns true on level increase.
+        /// Sets lines sent (two-player mode).
         /// </summary>
-        public bool IncrementLines(int value)
+        public void SetLinesSent(int value)
         {
-            Lines += value;
-            int newLevel = (Lines / 25) + 1;
-            if (newLevel > Lines)
-                return SetLevel(newLevel);
-            return false;
-        }
-
-        /// <summary>
-        /// Sets the current level.
-        /// </summary>
-        public bool SetLevel(int level)
-        {
-            if (level > 10)
-                level = 10;
-            if (level < 1)
-                level = 1;
-            if (level != Level)
-            {
-                Level = level;
-                return true;
-            }
-            return false;
+            LinesSent = value;
         }
 
         /// <summary>
@@ -80,14 +113,6 @@
         public void IncrementLinesSent(int value)
         {
             LinesSent += value;
-        }
-
-        /// <summary>
-        /// Sets lines sent (two-player mode).
-        /// </summary>
-        public void SetLinesSent(int value)
-        {
-            LinesSent = value;
         }
 
         /// <summary>

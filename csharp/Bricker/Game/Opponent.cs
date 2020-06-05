@@ -9,24 +9,17 @@ namespace Bricker.Game
     public class Opponent
     {
         //private
-        private readonly NetworkPlayer _networkPlayer;
+        private NetworkPlayer _networkPlayer;
         private readonly Space[,] _grid;
-        private int _level;
-        private int _lines;
-        private int _score;
-        private int _linesSent;
-        private int _lastLinesSent;
+        private readonly PlayerStats _stats;
         private bool _gameOver;
 
         //public
         public NetworkPlayer NetworkPlayer => _networkPlayer;
-        public Space[,] Grid => _grid;
-        public int Level => _level;
-        public int Lines => _lines;
-        public int Score => _score;
-        public int LinesSent => _linesSent;
-        public int LastLinesSent => _lastLinesSent;
+        //public Space[,] Grid => _grid;
+        public PlayerStats Stats => _stats;
         public bool GameOver => _gameOver;
+        public bool Exists => _networkPlayer != null;
 
         /// <summary>
         /// Class constructor.
@@ -35,27 +28,8 @@ namespace Bricker.Game
         {
             _networkPlayer = networkPlayer;
             _grid = new Space[12, 22];
-            _level = 1;
-            _lines = 0;
-            _score = 0;
-            _linesSent = 0;
-            _lastLinesSent = 0;
+            _stats = new PlayerStats();
             _gameOver = false;
-        }
-
-        /// <summary>
-        /// Class constructor.
-        /// </summary>
-        public Opponent(NetworkPlayer networkPlayer, Space[,] grid, int level, int lines, int score, int linesSent, int lastLinesSent, bool gameOver)
-        {
-            _networkPlayer = networkPlayer;
-            _grid = grid;
-            _level = level;
-            _lines = lines;
-            _score = score;
-            _linesSent = linesSent;
-            _lastLinesSent = lastLinesSent;
-            _gameOver = gameOver;
         }
 
         /// <summary>
@@ -63,15 +37,25 @@ namespace Bricker.Game
         /// </summary>
         public void Reset()
         {
-            for (int x = 0; x < 12; x++)
-                for (int y = 0; y < 22; y++)
-                    _grid[x, y] = Space.Empty;
-            _level = 1;
-            _lines = 0;
-            _score = 0;
-            _linesSent = 0;
-            _lastLinesSent = 0;
-            _gameOver = false;
+            lock (this)
+            {
+                for (int x = 0; x < 12; x++)
+                    for (int y = 0; y < 22; y++)
+                        _grid[x, y] = Space.Empty;
+                _stats.Reset();
+                _gameOver = false;
+            }
+        }
+
+        /// <summary>
+        /// Sets (or clears) opponent's network player instance.
+        /// </summary>
+        public void SetNetworkPlayer(NetworkPlayer networkPlayer)
+        {
+            lock (this)
+            {
+                _networkPlayer = networkPlayer;
+            }
         }
 
         /// <summary>
@@ -79,7 +63,10 @@ namespace Bricker.Game
         /// </summary>
         public void SetGameOver()
         {
-            _gameOver = true;
+            lock (this)
+            {
+                _gameOver = true;
+            }
         }
 
         /// <summary>
@@ -87,7 +74,10 @@ namespace Bricker.Game
         /// </summary>
         public void SetLastLinesSent(int value)
         {
-            _lastLinesSent = value;
+            lock (this)
+            {
+                _stats.SetLastLinesSent(value);
+            }
         }
 
         /// <summary>
@@ -95,22 +85,41 @@ namespace Bricker.Game
         /// </summary>
         public void UpdateOpponent(Space[,] matrix, int level, int lines, int score, int linesSent)
         {
-            for (int x = 0; x < matrix.GetLength(0); x++)
-                for (int y = 0; y < matrix.GetLength(1); y++)
-                    _grid[x, y] = matrix[x, y];
-            _level = level;
-            _lines = lines;
-            _score = score;
-            _linesSent = linesSent;
+            lock (this)
+            {
+                for (int x = 0; x < matrix.GetLength(0); x++)
+                    for (int y = 0; y < matrix.GetLength(1); y++)
+                        _grid[x, y] = matrix[x, y];
+
+                _stats.SetLevel(level);
+                _stats.SetLines(lines);
+                _stats.SetScore(score);
+                _stats.SetLinesSent(linesSent);
+            }
         }
 
         /// <summary>
-        /// Returns thread-safe copy of opponent.
+        /// Gets safe copies of objects used for frame rendering.
         /// </summary>
-        public Opponent Clone()
+        public void GetRenderObjects(out Space[,] grid, out PlayerStats stats, out string name)
         {
-            return new Opponent(_networkPlayer, _grid, _level, _lines, _score, _linesSent, _lastLinesSent, _gameOver);
+            lock (this)
+            {
+                if (_networkPlayer != null)
+                {
+                    grid = (Space[,])_grid.Clone();
+                    stats = _stats;
+                    name = _networkPlayer.Name;
+                }
+                else
+                {
+                    grid = null;
+                    stats = null;
+                    name = null;
+                }
+            }
         }
+
 
     }
 }

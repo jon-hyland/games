@@ -13,12 +13,12 @@ namespace Bricker.Game
     public class Player
     {
         //private
+        private NetworkPlayer _networkPlayer;
         private readonly double[] _levelDropIntervals;
         private readonly Random _random;
         private readonly Space[,] _grid;
         private readonly Queue<Brick> _nextBricks;
         private readonly PlayerStats _stats;
-        private NetworkPlayer _networkPlayer;
         private Brick _brick;
         private Brick _hold;
 
@@ -481,11 +481,11 @@ namespace Bricker.Game
         /// Increments cleared line count, and sets level.
         /// Returns true on level increase.
         /// </summary>
-        public bool IncrementLines(int value)
+        public bool IncrementLinesAndLevel(int value)
         {
             lock (this)
             {
-                return _stats.IncrementLines(value);
+                return _stats.IncrementLinesAndLevel(value);
             }
         }
 

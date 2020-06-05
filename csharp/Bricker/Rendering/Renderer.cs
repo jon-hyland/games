@@ -127,17 +127,17 @@ namespace Bricker.Rendering
         /// <summary>
         /// Renders a new frame.
         /// </summary>
-        public void DrawFrame(SKPaintSurfaceEventArgs e, Space[,] matrixGrid, Brick holdBrick, Brick[] nextBricks,
-            PlayerStats stats, HighScores highScores, List<ExplodingSpace> spaces, GameCommunications communications,
-            Opponent opponent, GameState gameState)
+        public void DrawFrame(SKPaintSurfaceEventArgs e, Space[,] playerGrid, Brick holdBrick, Brick[] nextBricks,
+            PlayerStats playerStats, HighScores highScores, List<ExplodingSpace> spaces, GameCommunications communications,
+            Space[,] opponentGrid, PlayerStats opponentStats, string opponentName, GameState gameState)
         {
             try
             {
                 //create fake opponent for rendering
-                if ((_fakeOpponent) && (opponent == null))
+                if ((_fakeOpponent) && (opponentGrid == null))
                 {
-                    opponent = new Opponent(new NetworkPlayer(_config.LocalIP, _config.GameTitle, _config.GameVersion, "OPN"));
-                    opponent.UpdateOpponent(matrixGrid, 3, 144, 12434, 7);
+                    opponentGrid = (Space[,])playerGrid.Clone();
+                    opponentStats = playerStats;
                 }
 
                 //vars
@@ -162,7 +162,7 @@ namespace Bricker.Rendering
                 _left_Center2 = ((_frame_Width - _player_Width) / 4) - 1;
                 _right_Center1 = (_frame_Width - ((_frame_Width - _player_TotalWidth) / 4)) + 1;
                 _title_XCenter = _left_Center1;
-                _title_YCenter = opponent == null ? 88 : 52;
+                _title_YCenter = opponentGrid == null ? 88 : 52;
                 _controls_XCenter = _left_Center1;
                 _controls_YCenter = 465;
                 _opponent_XCenter = _left_Center1;
@@ -182,10 +182,10 @@ namespace Bricker.Rendering
                 _fps.Increment();
 
                 //background
-                DrawBackground(frame, stats.Level);
+                DrawBackground(frame, playerStats.Level);
 
                 //game matrix
-                DrawMatrix(frame, matrixGrid);
+                DrawMatrix(frame, playerGrid);
 
                 //hold
                 DrawHold(frame, holdBrick);
@@ -194,7 +194,7 @@ namespace Bricker.Rendering
                 DrawNext(frame, nextBricks);
 
                 //opponent matrix
-                DrawOpponentMatrix(frame, opponent);
+                DrawOpponentMatrix(frame, opponentGrid, opponentStats, opponentName);
 
                 //exploding spaces
                 DrawExplodingSpaces(frame, spaces);
@@ -203,16 +203,16 @@ namespace Bricker.Rendering
                 DrawTitle(frame);
 
                 //controls
-                DrawControls(frame, opponent);
+                DrawControls(frame, opponentGrid);
 
                 //level
-                DrawLevel(frame, stats.Level);
+                DrawLevel(frame, playerStats.Level);
 
                 //lines
-                DrawLines(frame, stats.Lines);
+                DrawLines(frame, playerStats.Lines);
 
                 //current score
-                DrawScore(frame, stats.Score);
+                DrawScore(frame, playerStats.Score);
 
                 //high scores
                 DrawHighScores(frame, highScores);
@@ -233,7 +233,7 @@ namespace Bricker.Rendering
                 DrawLobbyMenu(frame);
 
                 //debug info
-                DrawDebugInfo(frame, communications, gameState, stats.LinesSent, opponent);
+                DrawDebugInfo(frame, communications, gameState, playerStats, opponentStats);
             }
             catch (Exception ex)
             {
@@ -293,7 +293,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws the game matrix, once per frame.
         /// </summary>
-        private void DrawMatrix(Surface frame, Space[,] matrixGrid)
+        private void DrawMatrix(Surface frame, Space[,] playerGrid)
         {
             using (Surface surface = new Surface(_player_Width, _player_Height, Colors.Black))
             {
@@ -305,9 +305,9 @@ namespace Bricker.Rendering
                 {
                     for (int y = 1; y < 22; y++)
                     {
-                        if (matrixGrid[x, y].Exists())
+                        if (playerGrid[x, y].Exists())
                         {
-                            Space space = matrixGrid[x, y];
+                            Space space = playerGrid[x, y];
                             if (!_spaces[32].ContainsKey(space))
                                 _spaces[32].Add(space, CreateBrickSurface(space, 32));
                             Surface s = _spaces[32][space];
@@ -435,9 +435,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws other player's matrix.
         /// </summary>
-        private void DrawOpponentMatrix(Surface frame, Opponent opponent)
+        private void DrawOpponentMatrix(Surface frame, Space[,] opponentGrid, PlayerStats opponentStats, string opponentName)
         {
-            if (opponent == null)
+            if ((opponentGrid == null) || (opponentStats == null))
                 return;
 
             int brickSize = 24;
@@ -454,15 +454,15 @@ namespace Bricker.Rendering
 
             using (Surface surface = new Surface(width, height))
             {
-                surface.DrawText_Left(_primaryWhite, opponent.NetworkPlayer.Name, 32, 23);
+                surface.DrawText_Left(_primaryWhite, opponentName ?? "", 32, 23);
                 using (Surface statsSurface = new Surface(125, headerHeight))
                 {
                     statsSurface.DrawText_Left(_primaryWhite, "level", 16, (statsHeight + textSpacing) * 0);
                     statsSurface.DrawText_Left(_primaryWhite, "lines", 16, (statsHeight + textSpacing) * 1);
                     statsSurface.DrawText_Left(_primaryWhite, "score", 16, (statsHeight + textSpacing) * 2);
-                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Level}", 16, (statsHeight + textSpacing) * 0);
-                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Lines.ToString("N0")}", 16, (statsHeight + textSpacing) * 1);
-                    statsSurface.DrawText_Right(_primaryWhite, $"{opponent.Score.ToString("N0")}", 16, (statsHeight + textSpacing) * 2);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponentStats.Level}", 16, (statsHeight + textSpacing) * 0);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponentStats.Lines.ToString("N0")}", 16, (statsHeight + textSpacing) * 1);
+                    statsSurface.DrawText_Right(_primaryWhite, $"{opponentStats.Score.ToString("N0")}", 16, (statsHeight + textSpacing) * 2);
                     surface.Blit(statsSurface, width - statsSurface.Width, 0);
                 }
                 using (Surface matrixSurface = new Surface(matrixWidth, matrixHeight, Colors.Black))
@@ -471,9 +471,9 @@ namespace Bricker.Rendering
                     {
                         for (int y = 1; y < 22; y++)
                         {
-                            if (opponent.Grid[x, y].Exists())
+                            if (opponentGrid[x, y].Exists())
                             {
-                                Space space = opponent.Grid[x, y];
+                                Space space = opponentGrid[x, y];
                                 if (!_spaces[brickSize].ContainsKey(space))
                                     _spaces[brickSize].Add(space, CreateBrickSurface(space, brickSize));
                                 Surface s = _spaces[brickSize][space];
@@ -545,9 +545,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws controls readout.
         /// </summary>
-        private void DrawControls(Surface frame, Opponent opponent)
+        private void DrawControls(Surface frame, Space[,] opponentGrid)
         {
-            if (opponent != null)
+            if (opponentGrid != null)
                 return;
 
             double width = 210;
@@ -977,7 +977,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws fps readout.
         /// </summary>
-        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState, int linesSent, Opponent opponent)
+        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState, PlayerStats playerStats, PlayerStats opponentStats)
         {
             if (!GameConfig.Instance.Debug)
                 return;
@@ -994,9 +994,9 @@ namespace Bricker.Rendering
                 lines.Add($"com_state:   {communications.ConnectionState}");
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
-            lines.Add($"lines_sent:    {linesSent}");
-            lines.Add($"opp_last_lines_sent:    {opponent.LastLinesSent}");
-            lines.Add($"opp_lines_sent:    {opponent.LinesSent}");
+            lines.Add($"lines_sent:    {playerStats.LinesSent}");
+            lines.Add($"opp_last_lines_sent:    {opponentStats.LastLinesSent}");
+            lines.Add($"opp_lines_sent:    {opponentStats.LinesSent}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
                 frame.Blit(surface, 35, 25);

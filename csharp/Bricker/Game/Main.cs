@@ -35,17 +35,16 @@ namespace Bricker.Game
         private readonly Config _config;
         private readonly Logger _logger;
         private readonly Player _player;
+        private readonly Opponent _opponent;
         private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
         private readonly HighScores _highScores;
         private readonly Random _random;
         private List<ExplodingSpace> _explodingSpaces;
         private NetworkPlayer _pendingOpponent;
-        private Opponent _opponent;
         private GameState _gameState;
         private bool _sessionEnded;
         private static long _musicPosition;
-        private readonly object _opponentLock = new object();
 
         //public
         public Config Config => _config;
@@ -67,11 +66,11 @@ namespace Bricker.Game
             _communications = new GameCommunications(_config, _config.Initials);
             _renderer = new Renderer(window, _config);
             _player = new Player();
+            _opponent = new Opponent(null);
             _highScores = new HighScores(_config);
             _random = new Random();
             _explodingSpaces = null;
             _pendingOpponent = null;
-            _opponent = null;
             _gameState = GameState.NotPlaying;
             _sessionEnded = false;
             _musicPosition = 0;
@@ -129,8 +128,9 @@ namespace Bricker.Game
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            _player.GetRenderObjects(out Space[,] matrixGrid, out Brick holdBrick, out Brick[] nextBricks, out PlayerStats stats);
-            _renderer.DrawFrame(e, matrixGrid, holdBrick, nextBricks, stats, _highScores, _explodingSpaces, _communications, _opponent, _gameState);
+            _player.GetRenderObjects(out Space[,] playerGrid, out Brick holdBrick, out Brick[] nextBricks, out PlayerStats playerStats);
+            _opponent.GetRenderObjects(out Space[,] opponentGrid, out PlayerStats opponentStats, out string opponentName);
+            _renderer.DrawFrame(e, playerGrid, holdBrick, nextBricks, playerStats, _highScores, _explodingSpaces, _communications, opponentGrid, opponentStats, opponentName, _gameState);
         }
 
         /// <summary>
@@ -240,32 +240,26 @@ namespace Bricker.Game
                     else if (selection == MenuSelection.TwoPlayer)
                     {
                         //select discovered player from lobby
-                        NetworkPlayer player = PlayerLobbyLoop();
-                        if (player == null)
+                        NetworkPlayer pendingOpponent = PlayerLobbyLoop();
+                        if (pendingOpponent == null)
                             continue;
 
                         //request match, get response
-                        CommandResult result = OpponentInviteLoop(player, out Opponent opponent);
+                        CommandResult result = OpponentInviteLoop(pendingOpponent);
 
                         //accept?
-                        if ((result.Code == ResultCode.Accept) && (opponent != null))
+                        if (result.Code == ResultCode.Accept)
                         {
-                            lock (_opponentLock)
-                            {
-                                _pendingOpponent = null;
-                                _opponent = opponent;
-                            }
+                            _pendingOpponent = null;
+                            _opponent.SetNetworkPlayer(pendingOpponent);
                             GameLoop(newGame: true);
                         }
 
                         //reject or timeout
                         else
                         {
-                            lock (_opponentLock)
-                            {
-                                _pendingOpponent = null;
-                                _opponent = null;
-                            }
+                            _pendingOpponent = null;
+                            _opponent.SetNetworkPlayer(null);
                         }
                     }
 
@@ -364,7 +358,6 @@ namespace Bricker.Game
         private void GameLoop(bool newGame)
         {
             //vars
-            Opponent opponent;
             bool hit;
             bool resting = false;
             bool collision;
@@ -374,10 +367,7 @@ namespace Bricker.Game
             if (newGame)
             {
                 _player.Reset();
-                lock (_opponentLock)
-                {
-                    _opponent?.Reset();
-                }
+                _opponent.Reset();
                 _sessionEnded = false;
             }
 
@@ -390,12 +380,6 @@ namespace Bricker.Game
             //event loop
             while (true)
             {
-                //get opponent (thread safe snapshot)
-                lock (_opponentLock)
-                {
-                    opponent = _opponent?.Clone();
-                }
-
                 //return if opponent invite
                 if (_pendingOpponent != null)
                 {
@@ -530,12 +514,12 @@ namespace Bricker.Game
                 }
 
                 //two-player mode?
-                if (opponent != null)
+                if (_opponent.Exists)
                 {
                     //disconnected?
                     if (_communications.ConnectionState == ConnectionState.NotConnected)
                     {
-                        _opponent = null;
+                        _opponent.SetNetworkPlayer(null);
                         _pendingOpponent = null;
                         Sounds.Play(Sound.Error1);
                         MessageBoxLoop(new MessageProperties("Disconnected from game server."));
@@ -545,7 +529,7 @@ namespace Bricker.Game
                     //session ended?
                     if (_sessionEnded)
                     {
-                        _opponent = null;
+                        _opponent.SetNetworkPlayer(null);
                         _pendingOpponent = null;
                         Sounds.Play(Sound.Error1);
                         MessageBoxLoop(new MessageProperties("Opponent has disconnected."));
@@ -553,11 +537,11 @@ namespace Bricker.Game
                     }
 
                     //have new sent lines?
-                    if (opponent.LinesSent > opponent.LastLinesSent)
+                    if (_opponent.Stats.LinesSent > _opponent.Stats.LastLinesSent)
                     {
                         Sounds.Play(Sound.Send1);
-                        int newLines = opponent.LinesSent - opponent.LastLinesSent;
-                        opponent.SetLastLinesSent(opponent.LinesSent);
+                        int newLines = _opponent.Stats.LinesSent - _opponent.Stats.LastLinesSent;
+                        _opponent.SetLastLinesSent(_opponent.Stats.LinesSent);
                         bool gameOver = _player.AddSentLines(newLines);
                         if (gameOver)
                         {
@@ -567,7 +551,7 @@ namespace Bricker.Game
                     }
 
                     //opponent game over logic
-                    if (opponent.GameOver)
+                    if (_opponent.GameOver)
                     {
                         _gameState = GameState.GameOver_OpponentLoss;
                         break;
@@ -579,7 +563,7 @@ namespace Bricker.Game
             ExplodeSpaces();
 
             //two-player mode?
-            if (opponent != null)
+            if (_opponent.Exists)
             {
                 //clear lines sent (needed in case opponent restarts before we do)
                 _player.SetLinesSent(0);
@@ -595,7 +579,7 @@ namespace Bricker.Game
                     {
                         new TextLine(text: "Game Over!", size: 32, bottomMargin: 36),
                         new TextLine(text: $"Your score:   {_player.Stats.Score.ToString("N0")}", size: 24),
-                        new TextLine(text: $"Opponent score:   {opponent.Score.ToString("N0")}", size: 24)
+                        new TextLine(text: $"Opponent score:   {_opponent.Stats.Score.ToString("N0")}", size: 24)
                     }));
             }
 
@@ -1050,10 +1034,9 @@ namespace Bricker.Game
         /// <summary>
         /// Sends invite to server, waits for opponent response, returns result.
         /// </summary>
-        private CommandResult OpponentInviteLoop(NetworkPlayer player, out Opponent opponent)
+        private CommandResult OpponentInviteLoop(NetworkPlayer player)
         {
             CommandResult result = new CommandResult(ResultCode.Unspecified);
-            opponent = null;
             try
             {
                 //show message
@@ -1064,8 +1047,6 @@ namespace Bricker.Game
 
                 //send invite and wait
                 result = _communications.InviteOpponent(player);
-                if (result.Code == ResultCode.Accept)
-                    opponent = new Opponent(player);
             }
             finally
             {
@@ -1118,7 +1099,7 @@ namespace Bricker.Game
             {
                 //connect, send rejection, disconnect
                 _communications.RejectInvite(pendingOpponent);
-                _opponent = null;
+                _opponent.SetNetworkPlayer(null);
                 _pendingOpponent = null;
                 return;
             }
@@ -1127,13 +1108,13 @@ namespace Bricker.Game
             bool success = _communications.AcceptInvite(pendingOpponent);
             if (!success)
             {
-                _opponent = null;
+                _opponent.SetNetworkPlayer(null);
                 _pendingOpponent = null;
                 return;
             }
 
             //set opponent
-            _opponent = new Opponent(pendingOpponent);
+            _opponent.SetNetworkPlayer(pendingOpponent);
             _pendingOpponent = null;
 
             //run new game loop
@@ -1542,7 +1523,7 @@ namespace Bricker.Game
                 Sounds.Play(Sound.Clear1);
 
                 //increment lines
-                bool levelUp = _player.IncrementLines(rows.Count);
+                bool levelUp = _player.IncrementLinesAndLevel(rows.Count);
 
                 //play sound?
                 if (levelUp)
