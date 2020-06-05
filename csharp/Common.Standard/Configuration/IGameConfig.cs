@@ -19,8 +19,8 @@ namespace Common.Standard.Configuration
 
         bool Music { get; set; }
         bool SoundEffects { get; set; }
-        bool Ghost { get; set; }
-        bool Background { get; set; }
+        bool ShowGhost { get; set; }
+        bool ShowBackground { get; set; }
         bool HighFrameRate { get; set; }
         bool AntiAlias { get; set; }
         bool Debug { get; set; }

@@ -101,7 +101,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Audio\Sounds.cs" />
-    <Compile Include="Game\GameState.cs" />
+    <Compile Include="Game\HighScores.cs" />
+    <Compile Include="Game\Player.cs" />
+    <Compile Include="Game\PlayerStats.cs" />
     <Compile Include="Game\Space.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Game\Main.cs" />
@@ -128,8 +130,6 @@
     </Compile>
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Game\Brick.cs" />
-    <Compile Include="Game\GameStats.cs" />
-    <Compile Include="Game\Matrix.cs" />
     <Compile Include="Game\MenuSelection.cs" />
     <Compile Include="Game\Opponent.cs" />
     <Compile Include="MainWindow.xaml.cs">

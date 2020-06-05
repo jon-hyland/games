@@ -32,10 +32,10 @@ namespace Bricker.Configuration
 
         public bool Music { get; set; }
         public bool SoundEffects { get; set; }
-        public bool Ghost { get; set; }
+        public bool ShowGhost { get; set; }
         public bool AntiAlias { get; set; }
         public bool HighFrameRate { get; set; }
-        public bool Background { get; set; }
+        public bool ShowBackground { get; set; }
         public bool Debug { get; set; }
         public string Initials { get; private set; }
 
@@ -61,8 +61,8 @@ namespace Bricker.Configuration
 
             Music = JsonParse.GetBoolean(data.audio.music);
             SoundEffects = JsonParse.GetBoolean(data.audio.effects);
-            Ghost = JsonParse.GetBoolean(data.display.ghost);
-            Background = JsonParse.GetBoolean(data.display.background);
+            ShowGhost = JsonParse.GetBoolean(data.display.ghost);
+            ShowBackground = JsonParse.GetBoolean(data.display.background);
             HighFrameRate = JsonParse.GetBoolean(data.performance.highFrameRate);
             AntiAlias = JsonParse.GetBoolean(data.performance.antiAlias);
             ImageFolder = JsonParse.GetString(data.display.imageFolder, null) ?? ImageFolder;

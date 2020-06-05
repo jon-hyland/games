@@ -127,7 +127,9 @@ namespace Bricker.Rendering
         /// <summary>
         /// Renders a new frame.
         /// </summary>
-        public void DrawFrame(SKPaintSurfaceEventArgs e, Space[,] matrixGrid, Brick holdBrick, Brick[] nextBricks, GameStats stats, List<ExplodingSpace> spaces, GameCommunications communications, Opponent opponent, GameState gameState)
+        public void DrawFrame(SKPaintSurfaceEventArgs e, Space[,] matrixGrid, Brick holdBrick, Brick[] nextBricks,
+            PlayerStats stats, HighScores highScores, List<ExplodingSpace> spaces, GameCommunications communications,
+            Opponent opponent, GameState gameState)
         {
             try
             {
@@ -180,7 +182,7 @@ namespace Bricker.Rendering
                 _fps.Increment();
 
                 //background
-                DrawBackground(frame, stats);
+                DrawBackground(frame, stats.Level);
 
                 //game matrix
                 DrawMatrix(frame, matrixGrid);
@@ -204,16 +206,16 @@ namespace Bricker.Rendering
                 DrawControls(frame, opponent);
 
                 //level
-                DrawLevel(frame, stats);
+                DrawLevel(frame, stats.Level);
 
                 //lines
-                DrawLines(frame, stats);
+                DrawLines(frame, stats.Lines);
 
                 //current score
-                DrawScore(frame, stats);
+                DrawScore(frame, stats.Score);
 
                 //high scores
-                DrawHighScores(frame, stats);
+                DrawHighScores(frame, highScores);
 
                 //menu
                 DrawMenu(frame);
@@ -231,7 +233,7 @@ namespace Bricker.Rendering
                 DrawLobbyMenu(frame);
 
                 //debug info
-                DrawDebugInfo(frame, communications, gameState, stats, opponent);
+                DrawDebugInfo(frame, communications, gameState, stats.LinesSent, opponent);
             }
             catch (Exception ex)
             {
@@ -577,7 +579,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws current level readout.
         /// </summary>
-        private void DrawLevel(Surface frame, GameStats stats)
+        private void DrawLevel(Surface frame, int level)
         {
             double width = 210;
             double height = 80;
@@ -586,7 +588,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Left(_primaryWhite, "level", 28, 0);
-                surface.DrawText_Right(_primaryWhite, stats.Level.ToString("N0"), 42, space);
+                surface.DrawText_Right(_primaryWhite, level.ToString("N0"), 42, space);
                 frame.Blit(surface, _level_XCenter - (width / 2), _level_YCenter - (height / 2));
             }
         }
@@ -594,7 +596,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws current lines readout.
         /// </summary>
-        private void DrawLines(Surface frame, GameStats stats)
+        private void DrawLines(Surface frame, int lines)
         {
             double width = 210;
             double height = 80;
@@ -603,7 +605,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Left(_primaryWhite, "lines", 28, 0);
-                surface.DrawText_Right(_primaryWhite, stats.Lines.ToString("N0"), 42, space);
+                surface.DrawText_Right(_primaryWhite, lines.ToString("N0"), 42, space);
                 frame.Blit(surface, _lines_XCenter - (width / 2), _lines_YCenter - (height / 2));
             }
         }
@@ -611,7 +613,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws current score readout.
         /// </summary>
-        private void DrawScore(Surface frame, GameStats stats)
+        private void DrawScore(Surface frame, int score)
         {
             double width = 210;
             double height = 80;
@@ -620,7 +622,7 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Left(_primaryWhite, "score", 28, 0);
-                surface.DrawText_Right(_primaryWhite, stats.Score.ToString("N0"), 42, space);
+                surface.DrawText_Right(_primaryWhite, score.ToString("N0"), 42, space);
                 frame.Blit(surface, _score_XCenter - (width / 2), _score_YCenter - (height / 2));
             }
         }
@@ -628,7 +630,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws high scores readout.
         /// </summary>
-        private void DrawHighScores(Surface frame, GameStats stats)
+        private void DrawHighScores(Surface frame, HighScores highScores)
         {
             double width = 210;
             double height = 286;
@@ -638,9 +640,9 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Left(_primaryWhite, "high scores", 28, 0);
-                for (int i = 0; i < stats.HighScores.Count; i++)
+                for (int i = 0; i < highScores.Scores.Count; i++)
                 {
-                    HighScore score = stats.HighScores[i];
+                    HighScore score = highScores.Scores[i];
                     surface.DrawText_Left(_primaryWhite, score.Initials, 18, titleSpacing + (lineSpacing * i), 10);
                     surface.DrawText_Right(_primaryWhite, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
                 }
@@ -975,7 +977,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws fps readout.
         /// </summary>
-        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState, GameStats stats, Opponent opponent)
+        private void DrawDebugInfo(Surface frame, GameCommunications communications, GameState gameState, int linesSent, Opponent opponent)
         {
             if (!GameConfig.Instance.Debug)
                 return;
@@ -992,7 +994,7 @@ namespace Bricker.Rendering
                 lines.Add($"com_state:   {communications.ConnectionState}");
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
-            lines.Add($"lines_sent:    {stats.LinesSent}");
+            lines.Add($"lines_sent:    {linesSent}");
             lines.Add($"opp_last_lines_sent:    {opponent.LastLinesSent}");
             lines.Add($"opp_lines_sent:    {opponent.LinesSent}");
 
@@ -1003,15 +1005,15 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws the background.
         /// </summary>
-        private void DrawBackground(Surface frame, GameStats stats)
+        private void DrawBackground(Surface frame, int level)
         {
-            if (!GameConfig.Instance.Background)
+            if (!GameConfig.Instance.ShowBackground)
                 return;
 
             DateTime now = DateTime.Now;
             foreach (ITile tile in _tiles)
             {
-                tile.Move(now, stats.Level);
+                tile.Move(now, level);
                 using (Surface surface = new Surface(tile.Width, tile.Height, tile.Color))
                 {
                     if ((tile is ImageTile t) && (t.Image != null))

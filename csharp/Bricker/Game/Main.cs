@@ -34,20 +34,18 @@ namespace Bricker.Game
         private Thread _sendStatusThread;
         private readonly Config _config;
         private readonly Logger _logger;
+        private readonly Player _player;
         private readonly GameCommunications _communications;
         private readonly Renderer _renderer;
-        private readonly Matrix _matrix;
+        private readonly HighScores _highScores;
         private readonly Random _random;
-        private GameStats _stats;
         private List<ExplodingSpace> _explodingSpaces;
-        private readonly double[] _levelDropIntervals;
         private NetworkPlayer _pendingOpponent;
         private Opponent _opponent;
         private GameState _gameState;
         private bool _sessionEnded;
         private static long _musicPosition;
-        private readonly object _playerLock;
-        private readonly object _opponentLock;
+        private readonly object _opponentLock = new object();
 
         //public
         public Config Config => _config;
@@ -68,18 +66,15 @@ namespace Bricker.Game
             _logger = new Logger(_config.LogFile);
             _communications = new GameCommunications(_config, _config.Initials);
             _renderer = new Renderer(window, _config);
-            _matrix = new Matrix();
+            _player = new Player();
+            _highScores = new HighScores(_config);
             _random = new Random();
-            _stats = new GameStats(_config);
             _explodingSpaces = null;
-            _levelDropIntervals = new double[10];
             _pendingOpponent = null;
             _opponent = null;
             _gameState = GameState.NotPlaying;
             _sessionEnded = false;
             _musicPosition = 0;
-            _playerLock = new object();
-            _opponentLock = new object();
 
             //ui
             _window.Title = $"Bricker v{_config.DisplayVersion}";
@@ -102,14 +97,6 @@ namespace Bricker.Game
 
             //run tests (usually does nothing)
             RunTests();
-
-            //calculate level drop intervals
-            double interval = 2000;
-            for (int i = 0; i < 10; i++)
-            {
-                interval *= 0.8;
-                _levelDropIntervals[i] = interval;
-            }
         }
 
         #endregion
@@ -142,17 +129,8 @@ namespace Bricker.Game
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e)
         {
-            Space[,] matrixGrid;
-            Brick holdBrick;
-            Brick[] nextBricks;
-            lock (_playerLock)
-            {
-                matrixGrid = _matrix.GetGrid(includeBrick: true, includeGhost: GameConfig.Instance.Ghost);
-                holdBrick = _matrix.GetHold();
-                nextBricks = _matrix.GetNextBricks();
-            }
-
-            _renderer.DrawFrame(e, matrixGrid, holdBrick, nextBricks, _stats, _explodingSpaces, _communications, _opponent, _gameState);
+            _player.GetRenderObjects(out Space[,] matrixGrid, out Brick holdBrick, out Brick[] nextBricks, out PlayerStats stats);
+            _renderer.DrawFrame(e, matrixGrid, holdBrick, nextBricks, stats, _highScores, _explodingSpaces, _communications, _opponent, _gameState);
         }
 
         /// <summary>
@@ -307,7 +285,7 @@ namespace Bricker.Game
                             new SettingsItem(
                                 onCaption: "Ghost On",
                                 offCaption: "Ghost Off",
-                                _config.Ghost),
+                                _config.ShowGhost),
                             new SettingsItem(
                                 onCaption: "Frame Rate High",
                                 offCaption: "Frame Rate Low",
@@ -315,7 +293,7 @@ namespace Bricker.Game
                             new SettingsItem(
                                 onCaption: "Background On",
                                 offCaption: "Background Off",
-                                _config.Background),
+                                _config.ShowBackground),
                             new SettingsItem(
                                 onCaption: "Debug Mode On",
                                 offCaption: "Debug Mode Off",
@@ -334,13 +312,13 @@ namespace Bricker.Game
                                     Sounds.Reset();
                                     break;
                                 case 2:
-                                    _config.Ghost = v;
+                                    _config.ShowGhost = v;
                                     break;
                                 case 3:
                                     _config.HighFrameRate = v;
                                     break;
                                 case 4:
-                                    _config.Background = v;
+                                    _config.ShowBackground = v;
                                     break;
                                 case 5:
                                     _config.Debug = v;
@@ -395,16 +373,12 @@ namespace Bricker.Game
             //new game?
             if (newGame)
             {
-                lock (_playerLock)
+                _player.Reset();
+                lock (_opponentLock)
                 {
-                    _stats = new GameStats(_config);
-                    _matrix.NewGame();
-                    lock (_opponentLock)
-                    {
-                        _opponent?.Reset();
-                    }
-                    _sessionEnded = false;
+                    _opponent?.Reset();
                 }
+                _sessionEnded = false;
             }
 
             //set flag
@@ -505,20 +479,20 @@ namespace Bricker.Game
                     else if ((key == Key.PageUp) && (_config.Debug))
                     {
                         Sounds.Play(Sound.LevelUp1);
-                        _stats.SetLevel(_stats.Level + 1);
+                        _player.SetLevel(_player.Stats.Level + 1);
                     }
 
                     //level down
                     else if ((key == Key.PageDown) && (_config.Debug))
                     {
                         Sounds.Play(Sound.LevelUp1);
-                        _stats.SetLevel(_stats.Level - 1);
+                        _player.SetLevel(_player.Stats.Level - 1);
                     }
 
                     //background
                     else if (key == Key.B)
                     {
-                        _config.Background = !_config.Background;
+                        _config.ShowBackground = !_config.ShowBackground;
                     }
 
                     //debug
@@ -608,7 +582,7 @@ namespace Bricker.Game
             if (opponent != null)
             {
                 //clear lines sent (needed in case opponent restarts before we do)
-                _stats.SetLinesSent(0);
+                _player.SetLinesSent(0);
 
                 //if it's local player that finished, send game over to opponent
                 //sends game status one last time, and receives one last status
@@ -620,17 +594,17 @@ namespace Bricker.Game
                     new TextLine[]
                     {
                         new TextLine(text: "Game Over!", size: 32, bottomMargin: 36),
-                        new TextLine(text: $"Your score:   {_stats.Score.ToString("N0")}", size: 24),
+                        new TextLine(text: $"Your score:   {_player.Stats.Score.ToString("N0")}", size: 24),
                         new TextLine(text: $"Opponent score:   {opponent.Score.ToString("N0")}", size: 24)
                     }));
             }
 
             //high score?
-            if (_stats.IsHighScore())
+            if (_highScores.IsHighScore(_player.Stats.Score))
             {
                 string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
                 if (!String.IsNullOrWhiteSpace(initials))
-                    _stats.AddHighScore(initials);
+                    _highScores.AddHighScore(initials, _player.Stats.Score);
 
             }
         }
@@ -706,7 +680,7 @@ namespace Bricker.Game
                     //background
                     else if (key == Key.B)
                     {
-                        _config.Background = !_config.Background;
+                        _config.ShowBackground = !_config.ShowBackground;
                     }
 
                     //debug
@@ -788,7 +762,7 @@ namespace Bricker.Game
                     //background
                     else if (key == Key.B)
                     {
-                        _config.Background = !_config.Background;
+                        _config.ShowBackground = !_config.ShowBackground;
                     }
 
                     //debug
@@ -1188,7 +1162,7 @@ namespace Bricker.Game
                         return;
 
                     //encode final game status (our version)
-                    byte[] bytes = GameStatusToBytes(_matrix, _stats);
+                    byte[] bytes = GameStatusToBytes();
 
                     //send game-over command request
                     result = _communications.SendCommandRequest(opponent.NetworkPlayer.IP, CommandType.GameOver, bytes, TimeSpan.FromSeconds(1));
@@ -1257,7 +1231,7 @@ namespace Bricker.Game
                     return;
 
                 //serialize data                
-                byte[] bytes = GameStatusToBytes(_matrix, _stats);
+                byte[] bytes = GameStatusToBytes();
 
                 //send data packet
                 _communications.SendData(destinationIP, bytes);
@@ -1271,11 +1245,12 @@ namespace Bricker.Game
         /// <summary>
         /// Serializes game matrix and stats into game status bytes (to send to opponent).
         /// </summary>
-        private byte[] GameStatusToBytes(Matrix matrix, GameStats stats)
+        private byte[] GameStatusToBytes()
         {
-            //copy matrix, add live brick
-            Space[,] matrixGrid = matrix.GetGrid(includeBrick: true, includeGhost: _config.Ghost);
-            byte[,] matrixBytes = Matrix.SpacesToBytes(matrixGrid);
+            //get safe objects
+            _player.GetRenderObjects(out Space[,] matrixGrid, out _, out _, out PlayerStats stats);
+
+            byte[,] matrixBytes = SpacesToBytes(matrixGrid);
 
             //serialize data                
             PacketBuilder builder = new PacketBuilder();
@@ -1325,7 +1300,7 @@ namespace Bricker.Game
                 //deserialize data
                 PacketParser parser = new PacketParser(bytes);
                 byte[,] matrixBytes = parser.GetBytes2D();
-                Space[,] matrixGrid = Matrix.BytesToSpaces(matrixBytes);
+                Space[,] matrixGrid = BytesToSpaces(matrixBytes);
                 int level = parser.GetUInt16();
                 int lines = parser.GetUInt16();
                 int score = parser.GetUInt16();
@@ -1363,7 +1338,7 @@ namespace Bricker.Game
                             type: CommandType.GameOver,
                             sequence: packet.Sequence,
                             code: ResultCode.Accept,
-                            data: GameStatusToBytes(_matrix, _stats));
+                            data: GameStatusToBytes());
                         break;
 
                     //session end
@@ -1423,6 +1398,54 @@ namespace Bricker.Game
 
         #endregion
 
+        #region Byte Conversion
+
+        /// <summary>
+        /// Converts 2D array of spaces to 2D array of bytes.
+        /// </summary>
+        private static byte[,] SpacesToBytes(Space[,] grid)
+        {
+            byte[,] bytes = new byte[grid.GetLength(0), grid.GetLength(1)];
+            SpacesToBytes(grid, bytes);
+            return bytes;
+        }
+
+        /// <summary>
+        /// Converts 2D array of spaces to 2D array of bytes.
+        /// </summary>
+        private static void SpacesToBytes(Space[,] grid, byte[,] bytes)
+        {
+            if ((bytes.GetLength(0) != grid.GetLength(0)) || (bytes.GetLength(1) != grid.GetLength(1)))
+                throw new Exception("Invalid array length");
+            for (int x = 0; x < grid.GetLength(0); x++)
+                for (int y = 0; y < grid.GetLength(1); y++)
+                    bytes[x, y] = (byte)grid[x, y];
+        }
+
+        /// <summary>
+        /// Converts 2D array of bytes to 2D array of spaces.
+        /// </summary>
+        private static Space[,] BytesToSpaces(byte[,] bytes)
+        {
+            Space[,] grid = new Space[bytes.GetLength(0), bytes.GetLength(1)];
+            BytesToSpaces(bytes, grid);
+            return grid;
+        }
+
+        /// <summary>
+        /// Converts 2D array of bytes to 2D array of spaces.
+        /// </summary>
+        private static void BytesToSpaces(byte[,] bytes, Space[,] grid)
+        {
+            if ((bytes.GetLength(0) != grid.GetLength(0)) || (bytes.GetLength(1) != grid.GetLength(1)))
+                throw new Exception("Invalid array length");
+            for (int x = 0; x < bytes.GetLength(0); x++)
+                for (int y = 0; y < bytes.GetLength(1); y++)
+                    grid[x, y] = (Space)bytes[x, y];
+        }
+
+        #endregion
+
         #region Brick Logic
 
         /// <summary>
@@ -1430,7 +1453,7 @@ namespace Bricker.Game
         /// </summary>
         private void MoveBrickLeft(out bool moved, out bool resting)
         {
-            _matrix.MoveBrickLeft(out moved, out resting);
+            _player.MoveBrickLeft(out moved, out resting);
         }
 
         /// <summary>
@@ -1438,7 +1461,7 @@ namespace Bricker.Game
         /// </summary>
         private void MoveBrickRight(out bool moved, out bool resting)
         {
-            _matrix.MoveBrickRight(out moved, out resting);
+            _player.MoveBrickRight(out moved, out resting);
         }
 
         /// <summary>
@@ -1446,9 +1469,9 @@ namespace Bricker.Game
         /// </summary>
         private void MoveBrickDown(out bool hit, out bool resting)
         {
-            _matrix.MoveBrickDown(out hit, out resting);
+            _player.MoveBrickDown(out hit, out resting);
             if (hit)
-                _stats.IncrementScore(1);
+                _player.IncrementScore(1);
         }
 
         /// <summary>
@@ -1456,7 +1479,7 @@ namespace Bricker.Game
         /// </summary>
         private void RotateBrick(out bool resting)
         {
-            _matrix.RotateBrick(out resting);
+            _player.RotateBrick(out resting);
         }
 
         /// <summary>
@@ -1464,7 +1487,7 @@ namespace Bricker.Game
         /// </summary>
         private void HoldBrick(out bool collision, out bool resting)
         {
-            _matrix.HoldBrick(out collision, out resting);
+            _player.HoldBrick(out collision, out resting);
         }
 
         /// <summary>
@@ -1489,7 +1512,7 @@ namespace Bricker.Game
                         break;
                 }
             }
-            _stats.IncrementScore(2);
+            _player.IncrementScore(2);
         }
 
         /// <summary>
@@ -1497,17 +1520,7 @@ namespace Bricker.Game
         /// </summary>
         private bool IsDropTime(bool resting, bool moveAfterResting)
         {
-            Brick brick = _matrix.GetBrick();
-            if (brick != null)
-            {
-                double dropIntervalMs = _levelDropIntervals[_stats.Level - 1];
-                if (resting && moveAfterResting)
-                    dropIntervalMs *= 2;
-                double elapsedMs = (DateTime.Now - brick.LastDropTime).TotalMilliseconds;
-                bool dropTime = elapsedMs >= dropIntervalMs;
-                return dropTime;
-            }
-            return false;
+            return _player.IsBrickDropTime(resting, moveAfterResting);
         }
 
         /// <summary>
@@ -1517,10 +1530,10 @@ namespace Bricker.Game
         private bool BrickHit()
         {
             //add brick to matrix
-            _matrix.AddBrickToMatrix();
+            _player.AddBrickToMatrix();
 
             //identify any solid rows
-            List<int> rows = _matrix.IdentifySolidRows();
+            List<int> rows = _player.IdentifySolidRows();
 
             //have rows?
             if (rows.Count > 0)
@@ -1529,7 +1542,7 @@ namespace Bricker.Game
                 Sounds.Play(Sound.Clear1);
 
                 //increment lines
-                bool levelUp = _stats.IncrementLines(rows.Count);
+                bool levelUp = _player.IncrementLines(rows.Count);
 
                 //play sound?
                 if (levelUp)
@@ -1559,11 +1572,11 @@ namespace Bricker.Game
                         linesToSend = 0;
                         break;
                 }
-                if (!_config.Ghost)
+                if (!_config.ShowGhost)
                     points = (int)(points * 1.2);
 
                 //increment score
-                _stats.IncrementScore(points);
+                _player.IncrementScore(points);
 
                 //animation + matrix change
                 //todo: add send lines animations
@@ -1574,12 +1587,12 @@ namespace Bricker.Game
                 if (linesToSend > 0)
                 {
                     Sounds.Play(Sound.Send1);
-                    _stats.IncrementLinesSent(linesToSend);
+                    _player.IncrementLinesSent(linesToSend);
                 }
             }
 
             //collision?
-            bool collision = _matrix.SpawnBrick();
+            bool collision = _player.SpawnBrick();
             return collision;
         }
 
@@ -1602,7 +1615,7 @@ namespace Bricker.Game
                     if ((x < 1) || (x > 10))
                         break;
                     foreach (int y in rowsToErase)
-                        _matrix[x, y] = Space.Empty;
+                        _player[x, y] = Space.Empty;
                 }
             }
         }
@@ -1628,7 +1641,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, row].IsSolid())
+                    if (_player[x, row].IsSolid())
                     {
                         empty = false;
                         break;
@@ -1648,7 +1661,7 @@ namespace Bricker.Game
                 bool empty = true;
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, row].IsSolid())
+                    if (_player[x, row].IsSolid())
                     {
                         empty = false;
                         break;
@@ -1664,9 +1677,9 @@ namespace Bricker.Game
                 return false;
             for (int y = bottomEmptyRow; y > 1; y--)
                 for (int x = 1; x <= 10; x++)
-                    _matrix[x, y] = _matrix[x, y - 1];
+                    _player[x, y] = _player[x, y - 1];
             for (int x = 1; x <= 10; x++)
-                _matrix[x, 1] = Space.Empty;
+                _player[x, 1] = Space.Empty;
             return true;
         }
 
@@ -1684,14 +1697,14 @@ namespace Bricker.Game
             {
                 for (int x = 1; x <= 10; x++)
                 {
-                    if (_matrix[x, y].IsSolid())
+                    if (_player[x, y].IsSolid())
                     {
                         int newY = y - newLines;
                         if (newY > 0)
-                            _matrix[x, newY] = _matrix[x, y];
+                            _player[x, newY] = _player[x, y];
                         else
                             outBounds = true;
-                        _matrix[x, y] = Space.Sent;
+                        _player[x, y] = Space.Sent;
                     }
                 }
             }
@@ -1711,7 +1724,7 @@ namespace Bricker.Game
                     if ((xx < 1) || (xx > 10))
                         break;
                     for (int y = 20; y > 20 - newLines; y--)
-                        _matrix[xx, y] = (xx != gapIndex ? Space.Sent : Space.Empty);
+                        _player[xx, y] = (xx != gapIndex ? Space.Sent : Space.Empty);
                 }
             }
 
@@ -1733,17 +1746,17 @@ namespace Bricker.Game
                 Sounds.Play(Sound.Explode3);
 
                 List<ExplodingSpace> spaces = new List<ExplodingSpace>();
-                _matrix.AddBrickToMatrix();
+                _player.AddBrickToMatrix();
                 for (int x = 1; x <= 10; x++)
                 {
                     for (int y = 1; y <= 20; y++)
                     {
-                        if (_matrix[x, y].IsSolid())
+                        if (_player[x, y].IsSolid())
                         {
                             double spaceX = (((x - 1) * 33) + 2) + ((_renderer.FrameWidth - 333) / 2) - 1;
                             double spaceY = (((y - 1) * 33) + 2) + ((_renderer.FrameHeight - 663) / 2) - 1;
-                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.SpaceToColor(_matrix[x, y])));
-                            _matrix[x, y] = Space.Empty;
+                            spaces.Add(new ExplodingSpace(spaceX, spaceY, Brick.SpaceToColor(_player[x, y])));
+                            _player[x, y] = Space.Empty;
                         }
                     }
                 }
@@ -1857,5 +1870,17 @@ namespace Bricker.Game
 
         #endregion
 
+    }
+
+    /// <summary>
+    /// Represents the run state of the game.
+    /// </summary>
+    public enum GameState
+    {
+        NotPlaying,
+        GameLive,
+        GamePaused,
+        GameOver,
+        GameOver_OpponentLoss
     }
 }
