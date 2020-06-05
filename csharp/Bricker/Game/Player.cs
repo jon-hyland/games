@@ -248,7 +248,7 @@ namespace Bricker.Game
                                 _grid[x, newY] = _grid[x, y];
                             else
                                 outBounds = true;
-                            _grid[x, y] = Space.Sent;
+                            _grid[x, y] = Space.Empty;
                         }
                     }
                 }
