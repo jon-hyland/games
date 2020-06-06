@@ -19,7 +19,8 @@ namespace Common.Standard.Networking
         public TimeSpan TimeSinceLastHeartbeat => DateTime.Now - LastHeartbeat;
         public int InviteSequence { get; set; }
         public bool QuitGame { get; set; }
-        public int UniqueKey { get; }
+        public int PlayerKey { get; }
+        public int GameKey { get; }
 
         /// <summary>
         /// Class constructor.
@@ -34,7 +35,8 @@ namespace Common.Standard.Networking
             LastHeartbeat = DateTime.Now;
             InviteSequence = inviteSequence;
             QuitGame = false;
-            UniqueKey = $"{IP}|{GameTitle}|{GameVersion}".GetHashCode();
+            PlayerKey = $"{IP}|{GameTitle}|{GameVersion}".GetHashCode();
+            GameKey = $"{GameTitle}|{GameVersion}".GetHashCode();
         }
 
         /// <summary>

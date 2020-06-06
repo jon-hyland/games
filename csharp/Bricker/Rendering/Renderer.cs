@@ -4,6 +4,7 @@ using Bricker.Rendering.Properties;
 using Bricker.Rendering.Tiles;
 using Common.Standard.Configuration;
 using Common.Standard.Error;
+using Common.Standard.Game;
 using Common.Standard.Networking;
 using Common.Standard.Utilities;
 using Common.Windows.Rendering;
@@ -128,7 +129,7 @@ namespace Bricker.Rendering
         /// Renders a new frame.
         /// </summary>
         public void DrawFrame(SKPaintSurfaceEventArgs e, Space[,] playerGrid, Brick holdBrick, Brick[] nextBricks,
-            PlayerStats playerStats, HighScores highScores, List<ExplodingSpace> spaces, GameCommunications communications,
+            PlayerStats playerStats, IReadOnlyList<HighScore> highScores, List<ExplodingSpace> spaces, GameCommunications communications,
             Space[,] opponentGrid, PlayerStats opponentStats, string opponentName, GameState gameState)
         {
             try
@@ -630,7 +631,7 @@ namespace Bricker.Rendering
         /// <summary>
         /// Draws high scores readout.
         /// </summary>
-        private void DrawHighScores(Surface frame, HighScores highScores)
+        private void DrawHighScores(Surface frame, IReadOnlyList<HighScore> highScores)
         {
             double width = 210;
             double height = 286;
@@ -640,9 +641,9 @@ namespace Bricker.Rendering
             using (Surface surface = new Surface(width, height))
             {
                 surface.DrawText_Left(_primaryWhite, "high scores", 28, 0);
-                for (int i = 0; i < highScores.Scores.Count; i++)
+                for (int i = 0; i < highScores.Count; i++)
                 {
-                    HighScore score = highScores.Scores[i];
+                    HighScore score = highScores[i];
                     surface.DrawText_Left(_primaryWhite, score.Initials, 18, titleSpacing + (lineSpacing * i), 10);
                     surface.DrawText_Right(_primaryWhite, score.Score.ToString("N0"), 18, titleSpacing + (lineSpacing * i), 10);
                 }
@@ -995,8 +996,8 @@ namespace Bricker.Rendering
             }
             lines.Add($"errors:   {ErrorHandler.ErrorCount}");
             lines.Add($"lines_sent:    {playerStats.LinesSent}");
-            lines.Add($"opp_last_lines_sent:    {opponentStats.LastLinesSent}");
-            lines.Add($"opp_lines_sent:    {opponentStats.LinesSent}");
+            lines.Add($"opp_last_lines_sent:    {opponentStats?.LastLinesSent ?? 0}");
+            lines.Add($"opp_lines_sent:    {opponentStats?.LinesSent ?? 0}");
 
             using (Surface surface = Surface.RenderText(Colors.White, lines, 12))
                 frame.Blit(surface, 35, 25);

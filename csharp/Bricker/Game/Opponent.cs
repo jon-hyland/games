@@ -16,7 +16,6 @@ namespace Bricker.Game
 
         //public
         public NetworkPlayer NetworkPlayer => _networkPlayer;
-        //public Space[,] Grid => _grid;
         public PlayerStats Stats => _stats;
         public bool GameOver => _gameOver;
         public bool Exists => _networkPlayer != null;

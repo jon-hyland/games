@@ -6,6 +6,7 @@ using Bricker.Rendering.Properties;
 using Common.Standard.Configuration;
 using Common.Standard.Error;
 using Common.Standard.Extensions;
+using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
@@ -67,7 +68,7 @@ namespace Bricker.Game
             _renderer = new Renderer(window, _config);
             _player = new Player();
             _opponent = new Opponent(null);
-            _highScores = new HighScores(_config);
+            _highScores = new HighScores(10, null, _config.HighScoreFile);
             _random = new Random();
             _explodingSpaces = null;
             _pendingOpponent = null;
@@ -130,7 +131,8 @@ namespace Bricker.Game
         {
             _player.GetRenderObjects(out Space[,] playerGrid, out Brick holdBrick, out Brick[] nextBricks, out PlayerStats playerStats);
             _opponent.GetRenderObjects(out Space[,] opponentGrid, out PlayerStats opponentStats, out string opponentName);
-            _renderer.DrawFrame(e, playerGrid, holdBrick, nextBricks, playerStats, _highScores, _explodingSpaces, _communications, opponentGrid, opponentStats, opponentName, _gameState);
+            IReadOnlyList<HighScore> highScores = _highScores.GetScores();
+            _renderer.DrawFrame(e, playerGrid, holdBrick, nextBricks, playerStats, highScores, _explodingSpaces, _communications, opponentGrid, opponentStats, opponentName, _gameState);
         }
 
         /// <summary>
@@ -410,7 +412,7 @@ namespace Bricker.Game
                     {
                         Sounds.Play(Sound.Click1);
                         bool restingBefore = resting;
-                        MoveBrickLeft(out bool moved, out resting);
+                        _player.MoveBrickLeft(out bool moved, out resting);
                         moveAfterResting = moved && restingBefore;
                     }
 
@@ -419,7 +421,7 @@ namespace Bricker.Game
                     {
                         Sounds.Play(Sound.Click1);
                         bool restingBefore = resting;
-                        MoveBrickRight(out bool moved, out resting);
+                        _player.MoveBrickRight(out bool moved, out resting);
                         moveAfterResting = moved && restingBefore;
                     }
 
@@ -428,7 +430,9 @@ namespace Bricker.Game
                     {
                         Sounds.Play(Sound.Click1);
                         moveAfterResting = resting;
-                        MoveBrickDown(out hit, out resting);
+                        _player.MoveBrickDown(out hit, out resting);
+                        if (hit)
+                            _player.IncrementScore(1);
                     }
 
                     //rotate
@@ -436,7 +440,7 @@ namespace Bricker.Game
                     {
                         Sounds.Play(Sound.Click1);
                         moveAfterResting = resting;
-                        RotateBrick(out resting);
+                        _player.RotateBrick(out resting);
                     }
 
                     //drop
@@ -449,7 +453,7 @@ namespace Bricker.Game
                     //hold
                     else if (key == Key.C)
                     {
-                        HoldBrick(out collision, out resting);
+                        _player.HoldBrick(out collision, out resting);
                     }
 
                     //menu
@@ -487,10 +491,12 @@ namespace Bricker.Game
                 }
 
                 //drop brick timer?
-                if (IsDropTime(resting, moveAfterResting))
+                if (_player.IsBrickDropTime(resting, moveAfterResting))
                 {
                     moveAfterResting = false;
-                    MoveBrickDown(out hit, out resting);
+                    _player.MoveBrickDown(out hit, out resting);
+                    if (hit)
+                        _player.IncrementScore(1);
                 }
 
                 //hit bottom?
@@ -728,8 +734,8 @@ namespace Bricker.Game
                         props.IncrementSelection();
                     }
 
-                    //enter
-                    else if (key == Key.Enter)
+                    //enter / space
+                    else if ((key == Key.Enter) || (key == Key.Space))
                     {
                         Sounds.Play(Sound.Click1);
                         props.Items[props.SelectedIndex].Value = !props.Items[props.SelectedIndex].Value;
@@ -1431,48 +1437,6 @@ namespace Bricker.Game
         #region Brick Logic
 
         /// <summary>
-        /// Moves brick left.
-        /// </summary>
-        private void MoveBrickLeft(out bool moved, out bool resting)
-        {
-            _player.MoveBrickLeft(out moved, out resting);
-        }
-
-        /// <summary>
-        /// Moves brick right.
-        /// </summary>
-        private void MoveBrickRight(out bool moved, out bool resting)
-        {
-            _player.MoveBrickRight(out moved, out resting);
-        }
-
-        /// <summary>
-        /// Moves brick down.  Returns true if brick hits bottom.
-        /// </summary>
-        private void MoveBrickDown(out bool hit, out bool resting)
-        {
-            _player.MoveBrickDown(out hit, out resting);
-            if (hit)
-                _player.IncrementScore(1);
-        }
-
-        /// <summary>
-        /// Rotates brick.
-        /// </summary>
-        private void RotateBrick(out bool resting)
-        {
-            _player.RotateBrick(out resting);
-        }
-
-        /// <summary>
-        /// Swaps hold brick.  Tries to avoid a collision, but returns true (game over) if it can't.
-        /// </summary>
-        private void HoldBrick(out bool collision, out bool resting)
-        {
-            _player.HoldBrick(out collision, out resting);
-        }
-
-        /// <summary>
         /// Animates a brick dropping to bottom of screen.
         /// </summary>
         private void DropBrickToBottom()
@@ -1488,21 +1452,15 @@ namespace Bricker.Game
                 int expectedDrops = (int)Math.Round(dropsPerSecond * elapsed.TotalSeconds);
                 while (dropCount < expectedDrops)
                 {
-                    MoveBrickDown(out hit, out _);
+                    _player.MoveBrickDown(out hit, out _);
+                    if (hit)
+                        _player.IncrementScore(1);
                     dropCount++;
                     if (hit)
                         break;
                 }
             }
             _player.IncrementScore(2);
-        }
-
-        /// <summary>
-        /// Returns true if it's time for brick to drop.
-        /// </summary>
-        private bool IsDropTime(bool resting, bool moveAfterResting)
-        {
-            return _player.IsBrickDropTime(resting, moveAfterResting);
         }
 
         /// <summary>
@@ -1563,7 +1521,9 @@ namespace Bricker.Game
                 //animation + matrix change
                 //todo: add send lines animations
                 _player.EraseFilledRows(rows);
-                DropGrid();
+                Thread.Sleep(15);
+                while (_player.DropGridOnce())
+                    continue;
 
                 //increment sent lines?
                 if (linesToSend > 0)
@@ -1578,16 +1538,6 @@ namespace Bricker.Game
             return collision;
         }
 
-        /// <summary>
-        /// Drops hanging pieces to resting place.
-        /// </summary>
-        private void DropGrid()
-        {
-            Thread.Sleep(15);
-            while (_player.DropGridOnce())
-                continue;
-        }
-
         #endregion
 
         #region Exploding Spaces
@@ -1599,10 +1549,15 @@ namespace Bricker.Game
         {
             try
             {
+                //play explode sound
                 Sounds.Play(Sound.Explode3);
 
-                List<ExplodingSpace> spaces = new List<ExplodingSpace>();
+                //add final brick to matrix (if not already)
                 _player.AddBrickToMatrix();
+
+                //create exploding spaces where grid spaces were
+                //clear grid spaces
+                List<ExplodingSpace> spaces = new List<ExplodingSpace>();
                 for (int x = 1; x <= 10; x++)
                 {
                     for (int y = 1; y <= 20; y++)
@@ -1618,6 +1573,7 @@ namespace Bricker.Game
                 }
                 _explodingSpaces = spaces;
 
+                //move exploding spaces until all off screen
                 DateTime start = DateTime.Now;
                 bool haveSpaces = true;
                 while (haveSpaces)

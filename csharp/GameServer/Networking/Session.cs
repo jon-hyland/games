@@ -31,18 +31,18 @@ namespace GameServer.Networking
 
         public bool ContainsPlayer(NetworkPlayer player)
         {
-            if (Player1.UniqueKey == player.UniqueKey)
+            if (Player1.PlayerKey == player.PlayerKey)
                 return true;
-            if (Player2.UniqueKey == player.UniqueKey)
+            if (Player2.PlayerKey == player.PlayerKey)
                 return true;
             return false;
         }
 
         public bool ContainsPlayer(int playerKey)
         {
-            if (Player1.UniqueKey == playerKey)
+            if (Player1.PlayerKey == playerKey)
                 return true;
-            if (Player2.UniqueKey == playerKey)
+            if (Player2.PlayerKey == playerKey)
                 return true;
             return false;
         }
@@ -81,7 +81,7 @@ namespace GameServer.Networking
 
         public NetworkPlayer GetOpponent(NetworkPlayer player)
         {
-            if (player.UniqueKey != Player2.UniqueKey)
+            if (player.PlayerKey != Player2.PlayerKey)
                 return Player1;
             return Player2;
         }

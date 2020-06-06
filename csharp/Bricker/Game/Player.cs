@@ -170,7 +170,7 @@ namespace Bricker.Game
         }
 
         /// <summary>
-        /// Drops hanging pieces, bottom-most row.
+        /// Drops single hanging grid row, collapsing bottom-most row.  Returns true if dropped.
         /// </summary>
         public bool DropGridOnce()
         {

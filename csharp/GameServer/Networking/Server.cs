@@ -1,5 +1,6 @@
 ﻿using Common.Standard.Error;
 using Common.Standard.Extensions;
+using Common.Standard.Game;
 using Common.Standard.Logging;
 using Common.Standard.Networking;
 using Common.Standard.Networking.Packets;
@@ -27,6 +28,7 @@ namespace GameServer.Networking
         private readonly Thread _listenThread;
         private readonly SimpleTimer _timer;
         private readonly Random _random;
+        private readonly Dictionary<int, HighScores> _highScores;
 
         #region Constructor
 
@@ -47,6 +49,7 @@ namespace GameServer.Networking
             _listenThread.IsBackground = true;
             _timer = new SimpleTimer(Timer_Callback, 1000);
             _random = new Random();
+            _highScores = new Dictionary<int, HighScores>();
         }
 
         /// <summary>
@@ -121,7 +124,7 @@ namespace GameServer.Networking
             lock (_players)
             {
                 NetworkPlayer existing = _players
-                    .Where(p => p.UniqueKey == key)
+                    .Where(p => p.PlayerKey == key)
                     .FirstOrDefault();
                 return existing;
             }
@@ -134,7 +137,7 @@ namespace GameServer.Networking
         {
             lock (_players)
             {
-                NetworkPlayer existing = GetPlayerByKey(player.UniqueKey);
+                NetworkPlayer existing = GetPlayerByKey(player.PlayerKey);
 
                 if (existing != null)
                 {
@@ -157,10 +160,10 @@ namespace GameServer.Networking
 
             lock (_clientsByPlayerKey)
             {
-                if (!_clientsByPlayerKey.ContainsKey(player.UniqueKey))
-                    _clientsByPlayerKey.Add(player.UniqueKey, client);
-                else if (_clientsByPlayerKey[player.UniqueKey] != client)
-                    _clientsByPlayerKey[player.UniqueKey] = client;
+                if (!_clientsByPlayerKey.ContainsKey(player.PlayerKey))
+                    _clientsByPlayerKey.Add(player.PlayerKey, client);
+                else if (_clientsByPlayerKey[player.PlayerKey] != client)
+                    _clientsByPlayerKey[player.PlayerKey] = client;
             }
         }
 
@@ -205,8 +208,8 @@ namespace GameServer.Networking
         {
             lock (_clientsByPlayerKey)
             {
-                if (_clientsByPlayerKey.ContainsKey(player.UniqueKey))
-                    return _clientsByPlayerKey[player.UniqueKey];
+                if (_clientsByPlayerKey.ContainsKey(player.PlayerKey))
+                    return _clientsByPlayerKey[player.PlayerKey];
                 return null;
             }
         }
@@ -378,6 +381,29 @@ namespace GameServer.Networking
 
         #endregion
 
+        #region High Scores
+
+        public void AddHighScore(NetworkPlayer player, HighScore score)
+        {
+            try
+            {
+                lock (_highScores)
+                {
+                    if (!_highScores.ContainsKey(player.GameKey))
+                        _highScores.Add(player.GameKey, new HighScores(10, null, null));
+                    _highScores[player.GameKey].AddHighScore(score.Initials, score.Score);
+                    //
+                }
+
+            }
+            catch (Exception ex)
+            {
+                ErrorHandler.LogError(ex);
+            }
+        }
+
+        #endregion
+
         #region Incoming Packets
 
         /// <summary>
@@ -451,7 +477,7 @@ namespace GameServer.Networking
 
                 //get list of connected players (not source player)
                 List<NetworkPlayer> otherPlayers = GetMatchingPlayers(player.GameTitle, player.GameVersion)
-                    .Where(p => p.UniqueKey != player.UniqueKey)
+                    .Where(p => p.PlayerKey != player.PlayerKey)
                     .ToList();
 
                 //message
@@ -494,7 +520,7 @@ namespace GameServer.Networking
             {
                 //get source player
                 NetworkPlayer player = NetworkPlayer.FromPacket(packet);
-                player = GetPlayerByKey(player.UniqueKey);
+                player = GetPlayerByKey(player.PlayerKey);
 
                 //set quit flag
                 player.QuitGame = true;
@@ -563,10 +589,10 @@ namespace GameServer.Networking
 
                 //create session?
                 if (requestPacket.CommandType == CommandType.ConnectToPlayer)
-                    CreateSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                    CreateSession(sourcePlayer.PlayerKey, destinationPlayer.PlayerKey);
 
                 //get session
-                Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                Session session = GetSession(sourcePlayer.PlayerKey, destinationPlayer.PlayerKey);
                 if ((session == null) && (requestPacket.CommandType != CommandType.ConnectToPlayer))
                 {
                     Log.Write($"Passthrough_Command: Live session does not exist between '{sourcePlayer.IP}' and '{destinationPlayer.IP}'");
@@ -626,7 +652,7 @@ namespace GameServer.Networking
 
                         //confirm session?
                         if ((requestPacket.CommandType == CommandType.ConnectToPlayer) && (result.Code == ResultCode.Accept))
-                            ConfirmSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                            ConfirmSession(sourcePlayer.PlayerKey, destinationPlayer.PlayerKey);
 
                         //get original packet
                         responsePacket = result.ResponsePacket;
@@ -696,7 +722,7 @@ namespace GameServer.Networking
                 }
 
                 //get session
-                Session session = GetSession(sourcePlayer.UniqueKey, destinationPlayer.UniqueKey);
+                Session session = GetSession(sourcePlayer.PlayerKey, destinationPlayer.PlayerKey);
                 if (session == null)
                 {
                     Log.Write($"Passthrough_Data: Live session does not exist between '{sourcePlayer.IP}' and '{destinationPlayer.IP}'");

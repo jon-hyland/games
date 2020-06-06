@@ -101,7 +101,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Audio\Sounds.cs" />
-    <Compile Include="Game\HighScores.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\PlayerStats.cs" />
     <Compile Include="Game\Space.cs" />
