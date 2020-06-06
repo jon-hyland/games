@@ -45,34 +45,11 @@ X - Add music to settings.
 X - Network Fixes:
 X   * Send Game Quit to Server, even on Window close
 X   * Accept timeout not working right
+X - Improve config reader.
 - Add saving of settings.
 - Allow reset of high scores from settings.
-- Improve config reader.
-- Allow initials change.
+- Allow initials change from menu.
 - Move menu loops into library class?
-
-
-
-Clear1          Clear lines
-Clear2          
-Click1          Brick move, menu select
-Click2          
-Click3          
-Error1          
-Explode1        
-Explode2        
-Explode3        Explode spaces 
-Hit1            
-Hit2            Brick hit bottom
-LevelUp1        Level up
-MenuBack1       
-MenuMove1       
-MenuMove2       
-MenuSelect1     
-MenuSelect2     
-Music1          
-Music2          
-Send1           
 
 
 =============
@@ -107,5 +84,4 @@ X   * Receive EndSession command in game.  Show message, clear opponent.
 =======
  LATER
 =======
-- Refactoring (player, opponent, etc).  ErrorHandler like Log.
 - Improve game animation.
