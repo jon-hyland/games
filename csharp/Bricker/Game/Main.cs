@@ -176,15 +176,10 @@ namespace Bricker.Game
                 _communications.Start();
 
                 //get player initials
+                string initials = InitialsLoop(new string[] { "who are you?", "enter your initials" });
                 if (String.IsNullOrWhiteSpace(_config.Initials))
-                {
-                    string initials = InitialsLoop(new string[] { "who are you?", "enter your initials" });
-                    if (!String.IsNullOrWhiteSpace(_config.Initials))
-                    {
-                        _config.SaveInitials(initials);
-                        _communications.ChangePlayerName(initials);
-                    }
-                }
+                    initials = "ABC";
+                _config.SaveInitials(initials);
 
                 //program loop
                 while (true)
@@ -592,10 +587,8 @@ namespace Bricker.Game
             //high score?
             if (_highScores.IsHighScore(_player.Stats.Score))
             {
-                string initials = InitialsLoop(new string[] { "new high score", "enter your initials" });
-                if (!String.IsNullOrWhiteSpace(initials))
-                    _highScores.AddHighScore(initials, _player.Stats.Score);
-
+                _highScores.AddHighScore(_config.Initials, _player.Stats.Score);
+                SendHighScores();
             }
         }
 
@@ -1381,6 +1374,50 @@ namespace Bricker.Game
             {
                 if (result.Code != ResultCode.Accept)
                     Log.Write($"SendQuitGame: Failed with code '{result.Code}'");
+            }
+        }
+
+        /// <summary>
+        /// Sends high scores to the server, server responds with complete list, updates local list and saves.
+        /// </summary>
+        private void SendHighScores()
+        {
+            CommandResult result = new CommandResult(ResultCode.Accept);
+
+            try
+            {
+                //return if not connected
+                if (_communications.ConnectionState != ConnectionState.Connected)
+                    return;
+
+                //get high score bytes
+                byte[] requestBytes = _highScores.ToBytes();
+
+                //try three times
+                for (int i = 0; i < 3; i++)
+                {
+                    //send quit-game command request
+                    result = _communications.SendCommandRequest(_config.ServerIP, CommandType.SyncHighScores, requestBytes, TimeSpan.FromSeconds(1));
+                    if (result.Code != ResultCode.Accept)
+                        continue;
+
+                    //update scores
+                    if (result.ResponsePacket?.ToBytes() is byte[] responseBytes)
+                        _highScores.UpdateFromBytes(responseBytes);
+
+                    //success
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Code = ResultCode.Error;
+                ErrorHandler.LogError(ex);
+            }
+            finally
+            {
+                if (result.Code != ResultCode.Accept)
+                    Log.Write($"SendHighScores: Failed with code '{result.Code}'");
             }
         }
 

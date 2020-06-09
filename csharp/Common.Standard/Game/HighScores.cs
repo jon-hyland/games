@@ -190,6 +190,7 @@ namespace Common.Standard.Game
                     _scores.Add(new HighScore(initials, score));
                 }
                 _scores = _scores.OrderByDescending(s => s.Score).Take(_maxCount).ToList();
+                SaveLocalFile(_localFile, _scores);
             }
         }
 
