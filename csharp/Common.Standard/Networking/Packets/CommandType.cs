@@ -13,9 +13,7 @@
         EndSession = 4,             // sent by server
         Passthrough = 5,            // passed to opponent
         QuitGame = 6,               // sent to server
-        GetHighScores = 7,          // sent to server
-        AddHighScore = 8,           // sent to server
-        HighScoresChanged = 9       // sent by server
+        SyncHighScores = 7          // sent to server, todo: sent by server
 
     }
 }

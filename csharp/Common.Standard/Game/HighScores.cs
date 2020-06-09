@@ -1,5 +1,6 @@
 ﻿using Common.Standard.Error;
 using Common.Standard.Extensions;
+using Common.Standard.Networking;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -153,6 +154,45 @@ namespace Common.Standard.Game
                 initials = initials.Substring(0, 3);
             return initials;
         }
+
+        /// <summary>
+        /// Serializes high score list to packet bytes.
+        /// </summary>
+        public byte[] ToBytes()
+        {
+            PacketBuilder builder = new PacketBuilder();
+            lock (this)
+            {
+                builder.AddUInt16((ushort)_scores.Count);
+                foreach (HighScore score in _scores)
+                {
+                    builder.AddString(score.Initials ?? "");
+                    builder.AddInt32(score.Score);
+                }
+            }
+            return builder.ToBytes();
+        }
+
+        /// <summary>
+        /// Deserializes packet data 
+        /// </summary>
+        public void UpdateFromBytes(byte[] bytes)
+        {
+            PacketParser parser = new PacketParser(bytes);
+            lock (this)
+            {
+                _scores.Clear();
+                int count = parser.GetUInt16();
+                for (int i = 0; i < count; i++)
+                {
+                    string initials = parser.GetString();
+                    int score = parser.GetInt32();
+                    _scores.Add(new HighScore(initials, score));
+                }
+                _scores = _scores.OrderByDescending(s => s.Score).Take(_maxCount).ToList();
+            }
+        }
+
     }
 
     /// <summary>

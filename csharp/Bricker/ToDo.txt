@@ -46,6 +46,17 @@ X - Network Fixes:
 X   * Send Game Quit to Server, even on Window close
 X   * Accept timeout not working right
 X - Improve config reader.
+
+- Server managed high scores.
+  X * Add HighScores serialization deserialization.
+  X * Create packet type.
+  * Enter initials on startup, only, every time.
+  * Add client-side request, response parsing.  Happens on start, game start, game end, menu open.
+  * Add server-side request parsing, updating, response.
+  * ---
+  * Add client-side request handling, request pasring, response.
+  * Add server-side request initialization based on sessions.
+
 - Add saving of settings.
 - Allow reset of high scores from settings.
 - Allow initials change from menu.
