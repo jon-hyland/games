@@ -78,7 +78,7 @@
         {
             Lines += value;
             int newLevel = (Lines / 25) + 1;
-            if (newLevel > Lines)
+            if (newLevel > Level)
                 return SetLevel(newLevel);
             return false;
         }
