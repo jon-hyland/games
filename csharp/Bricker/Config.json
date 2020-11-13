@@ -4,7 +4,7 @@
       "effects": 1
   },
   "multiplayer": {
-    "server": "hyland.one",
+    "server": "172.22.35.61",
     "port": 8780 
   },
   "performance": {
@@ -14,7 +14,7 @@
   "display": {
     "ghost": 1,
     "background": 1,
-    "imageFolder": "./Images",
+    "imageFolder": "./Images"
   },
   "debug": 0,
 }
